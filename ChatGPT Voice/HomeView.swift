@@ -9,12 +9,18 @@ import AVFoundation
 import SwiftUI
 
 var speechRecognizer = SpeechRecognizer()
+var isRecording = false
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
+
     @State private var navigate = false
-    @State private var isRecording = false
+    @State private var her = true
+    @State private var text = "Hello, how can I help?"
+    @State private var showingSettingsSheet = false
+
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
+    @StateObject private var audioPlayer = AudioPlayer()
 
     var body: some View {
         NavigationView {
@@ -31,6 +37,7 @@ struct HomeView: View {
                             weight: .light
                         ))
                         .padding(.bottom, 100)
+
                     NavigationLink(destination: ContentView(), isActive: $navigate) {
                         Button("Conversations", action: {navigate = true})
                             .font(.system(
@@ -40,6 +47,7 @@ struct HomeView: View {
                             .foregroundColor(.primary)
                             .buttonStyle(.bordered)
                     }
+
                     Button("Stop", action: {
                         speechRecognizer.stopTranscribing()
                         addConversation()
@@ -50,12 +58,20 @@ struct HomeView: View {
                         ))
                         .foregroundColor(.primary)
                         .buttonStyle(.bordered)
+
+                    Image(systemName: "gear")
+                        .font(.system(size: 20))
+                        .frame(width: 40)
+                        .padding(.top, 80)
+                        .onTapGesture {
+                            showingSettingsSheet.toggle()
+                        }
+                        .sheet(isPresented: $showingSettingsSheet) {
+                            SettingsView()
+                        }
                 }
                 .onAppear {
-                    playTextWithSiri(
-                        text: "Hello, how can I help?"
-                    )
-                    isRecording = true
+                    sayText(text: text)
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
@@ -65,17 +81,28 @@ struct HomeView: View {
         }
     }
 
-    func playTextWithSiri(text: String) {
-        let speechUtterance = AVSpeechUtterance(string: text)
+    func sayText(text: String) {
+        if her {
+            elevenLabsTextToSpeech(text: text) { result in
+                switch result {
+                case .success(let data):
+                    audioPlayer.playAudioFromData(data: data)
+                case .failure(let error):
+                    print("Error: \(error.localizedDescription)")
+                }
+            }
+        } else {
+            let speechUtterance = AVSpeechUtterance(string: text)
 
-        // Set the voice to the default system voice
-        speechUtterance.voice = AVSpeechSynthesisVoice(language: nil)
+            // Set the voice to the default system voice
+            speechUtterance.voice = AVSpeechSynthesisVoice(language: nil)
 
-        // Set the speech rate (default is AVSpeechUtteranceDefaultSpeechRate)
-        speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate
+            // Set the speech rate (default is AVSpeechUtteranceDefaultSpeechRate)
+            speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate
 
-        // Start the speech synthesizer
-        speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
+            // Start the speech synthesizer
+            speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
+        }
     }
 
     private func addConversation() {
@@ -115,7 +142,48 @@ class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, Observabl
         print("Finished speaking")
 
         // Start recording
+        isRecording = true
         speechRecognizer.reset()
         speechRecognizer.transcribe()
     }
+}
+
+class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    @Published var audioPlayer: AVAudioPlayer?
+
+    func playAudioFile(url: URL) {
+        do {
+            let audioData = try Data(contentsOf: url)
+            self.audioPlayer = try AVAudioPlayer(data: audioData)
+            self.audioPlayer?.delegate = self
+            self.audioPlayer?.prepareToPlay()
+            self.audioPlayer?.play()
+        } catch {
+            print("Error loading audio file: \(error.localizedDescription)")
+        }
+    }
+
+    func playAudioFromData(data: Data) {
+        do {
+            self.audioPlayer = try AVAudioPlayer(data: data)
+            self.audioPlayer?.delegate = self
+            self.audioPlayer?.prepareToPlay()
+            self.audioPlayer?.play()
+        } catch {
+            print("Error loading audio data: \(error.localizedDescription)")
+        }
+    }
+
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        if flag {
+            print("Audio playback finished successfully")
+        } else {
+            print("Audio playback finished, but there was an issue")
+        }
+
+        // Start recording
+        isRecording = true
+        speechRecognizer.reset()
+        speechRecognizer.transcribe()
+   }
 }

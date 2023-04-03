@@ -17,6 +17,8 @@
 		05496C7F29D956D40080C503 /* ChatGPT_VoiceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C7E29D956D40080C503 /* ChatGPT_VoiceUITests.swift */; };
 		05496C8129D956D40080C503 /* ChatGPT_VoiceUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8029D956D40080C503 /* ChatGPT_VoiceUITestsLaunchTests.swift */; };
 		05496C8E29D958550080C503 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8D29D958550080C503 /* HomeView.swift */; };
+		05744E7C29DAE5D40013FB54 /* TextToSpeech.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */; };
+		05744E7E29DAEED90013FB54 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7D29DAEED90013FB54 /* SettingsView.swift */; };
 		0597AE5829D98B9B00C5CCF4 /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0597AE5729D98B9B00C5CCF4 /* SpeechRecognizer.swift */; };
 /* End PBXBuildFile section */
 
@@ -52,6 +54,8 @@
 		05496C7E29D956D40080C503 /* ChatGPT_VoiceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPT_VoiceUITests.swift; sourceTree = "<group>"; };
 		05496C8029D956D40080C503 /* ChatGPT_VoiceUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPT_VoiceUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		05496C8D29D958550080C503 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeech.swift; sourceTree = "<group>"; };
+		05744E7D29DAEED90013FB54 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		0597AE5729D98B9B00C5CCF4 /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -106,6 +110,8 @@
 				05496C5D29D956D20080C503 /* ChatGPT_VoiceApp.swift */,
 				05496C5F29D956D20080C503 /* ContentView.swift */,
 				05496C8D29D958550080C503 /* HomeView.swift */,
+				05744E7D29DAEED90013FB54 /* SettingsView.swift */,
+				05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */,
 				0597AE5729D98B9B00C5CCF4 /* SpeechRecognizer.swift */,
 				05496C6129D956D40080C503 /* Assets.xcassets */,
 				05496C6629D956D40080C503 /* Persistence.swift */,
@@ -272,9 +278,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				05496C6729D956D40080C503 /* Persistence.swift in Sources */,
+				05744E7E29DAEED90013FB54 /* SettingsView.swift in Sources */,
 				05496C6029D956D20080C503 /* ContentView.swift in Sources */,
 				0597AE5829D98B9B00C5CCF4 /* SpeechRecognizer.swift in Sources */,
 				05496C6A29D956D40080C503 /* ChatGPT_Voice.xcdatamodeld in Sources */,
+				05744E7C29DAE5D40013FB54 /* TextToSpeech.swift in Sources */,
 				05496C8E29D958550080C503 /* HomeView.swift in Sources */,
 				05496C5E29D956D20080C503 /* ChatGPT_VoiceApp.swift in Sources */,
 			);
