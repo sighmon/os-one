@@ -10,12 +10,12 @@ import SwiftUI
 
 var speechRecognizer = SpeechRecognizer()
 var isRecording = false
+var her = UserDefaults.standard.bool(forKey: "her")
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
 
     @State private var navigate = false
-    @State private var her = true
     @State private var welcomeText = "Hello, how can I help?"
     @State private var showingSettingsSheet = false
 

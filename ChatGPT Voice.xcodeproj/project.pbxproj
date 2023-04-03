@@ -58,6 +58,7 @@
 		05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeech.swift; sourceTree = "<group>"; };
 		05744E7D29DAEED90013FB54 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		05744E7F29DAF2B60013FB54 /* OpenAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAI.swift; sourceTree = "<group>"; };
+		05744E8129DB052E0013FB54 /* ChatGPT-Voice-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ChatGPT-Voice-Info.plist"; sourceTree = SOURCE_ROOT; };
 		0597AE5729D98B9B00C5CCF4 /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -109,6 +110,7 @@
 		05496C5C29D956D20080C503 /* ChatGPT Voice */ = {
 			isa = PBXGroup;
 			children = (
+				05744E8129DB052E0013FB54 /* ChatGPT-Voice-Info.plist */,
 				05496C5D29D956D20080C503 /* ChatGPT_VoiceApp.swift */,
 				05496C5F29D956D20080C503 /* ContentView.swift */,
 				05496C8D29D958550080C503 /* HomeView.swift */,
@@ -445,11 +447,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "\"ChatGPT Voice/Preview Content\"";
 				DEVELOPMENT_TEAM = 4P8S9W2NYL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ChatGPT-Voice-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "OS One";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Enables you to talk to ChatGPT.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Enables ChatGPT to understand what you're saying.";
@@ -477,11 +480,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_ASSET_PATHS = "\"ChatGPT Voice/Preview Content\"";
 				DEVELOPMENT_TEAM = 4P8S9W2NYL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ChatGPT-Voice-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "OS One";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Enables you to talk to ChatGPT.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Enables ChatGPT to understand what you're saying.";

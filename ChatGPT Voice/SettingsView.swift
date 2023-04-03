@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @State private var elevenLabsApiKey: String = ""
     @State private var openAIApiKey: String = ""
+    @State private var her: Bool = true
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -27,6 +28,10 @@ struct SettingsView: View {
                         .onChange(of: elevenLabsApiKey) {
                             UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
                         }
+                    Toggle("Her", isOn: $her)
+                        .onChange(of: her) {
+                            UserDefaults.standard.set($0, forKey: "her")
+                        }
                 }
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.never)
@@ -36,6 +41,7 @@ struct SettingsView: View {
                     // Load OS One settings from user defaults
                     openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
+                    her = UserDefaults.standard.bool(forKey: "her")
                 }
             }
             .toolbar {
