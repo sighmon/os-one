@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var elevenLabsApiKey: String = ""
+    @State private var openAIApiKey: String = ""
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -18,6 +19,10 @@ struct SettingsView: View {
                 VStack {
                     Text("OS One settings")
                         .font(.system(size: 30, weight: .medium))
+                    SecureField("OpenAI API Key", text: $openAIApiKey)
+                        .onChange(of: openAIApiKey) {
+                            UserDefaults.standard.set($0, forKey: "openAIApiKey")
+                        }
                     SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
                         .onChange(of: elevenLabsApiKey) {
                             UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
@@ -29,6 +34,7 @@ struct SettingsView: View {
                 .padding([.leading, .trailing], 40)
                 .onAppear {
                     // Load OS One settings from user defaults
+                    openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                 }
             }

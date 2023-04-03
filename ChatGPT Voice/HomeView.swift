@@ -16,7 +16,7 @@ struct HomeView: View {
 
     @State private var navigate = false
     @State private var her = true
-    @State private var text = "Hello, how can I help?"
+    @State private var welcomeText = "Hello, how can I help?"
     @State private var showingSettingsSheet = false
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
@@ -48,8 +48,16 @@ struct HomeView: View {
                             .buttonStyle(.bordered)
                     }
 
-                    Button("Stop", action: {
+                    Button("Send", action: {
                         speechRecognizer.stopTranscribing()
+                        chatCompletionAPI(prompt: speechRecognizer.transcript, her: her) { result in
+                            switch result {
+                            case .success(let content):
+                                sayText(text: content)
+                            case .failure(let error):
+                                print("OpenAI API error: \(error.localizedDescription)")
+                            }
+                        }
                         addConversation()
                     })
                         .font(.system(
@@ -71,7 +79,7 @@ struct HomeView: View {
                         }
                 }
                 .onAppear {
-                    sayText(text: text)
+                    sayText(text: welcomeText)
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
@@ -88,7 +96,7 @@ struct HomeView: View {
                 case .success(let data):
                     audioPlayer.playAudioFromData(data: data)
                 case .failure(let error):
-                    print("Error: \(error.localizedDescription)")
+                    print("Eleven Labs API error: \(error.localizedDescription)")
                 }
             }
         } else {
@@ -152,32 +160,34 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var audioPlayer: AVAudioPlayer?
 
     func playAudioFile(url: URL) {
-        do {
-            let audioData = try Data(contentsOf: url)
-            self.audioPlayer = try AVAudioPlayer(data: audioData)
-            self.audioPlayer?.delegate = self
-            self.audioPlayer?.prepareToPlay()
-            self.audioPlayer?.play()
-        } catch {
-            print("Error loading audio file: \(error.localizedDescription)")
+        DispatchQueue.main.async {
+            do {
+                let audioData = try Data(contentsOf: url)
+                self.audioPlayer = try AVAudioPlayer(data: audioData)
+                self.audioPlayer?.delegate = self
+                self.audioPlayer?.prepareToPlay()
+                self.audioPlayer?.play()
+            } catch {
+                print("Error loading audio file: \(error.localizedDescription)")
+            }
         }
     }
 
     func playAudioFromData(data: Data) {
-        do {
-            self.audioPlayer = try AVAudioPlayer(data: data)
-            self.audioPlayer?.delegate = self
-            self.audioPlayer?.prepareToPlay()
-            self.audioPlayer?.play()
-        } catch {
-            print("Error loading audio data: \(error.localizedDescription)")
+        DispatchQueue.main.async {
+            do {
+                self.audioPlayer = try AVAudioPlayer(data: data)
+                self.audioPlayer?.delegate = self
+                self.audioPlayer?.prepareToPlay()
+                self.audioPlayer?.play()
+            } catch {
+                print("Error loading audio data: \(error.localizedDescription)")
+            }
         }
     }
 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-        if flag {
-            print("Audio playback finished successfully")
-        } else {
+        if !flag {
             print("Audio playback finished, but there was an issue")
         }
 
