@@ -23,7 +23,7 @@ struct HomeView: View {
     @StateObject private var audioPlayer = AudioPlayer()
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 Color(
                     red: 240/255,
@@ -111,6 +111,7 @@ struct HomeView: View {
             // Start the speech synthesizer
             speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
         }
+        setAudioSession(active: true)
     }
 
     private func addConversation() {
@@ -148,6 +149,7 @@ class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, Observabl
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         print("Finished speaking")
+        setAudioSession(active: false)
 
         // Start recording
         isRecording = true
@@ -196,4 +198,15 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
         speechRecognizer.reset()
         speechRecognizer.transcribe()
    }
+}
+
+func setAudioSession(active: Bool) {
+    let session = AVAudioSession.sharedInstance()
+    do {
+        try session.setCategory(AVAudioSession.Category.playAndRecord, options: .mixWithOthers)
+        try session.setActive(active, options: .notifyOthersOnDeactivation)
+        print("Volume: \(session.outputVolume)")
+    } catch {
+        print("Error resetting audio session: \(error)")
+    }
 }
