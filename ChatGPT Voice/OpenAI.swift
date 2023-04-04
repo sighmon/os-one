@@ -88,3 +88,22 @@ func chatCompletionAPI(prompt: String, her: Bool, completion: @escaping (Result<
     }
     task.resume()
 }
+
+struct ChatMessage: Identifiable {
+    let id = UUID()
+    let message: String
+    let sender: Sender
+
+    enum Sender {
+        case user
+        case openAI
+    }
+}
+
+class ChatHistory: ObservableObject {
+    @Published var messages: [ChatMessage] = []
+
+    func addMessage(_ message: String, from sender: ChatMessage.Sender) {
+        messages.append(ChatMessage(message: message, sender: sender))
+    }
+}

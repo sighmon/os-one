@@ -21,6 +21,7 @@ struct HomeView: View {
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
     @StateObject private var audioPlayer = AudioPlayer()
+    @StateObject private var chatHistory = ChatHistory()
 
     var body: some View {
         NavigationStack {
@@ -48,17 +49,34 @@ struct HomeView: View {
                             .buttonStyle(.bordered)
                     }
 
+                    Button("Save", action: {
+                        addConversation()
+                    })
+                        .font(.system(
+                            size: 20,
+                            weight: .light
+                        ))
+                        .foregroundColor(.secondary)
+                        .buttonStyle(.bordered)
+
                     Button("Send", action: {
                         speechRecognizer.stopTranscribing()
+                        chatHistory.addMessage(
+                            speechRecognizer.transcript,
+                            from: ChatMessage.Sender.user
+                        )
                         chatCompletionAPI(prompt: speechRecognizer.transcript, her: her) { result in
                             switch result {
                             case .success(let content):
+                                chatHistory.addMessage(
+                                    content,
+                                    from: ChatMessage.Sender.openAI
+                                )
                                 sayText(text: content)
                             case .failure(let error):
                                 print("OpenAI API error: \(error.localizedDescription)")
                             }
                         }
-                        addConversation()
                     })
                         .font(.system(
                             size: 20,
@@ -66,6 +84,7 @@ struct HomeView: View {
                         ))
                         .foregroundColor(.primary)
                         .buttonStyle(.bordered)
+                        .padding(.top, 40)
 
                     Image(systemName: "gear")
                         .font(.system(size: 20))
@@ -118,7 +137,8 @@ struct HomeView: View {
         withAnimation {
             let newConversation = Conversation(context: viewContext)
             newConversation.timestamp = Date()
-            newConversation.messages = speechRecognizer.transcript
+            // TODO: Add encoder/decoder for ChatHistory
+            newConversation.messages = chatHistory.messages.last?.message
 
             do {
                 try viewContext.save()
@@ -205,7 +225,6 @@ func setAudioSession(active: Bool) {
     do {
         try session.setCategory(AVAudioSession.Category.playAndRecord, options: .mixWithOthers)
         try session.setActive(active, options: .notifyOthersOnDeactivation)
-        print("Volume: \(session.outputVolume)")
     } catch {
         print("Error resetting audio session: \(error)")
     }
