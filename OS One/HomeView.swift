@@ -60,6 +60,7 @@ struct HomeView: View {
                         .foregroundColor(.secondary)
                         .buttonStyle(.bordered)
 
+                    // TODO: silence detection instead of send button
                     Button("Send", action: {
                         speechRecognizer.stopTranscribing()
                         print("Message: \(speechRecognizer.transcript)")
