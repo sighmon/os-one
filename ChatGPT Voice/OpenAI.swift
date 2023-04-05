@@ -7,25 +7,7 @@
 
 import Foundation
 
-struct OpenAIResponse: Codable {
-    let choices: [OpenAIChoice]
-    let usage: OpenAIUsage
-}
-
-struct OpenAIChoice: Codable {
-    let message: OpenAIMessage
-}
-
-struct OpenAIUsage: Codable {
-    let total_tokens: Int
-}
-
-struct OpenAIMessage: Codable {
-    let content: String
-}
-
-func chatCompletionAPI(prompt: String, her: Bool, completion: @escaping (Result<String, Error>) -> Void) {
-    print("Message: \(prompt)")
+func chatCompletionAPI(her: Bool, messageHistory: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
     let model = "gpt-4"
 
@@ -42,9 +24,13 @@ func chatCompletionAPI(prompt: String, her: Bool, completion: @escaping (Result<
         )
     }
 
-    messages.append(
-        ["role": "user", "content": prompt]
-    )
+    if messageHistory.count > 0 {
+        for item in messageHistory {
+            messages.append(
+                ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": item.message]
+            )
+        }
+    }
 
     let body = [
         "model": model,
@@ -87,6 +73,23 @@ func chatCompletionAPI(prompt: String, her: Bool, completion: @escaping (Result<
         }
     }
     task.resume()
+}
+
+struct OpenAIResponse: Codable {
+    let choices: [OpenAIChoice]
+    let usage: OpenAIUsage
+}
+
+struct OpenAIChoice: Codable {
+    let message: OpenAIMessage
+}
+
+struct OpenAIUsage: Codable {
+    let total_tokens: Int
+}
+
+struct OpenAIMessage: Codable {
+    let content: String
 }
 
 struct ChatMessage: Identifiable {

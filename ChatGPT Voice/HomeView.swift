@@ -61,11 +61,12 @@ struct HomeView: View {
 
                     Button("Send", action: {
                         speechRecognizer.stopTranscribing()
+                        print("Message: \(speechRecognizer.transcript)")
                         chatHistory.addMessage(
                             speechRecognizer.transcript,
                             from: ChatMessage.Sender.user
                         )
-                        chatCompletionAPI(prompt: speechRecognizer.transcript, her: her) { result in
+                        chatCompletionAPI(her: her, messageHistory: chatHistory.messages) { result in
                             switch result {
                             case .success(let content):
                                 chatHistory.addMessage(
@@ -137,8 +138,19 @@ struct HomeView: View {
         withAnimation {
             let newConversation = Conversation(context: viewContext)
             newConversation.timestamp = Date()
-            // TODO: Add encoder/decoder for ChatHistory
-            newConversation.messages = chatHistory.messages.last?.message
+
+            var messages: [[String: String]] = []
+            for item in chatHistory.messages {
+                messages.append(
+                    ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": item.message]
+                )
+            }
+            do {
+                let data = try JSONSerialization.data(withJSONObject: messages)
+                newConversation.messages = String(data: data, encoding: String.Encoding.utf8)
+            } catch {
+                print("Failed to serialise chat history...")
+            }
 
             do {
                 try viewContext.save()
@@ -223,7 +235,8 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
 func setAudioSession(active: Bool) {
     let session = AVAudioSession.sharedInstance()
     do {
-        try session.setCategory(AVAudioSession.Category.playAndRecord, options: .mixWithOthers)
+        try session.setCategory(AVAudioSession.Category.playAndRecord, options: .duckOthers)
+        try session.overrideOutputAudioPort(AVAudioSession.PortOverride.speaker)
         try session.setActive(active, options: .notifyOthersOnDeactivation)
     } catch {
         print("Error resetting audio session: \(error)")

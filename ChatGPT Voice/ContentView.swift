@@ -20,7 +20,8 @@ struct ContentView: View {
         List {
             ForEach(conversations) { conversation in
                 NavigationLink {
-                    Text("Conversation: at \(conversation.timestamp!, formatter: conversationFormatter)\n \(conversation.messages!)")
+                    Text("Conversation: at \(conversation.timestamp!, formatter: conversationFormatter)\n\n \(conversation.messages!)")
+                        .padding(20)
                 } label: {
                     Text(conversation.timestamp!, formatter: conversationFormatter)
                 }
@@ -48,7 +49,7 @@ struct ContentView: View {
 private let conversationFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.dateStyle = .short
-    formatter.timeStyle = .medium
+    formatter.timeStyle = .short
     return formatter
 }()
 

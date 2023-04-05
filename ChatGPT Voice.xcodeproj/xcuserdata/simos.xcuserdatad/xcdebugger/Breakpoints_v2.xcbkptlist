@@ -14,8 +14,8 @@
             filePath = "ChatGPT Voice/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "75"
-            endingLineNumber = "75"
+            startingLineNumber = "76"
+            endingLineNumber = "76"
             landmarkName = "body"
             landmarkType = "24">
             <Locations>
@@ -48,6 +48,84 @@
                   startingLineNumber = "57"
                   endingLineNumber = "57"
                   offsetFromSymbolStart = "281">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "ChatGPT Voice/OpenAI.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "40"
+            endingLineNumber = "40"
+            landmarkName = "chatCompletionAPI(her:messageHistory:completion:)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 5d95e99bd78a8ebd"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ChatGPT_Voice.chatCompletionAPI(prompt: Swift.String, her: Swift.Bool, messageHistory: Swift.Array&lt;ChatGPT_Voice.ChatMessage&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "ChatGPT Voice"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "45"
+                  endingLineNumber = "45"
+                  offsetFromSymbolStart = "3829">
+               </Location>
+               <Location
+                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 5d95e99bd78a8ebd"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ChatGPT_Voice.chatCompletionAPI(prompt: Swift.String, her: Swift.Bool, messageHistory: Swift.Array&lt;ChatGPT_Voice.ChatMessage&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "ChatGPT Voice"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "45"
+                  endingLineNumber = "45"
+                  offsetFromSymbolStart = "3961">
+               </Location>
+               <Location
+                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 790426250a52fcd0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ChatGPT_Voice.chatCompletionAPI(her: Swift.Bool, messageHistory: Swift.Array&lt;ChatGPT_Voice.ChatMessage&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "ChatGPT Voice"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "40"
+                  endingLineNumber = "40"
+                  offsetFromSymbolStart = "3006">
+               </Location>
+               <Location
+                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 790426250a52fcd0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ChatGPT_Voice.chatCompletionAPI(her: Swift.Bool, messageHistory: Swift.Array&lt;ChatGPT_Voice.ChatMessage&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "ChatGPT Voice"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "40"
+                  endingLineNumber = "40"
+                  offsetFromSymbolStart = "3138">
                </Location>
             </Locations>
          </BreakpointContent>
