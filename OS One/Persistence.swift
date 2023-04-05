@@ -1,6 +1,6 @@
 //
 //  Persistence.swift
-//  ChatGPT Voice
+//  OS One
 //
 //  Created by Simon Loffler on 2/4/2023.
 //
@@ -31,7 +31,7 @@ struct PersistenceController {
     let container: NSPersistentCloudKitContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "ChatGPT_Voice")
+        container = NSPersistentCloudKitContainer(name: "OS_One")
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }

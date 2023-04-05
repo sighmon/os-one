@@ -11,7 +11,7 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "ChatGPT Voice/HomeView.swift"
+            filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "77"
@@ -20,12 +20,12 @@
             landmarkType = "24">
             <Locations>
                <Location
-                  uuid = "3E0CF72B-38A6-45E5-AF4F-B71EB1C781E0 - df7618cee7e365b0"
+                  uuid = "3E0CF72B-38A6-45E5-AF4F-B71EB1C781E0 - c07287523cfb0754"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "closure #1 (Swift.Result&lt;Foundation.Data, Swift.Error&gt;) -&gt; () in closure #2 () -&gt; () in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0, SwiftUI.NavigationLink&lt;&lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, ChatGPT_Voice.ContentView&gt;, &lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.sheet&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.View&gt;(isPresented: SwiftUI.Binding&lt;Swift.Bool&gt;, onDismiss: Swift.Optional&lt;() -&gt; ()&gt;, content: () -&gt; &#x3c4;_1_0) -&gt; some&gt;&gt;.0)&gt; in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.edgesIgnoringSafeArea(SwiftUI.Edge.Set) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.onDisappear(perform: Swift.Optional&lt;() -&gt; ()&gt;) -&gt; some&gt;&gt;.0)&gt; in closure #1 () -&gt; SwiftUI.ZStack&lt;SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.edgesIgnoringSafeArea(SwiftUI.Edge.Set) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.onDisappear(perform: Swift.Optional&lt;() -&gt; ()&gt;) -&gt; some&gt;&gt;.0)&gt;&gt; in ChatGPT_Voice.HomeView.body.getter : some"
-                  moduleName = "ChatGPT Voice"
+                  moduleName = "OS One"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/HomeView.swift"
                   startingColumnNumber = "9223372036854775807"
@@ -35,12 +35,12 @@
                   offsetFromSymbolStart = "286">
                </Location>
                <Location
-                  uuid = "3E0CF72B-38A6-45E5-AF4F-B71EB1C781E0 - 4d892ea1b0e96183"
+                  uuid = "3E0CF72B-38A6-45E5-AF4F-B71EB1C781E0 - 528db13d6bf10367"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "closure #1 (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; () in closure #2 () -&gt; () in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.padding(SwiftUI.Edge.Set, Swift.Optional&lt;CoreGraphics.CGFloat&gt;) -&gt; some&gt;&gt;.0, SwiftUI.NavigationLink&lt;&lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, ChatGPT_Voice.ContentView&gt;, &lt;&lt;opaque return type of SwiftUI.View.buttonStyle&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.PrimitiveButtonStyle&gt;(&#x3c4;_1_0) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.sheet&lt;&#x3c4;_0_0 where &#x3c4;_1_0: SwiftUI.View&gt;(isPresented: SwiftUI.Binding&lt;Swift.Bool&gt;, onDismiss: Swift.Optional&lt;() -&gt; ()&gt;, content: () -&gt; &#x3c4;_1_0) -&gt; some&gt;&gt;.0)&gt; in closure #1 () -&gt; SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.edgesIgnoringSafeArea(SwiftUI.Edge.Set) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.onDisappear(perform: Swift.Optional&lt;() -&gt; ()&gt;) -&gt; some&gt;&gt;.0)&gt; in closure #1 () -&gt; SwiftUI.ZStack&lt;SwiftUI.TupleView&lt;(&lt;&lt;opaque return type of SwiftUI.View.edgesIgnoringSafeArea(SwiftUI.Edge.Set) -&gt; some&gt;&gt;.0, &lt;&lt;opaque return type of SwiftUI.View.onDisappear(perform: Swift.Optional&lt;() -&gt; ()&gt;) -&gt; some&gt;&gt;.0)&gt;&gt; in ChatGPT_Voice.HomeView.body.getter : some"
-                  moduleName = "ChatGPT Voice"
+                  moduleName = "OS One"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/HomeView.swift"
                   startingColumnNumber = "9223372036854775807"
@@ -59,7 +59,7 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "ChatGPT Voice/OpenAI.swift"
+            filePath = "OS One/OpenAI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "40"
@@ -68,12 +68,12 @@
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 5d95e99bd78a8ebd"
+                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 429176070c92ec59"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "ChatGPT_Voice.chatCompletionAPI(prompt: Swift.String, her: Swift.Bool, messageHistory: Swift.Array&lt;ChatGPT_Voice.ChatMessage&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "ChatGPT Voice"
+                  moduleName = "OS One"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"
@@ -83,12 +83,12 @@
                   offsetFromSymbolStart = "3829">
                </Location>
                <Location
-                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 5d95e99bd78a8ebd"
+                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 429176070c92ec59"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "ChatGPT_Voice.chatCompletionAPI(prompt: Swift.String, her: Swift.Bool, messageHistory: Swift.Array&lt;ChatGPT_Voice.ChatMessage&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "ChatGPT Voice"
+                  moduleName = "OS One"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"
@@ -98,12 +98,12 @@
                   offsetFromSymbolStart = "3961">
                </Location>
                <Location
-                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 790426250a52fcd0"
+                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 6600b9b9d14a9e34"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "ChatGPT_Voice.chatCompletionAPI(her: Swift.Bool, messageHistory: Swift.Array&lt;ChatGPT_Voice.ChatMessage&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "ChatGPT Voice"
+                  moduleName = "OS One"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"
@@ -113,12 +113,12 @@
                   offsetFromSymbolStart = "3006">
                </Location>
                <Location
-                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 790426250a52fcd0"
+                  uuid = "BD9CFD40-9118-4736-AA09-03F6517409B0 - 6600b9b9d14a9e34"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
                   symbolName = "ChatGPT_Voice.chatCompletionAPI(her: Swift.Bool, messageHistory: Swift.Array&lt;ChatGPT_Voice.ChatMessage&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "ChatGPT Voice"
+                  moduleName = "OS One"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Users/simos/Coding/iOS/ChatGPT%20Voice/ChatGPT%20Voice/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"

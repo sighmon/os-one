@@ -1,13 +1,13 @@
 //
-//  ChatGPT_VoiceUITestsLaunchTests.swift
-//  ChatGPT VoiceUITests
+//  OS_OneUITestsLaunchTests.swift
+//  OS OneUITests
 //
 //  Created by Simon Loffler on 2/4/2023.
 //
 
 import XCTest
 
-final class ChatGPT_VoiceUITestsLaunchTests: XCTestCase {
+final class OS_OneUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

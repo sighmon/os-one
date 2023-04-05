@@ -1,14 +1,14 @@
 //
-//  ChatGPT_VoiceTests.swift
-//  ChatGPT VoiceTests
+//  OS_OneTests.swift
+//  OS OneTests
 //
 //  Created by Simon Loffler on 2/4/2023.
 //
 
 import XCTest
-@testable import ChatGPT_Voice
+@testable import OS_One
 
-final class ChatGPT_VoiceTests: XCTestCase {
+final class OS_One_Tests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

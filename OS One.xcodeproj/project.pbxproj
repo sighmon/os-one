@@ -7,15 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		05496C5E29D956D20080C503 /* ChatGPT_VoiceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C5D29D956D20080C503 /* ChatGPT_VoiceApp.swift */; };
+		05496C5E29D956D20080C503 /* OS_OneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C5D29D956D20080C503 /* OS_OneApp.swift */; };
 		05496C6029D956D20080C503 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C5F29D956D20080C503 /* ContentView.swift */; };
 		05496C6229D956D40080C503 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 05496C6129D956D40080C503 /* Assets.xcassets */; };
 		05496C6529D956D40080C503 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 05496C6429D956D40080C503 /* Preview Assets.xcassets */; };
 		05496C6729D956D40080C503 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C6629D956D40080C503 /* Persistence.swift */; };
-		05496C6A29D956D40080C503 /* ChatGPT_Voice.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 05496C6829D956D40080C503 /* ChatGPT_Voice.xcdatamodeld */; };
-		05496C7529D956D40080C503 /* ChatGPT_VoiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C7429D956D40080C503 /* ChatGPT_VoiceTests.swift */; };
-		05496C7F29D956D40080C503 /* ChatGPT_VoiceUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C7E29D956D40080C503 /* ChatGPT_VoiceUITests.swift */; };
-		05496C8129D956D40080C503 /* ChatGPT_VoiceUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8029D956D40080C503 /* ChatGPT_VoiceUITestsLaunchTests.swift */; };
+		05496C6A29D956D40080C503 /* OS_One.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 05496C6829D956D40080C503 /* OS_One.xcdatamodeld */; };
+		05496C7529D956D40080C503 /* OS_One_Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C7429D956D40080C503 /* OS_One_Tests.swift */; };
+		05496C7F29D956D40080C503 /* OS_OneUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C7E29D956D40080C503 /* OS_OneUITests.swift */; };
+		05496C8129D956D40080C503 /* OS_OneUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8029D956D40080C503 /* OS_OneUITestsLaunchTests.swift */; };
 		05496C8E29D958550080C503 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8D29D958550080C503 /* HomeView.swift */; };
 		05744E7C29DAE5D40013FB54 /* TextToSpeech.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */; };
 		05744E7E29DAEED90013FB54 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7D29DAEED90013FB54 /* SettingsView.swift */; };
@@ -29,36 +29,36 @@
 			containerPortal = 05496C5229D956D20080C503 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 05496C5929D956D20080C503;
-			remoteInfo = "ChatGPT Voice";
+			remoteInfo = "OS One";
 		};
 		05496C7B29D956D40080C503 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 05496C5229D956D20080C503 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 05496C5929D956D20080C503;
-			remoteInfo = "ChatGPT Voice";
+			remoteInfo = "OS One";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		05496C5A29D956D20080C503 /* ChatGPT Voice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ChatGPT Voice.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		05496C5D29D956D20080C503 /* ChatGPT_VoiceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPT_VoiceApp.swift; sourceTree = "<group>"; };
+		05496C5A29D956D20080C503 /* OS One.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "OS One.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		05496C5D29D956D20080C503 /* OS_OneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OS_OneApp.swift; sourceTree = "<group>"; };
 		05496C5F29D956D20080C503 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		05496C6129D956D40080C503 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		05496C6429D956D40080C503 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		05496C6629D956D40080C503 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
-		05496C6929D956D40080C503 /* ChatGPT_Voice.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = ChatGPT_Voice.xcdatamodel; sourceTree = "<group>"; };
+		05496C6929D956D40080C503 /* OS_One.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = OS_One.xcdatamodel; sourceTree = "<group>"; };
 		05496C6B29D956D40080C503 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		05496C7029D956D40080C503 /* ChatGPT VoiceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ChatGPT VoiceTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		05496C7429D956D40080C503 /* ChatGPT_VoiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPT_VoiceTests.swift; sourceTree = "<group>"; };
-		05496C7A29D956D40080C503 /* ChatGPT VoiceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ChatGPT VoiceUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		05496C7E29D956D40080C503 /* ChatGPT_VoiceUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPT_VoiceUITests.swift; sourceTree = "<group>"; };
-		05496C8029D956D40080C503 /* ChatGPT_VoiceUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPT_VoiceUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		05496C7029D956D40080C503 /* OS OneTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "OS OneTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		05496C7429D956D40080C503 /* OS_One_Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OS_One_Tests.swift; sourceTree = "<group>"; };
+		05496C7A29D956D40080C503 /* OS OneUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "OS OneUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		05496C7E29D956D40080C503 /* OS_OneUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OS_OneUITests.swift; sourceTree = "<group>"; };
+		05496C8029D956D40080C503 /* OS_OneUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OS_OneUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		05496C8D29D958550080C503 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeech.swift; sourceTree = "<group>"; };
 		05744E7D29DAEED90013FB54 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		05744E7F29DAF2B60013FB54 /* OpenAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAI.swift; sourceTree = "<group>"; };
-		05744E8129DB052E0013FB54 /* ChatGPT-Voice-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ChatGPT-Voice-Info.plist"; sourceTree = SOURCE_ROOT; };
+		05744E8129DB052E0013FB54 /* OS-One-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "OS-One-Info.plist"; sourceTree = SOURCE_ROOT; };
 		0597AE5729D98B9B00C5CCF4 /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -90,9 +90,9 @@
 		05496C5129D956D20080C503 = {
 			isa = PBXGroup;
 			children = (
-				05496C5C29D956D20080C503 /* ChatGPT Voice */,
-				05496C7329D956D40080C503 /* ChatGPT VoiceTests */,
-				05496C7D29D956D40080C503 /* ChatGPT VoiceUITests */,
+				05496C5C29D956D20080C503 /* OS One */,
+				05496C7329D956D40080C503 /* OS One VoiceTests */,
+				05496C7D29D956D40080C503 /* OS One VoiceUITests */,
 				05496C5B29D956D20080C503 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -100,18 +100,18 @@
 		05496C5B29D956D20080C503 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				05496C5A29D956D20080C503 /* ChatGPT Voice.app */,
-				05496C7029D956D40080C503 /* ChatGPT VoiceTests.xctest */,
-				05496C7A29D956D40080C503 /* ChatGPT VoiceUITests.xctest */,
+				05496C5A29D956D20080C503 /* OS One.app */,
+				05496C7029D956D40080C503 /* OS OneTests.xctest */,
+				05496C7A29D956D40080C503 /* OS OneUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		05496C5C29D956D20080C503 /* ChatGPT Voice */ = {
+		05496C5C29D956D20080C503 /* OS One */ = {
 			isa = PBXGroup;
 			children = (
-				05744E8129DB052E0013FB54 /* ChatGPT-Voice-Info.plist */,
-				05496C5D29D956D20080C503 /* ChatGPT_VoiceApp.swift */,
+				05744E8129DB052E0013FB54 /* OS-One-Info.plist */,
+				05496C5D29D956D20080C503 /* OS_OneApp.swift */,
 				05496C5F29D956D20080C503 /* ContentView.swift */,
 				05496C8D29D958550080C503 /* HomeView.swift */,
 				05744E7D29DAEED90013FB54 /* SettingsView.swift */,
@@ -121,10 +121,10 @@
 				05496C6129D956D40080C503 /* Assets.xcassets */,
 				05496C6629D956D40080C503 /* Persistence.swift */,
 				05496C6B29D956D40080C503 /* Info.plist */,
-				05496C6829D956D40080C503 /* ChatGPT_Voice.xcdatamodeld */,
+				05496C6829D956D40080C503 /* OS_One.xcdatamodeld */,
 				05496C6329D956D40080C503 /* Preview Content */,
 			);
-			path = "ChatGPT Voice";
+			path = "OS One";
 			sourceTree = "<group>";
 		};
 		05496C6329D956D40080C503 /* Preview Content */ = {
@@ -135,29 +135,29 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		05496C7329D956D40080C503 /* ChatGPT VoiceTests */ = {
+		05496C7329D956D40080C503 /* OS One VoiceTests */ = {
 			isa = PBXGroup;
 			children = (
-				05496C7429D956D40080C503 /* ChatGPT_VoiceTests.swift */,
+				05496C7429D956D40080C503 /* OS_One_Tests.swift */,
 			);
-			path = "ChatGPT VoiceTests";
+			path = "OS One VoiceTests";
 			sourceTree = "<group>";
 		};
-		05496C7D29D956D40080C503 /* ChatGPT VoiceUITests */ = {
+		05496C7D29D956D40080C503 /* OS One VoiceUITests */ = {
 			isa = PBXGroup;
 			children = (
-				05496C7E29D956D40080C503 /* ChatGPT_VoiceUITests.swift */,
-				05496C8029D956D40080C503 /* ChatGPT_VoiceUITestsLaunchTests.swift */,
+				05496C7E29D956D40080C503 /* OS_OneUITests.swift */,
+				05496C8029D956D40080C503 /* OS_OneUITestsLaunchTests.swift */,
 			);
-			path = "ChatGPT VoiceUITests";
+			path = "OS One VoiceUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		05496C5929D956D20080C503 /* ChatGPT Voice */ = {
+		05496C5929D956D20080C503 /* OS One */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 05496C8429D956D40080C503 /* Build configuration list for PBXNativeTarget "ChatGPT Voice" */;
+			buildConfigurationList = 05496C8429D956D40080C503 /* Build configuration list for PBXNativeTarget "OS One" */;
 			buildPhases = (
 				05496C5629D956D20080C503 /* Sources */,
 				05496C5729D956D20080C503 /* Frameworks */,
@@ -167,14 +167,14 @@
 			);
 			dependencies = (
 			);
-			name = "ChatGPT Voice";
-			productName = "ChatGPT Voice";
-			productReference = 05496C5A29D956D20080C503 /* ChatGPT Voice.app */;
+			name = "OS One";
+			productName = "OS One";
+			productReference = 05496C5A29D956D20080C503 /* OS One.app */;
 			productType = "com.apple.product-type.application";
 		};
-		05496C6F29D956D40080C503 /* ChatGPT VoiceTests */ = {
+		05496C6F29D956D40080C503 /* OS OneTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 05496C8729D956D40080C503 /* Build configuration list for PBXNativeTarget "ChatGPT VoiceTests" */;
+			buildConfigurationList = 05496C8729D956D40080C503 /* Build configuration list for PBXNativeTarget "OS OneTests" */;
 			buildPhases = (
 				05496C6C29D956D40080C503 /* Sources */,
 				05496C6D29D956D40080C503 /* Frameworks */,
@@ -185,14 +185,14 @@
 			dependencies = (
 				05496C7229D956D40080C503 /* PBXTargetDependency */,
 			);
-			name = "ChatGPT VoiceTests";
-			productName = "ChatGPT VoiceTests";
-			productReference = 05496C7029D956D40080C503 /* ChatGPT VoiceTests.xctest */;
+			name = "OS OneTests";
+			productName = "OS OneTests";
+			productReference = 05496C7029D956D40080C503 /* OS OneTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		05496C7929D956D40080C503 /* ChatGPT VoiceUITests */ = {
+		05496C7929D956D40080C503 /* OS OneUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 05496C8A29D956D40080C503 /* Build configuration list for PBXNativeTarget "ChatGPT VoiceUITests" */;
+			buildConfigurationList = 05496C8A29D956D40080C503 /* Build configuration list for PBXNativeTarget "OS OneUITests" */;
 			buildPhases = (
 				05496C7629D956D40080C503 /* Sources */,
 				05496C7729D956D40080C503 /* Frameworks */,
@@ -203,9 +203,9 @@
 			dependencies = (
 				05496C7C29D956D40080C503 /* PBXTargetDependency */,
 			);
-			name = "ChatGPT VoiceUITests";
-			productName = "ChatGPT VoiceUITests";
-			productReference = 05496C7A29D956D40080C503 /* ChatGPT VoiceUITests.xctest */;
+			name = "OS OneUITests";
+			productName = "OS OneUITests";
+			productReference = 05496C7A29D956D40080C503 /* OS OneUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -231,7 +231,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 05496C5529D956D20080C503 /* Build configuration list for PBXProject "ChatGPT Voice" */;
+			buildConfigurationList = 05496C5529D956D20080C503 /* Build configuration list for PBXProject "OS One" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -244,9 +244,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				05496C5929D956D20080C503 /* ChatGPT Voice */,
-				05496C6F29D956D40080C503 /* ChatGPT VoiceTests */,
-				05496C7929D956D40080C503 /* ChatGPT VoiceUITests */,
+				05496C5929D956D20080C503 /* OS One */,
+				05496C6F29D956D40080C503 /* OS OneTests */,
+				05496C7929D956D40080C503 /* OS OneUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -287,10 +287,10 @@
 				05496C6029D956D20080C503 /* ContentView.swift in Sources */,
 				05744E8029DAF2B60013FB54 /* OpenAI.swift in Sources */,
 				0597AE5829D98B9B00C5CCF4 /* SpeechRecognizer.swift in Sources */,
-				05496C6A29D956D40080C503 /* ChatGPT_Voice.xcdatamodeld in Sources */,
+				05496C6A29D956D40080C503 /* OS_One.xcdatamodeld in Sources */,
 				05744E7C29DAE5D40013FB54 /* TextToSpeech.swift in Sources */,
 				05496C8E29D958550080C503 /* HomeView.swift in Sources */,
-				05496C5E29D956D20080C503 /* ChatGPT_VoiceApp.swift in Sources */,
+				05496C5E29D956D20080C503 /* OS_OneApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,7 +298,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				05496C7529D956D40080C503 /* ChatGPT_VoiceTests.swift in Sources */,
+				05496C7529D956D40080C503 /* OS_One_Tests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -306,8 +306,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				05496C7F29D956D40080C503 /* ChatGPT_VoiceUITests.swift in Sources */,
-				05496C8129D956D40080C503 /* ChatGPT_VoiceUITestsLaunchTests.swift in Sources */,
+				05496C7F29D956D40080C503 /* OS_OneUITests.swift in Sources */,
+				05496C8129D956D40080C503 /* OS_OneUITestsLaunchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -316,12 +316,12 @@
 /* Begin PBXTargetDependency section */
 		05496C7229D956D40080C503 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 05496C5929D956D20080C503 /* ChatGPT Voice */;
+			target = 05496C5929D956D20080C503 /* OS One */;
 			targetProxy = 05496C7129D956D40080C503 /* PBXContainerItemProxy */;
 		};
 		05496C7C29D956D40080C503 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 05496C5929D956D20080C503 /* ChatGPT Voice */;
+			target = 05496C5929D956D20080C503 /* OS One */;
 			targetProxy = 05496C7B29D956D40080C503 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -447,15 +447,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
-				DEVELOPMENT_ASSET_PATHS = "\"ChatGPT Voice/Preview Content\"";
+				CURRENT_PROJECT_VERSION = 9;
+				DEVELOPMENT_ASSET_PATHS = "\"OS One/Preview Content\"";
 				DEVELOPMENT_TEAM = 4P8S9W2NYL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "ChatGPT-Voice-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "OS One";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Enables you to talk to ChatGPT.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Enables ChatGPT to understand what you're saying.";
+				INFOPLIST_FILE = "OS-One-Info.plist";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Enables you to turn your speech into text.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Enables you to turn your speech into text.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -466,8 +465,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.sighmon.ChatGPT-Voice";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.sighmon.OS-One";
+				PRODUCT_NAME = "OS One";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -480,15 +479,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
-				DEVELOPMENT_ASSET_PATHS = "\"ChatGPT Voice/Preview Content\"";
+				CURRENT_PROJECT_VERSION = 9;
+				DEVELOPMENT_ASSET_PATHS = "\"OS One/Preview Content\"";
 				DEVELOPMENT_TEAM = 4P8S9W2NYL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "ChatGPT-Voice-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "OS One";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Enables you to talk to ChatGPT.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Enables ChatGPT to understand what you're saying.";
+				INFOPLIST_FILE = "OS-One-Info.plist";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Enables you to turn your speech into text.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Enables you to turn your speech into text.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -499,8 +497,8 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.sighmon.ChatGPT-Voice";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.sighmon.OS-One";
+				PRODUCT_NAME = "OS One";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -523,7 +521,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChatGPT Voice.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ChatGPT Voice";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OS One.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OS One";
 			};
 			name = Debug;
 		};
@@ -543,7 +541,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChatGPT Voice.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ChatGPT Voice";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OS One.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OS One";
 			};
 			name = Release;
 		};
@@ -561,7 +559,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "ChatGPT Voice";
+				TEST_TARGET_NAME = "OS One";
 			};
 			name = Debug;
 		};
@@ -579,14 +577,14 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = "ChatGPT Voice";
+				TEST_TARGET_NAME = "OS One";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		05496C5529D956D20080C503 /* Build configuration list for PBXProject "ChatGPT Voice" */ = {
+		05496C5529D956D20080C503 /* Build configuration list for PBXProject "OS One" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				05496C8229D956D40080C503 /* Debug */,
@@ -595,7 +593,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		05496C8429D956D40080C503 /* Build configuration list for PBXNativeTarget "ChatGPT Voice" */ = {
+		05496C8429D956D40080C503 /* Build configuration list for PBXNativeTarget "OS One" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				05496C8529D956D40080C503 /* Debug */,
@@ -604,7 +602,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		05496C8729D956D40080C503 /* Build configuration list for PBXNativeTarget "ChatGPT VoiceTests" */ = {
+		05496C8729D956D40080C503 /* Build configuration list for PBXNativeTarget "OS OneTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				05496C8829D956D40080C503 /* Debug */,
@@ -613,7 +611,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		05496C8A29D956D40080C503 /* Build configuration list for PBXNativeTarget "ChatGPT VoiceUITests" */ = {
+		05496C8A29D956D40080C503 /* Build configuration list for PBXNativeTarget "OS OneUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				05496C8B29D956D40080C503 /* Debug */,
@@ -625,13 +623,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCVersionGroup section */
-		05496C6829D956D40080C503 /* ChatGPT_Voice.xcdatamodeld */ = {
+		05496C6829D956D40080C503 /* OS_One.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
-				05496C6929D956D40080C503 /* ChatGPT_Voice.xcdatamodel */,
+				05496C6929D956D40080C503 /* OS_One.xcdatamodel */,
 			);
-			currentVersion = 05496C6929D956D40080C503 /* ChatGPT_Voice.xcdatamodel */;
-			path = ChatGPT_Voice.xcdatamodeld;
+			currentVersion = 05496C6929D956D40080C503 /* OS_One.xcdatamodel */;
+			path = OS_One.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;
 		};

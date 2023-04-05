@@ -1,6 +1,6 @@
 //
-//  ChatGPT_VoiceApp.swift
-//  ChatGPT Voice
+//  OS_OneApp.swift
+//  OS One
 //
 //  Created by Simon Loffler on 2/4/2023.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct ChatGPT_VoiceApp: App {
+struct OS_OneApp: App {
     let persistenceController = PersistenceController.shared
 
     var body: some Scene {

@@ -1,6 +1,6 @@
 //
 //  HomeView.swift
-//  ChatGPT Voice
+//  OS One
 //
 //  Created by Simon Loffler on 2/4/2023.
 //
