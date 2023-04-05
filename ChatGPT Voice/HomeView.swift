@@ -39,15 +39,16 @@ struct HomeView: View {
                         ))
                         .padding(.bottom, 100)
 
-                    NavigationLink(destination: ContentView(), isActive: $navigate) {
-                        Button("Conversations", action: {navigate = true})
-                            .font(.system(
-                                size: 20,
-                                weight: .light
-                            ))
-                            .foregroundColor(.primary)
-                            .buttonStyle(.bordered)
-                    }
+                    Button("Conversations", action: {navigate = true})
+                        .font(.system(
+                            size: 20,
+                            weight: .light
+                        ))
+                        .foregroundColor(.primary)
+                        .buttonStyle(.bordered)
+                        .navigationDestination(isPresented: $navigate) {
+                            ContentView()
+                        }
 
                     Button("Save", action: {
                         addConversation()
