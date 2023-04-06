@@ -28,7 +28,7 @@ struct SettingsView: View {
                         .onChange(of: elevenLabsApiKey) {
                             UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
                         }
-                    Toggle("Her", isOn: $her)
+                    Toggle("Samantha from Her", isOn: $her)
                         .onChange(of: her) {
                             UserDefaults.standard.set($0, forKey: "her")
                         }

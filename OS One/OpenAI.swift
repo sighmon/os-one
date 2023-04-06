@@ -92,12 +92,12 @@ struct OpenAIMessage: Codable {
     let content: String
 }
 
-struct ChatMessage: Identifiable {
-    let id = UUID()
+struct ChatMessage: Identifiable, Codable {
+    var id = UUID()
     let message: String
     let sender: Sender
 
-    enum Sender {
+    enum Sender: String, Codable {
         case user
         case openAI
     }
@@ -108,5 +108,34 @@ class ChatHistory: ObservableObject {
 
     func addMessage(_ message: String, from sender: ChatMessage.Sender) {
         messages.append(ChatMessage(message: message, sender: sender))
+    }
+}
+
+func serialize(chatMessage: ChatMessage) -> String? {
+    let encoder = JSONEncoder()
+
+    do {
+        let data = try encoder.encode(chatMessage)
+        return String(data: data, encoding: .utf8)
+    } catch {
+        print("Failed to serialize ChatMessage: \(error.localizedDescription)")
+        return nil
+    }
+}
+
+func deserialize(jsonString: String) -> ChatMessage? {
+    let decoder = JSONDecoder()
+
+    guard let data = jsonString.data(using: .utf8) else {
+        print("Failed to convert jsonString to Data")
+        return nil
+    }
+
+    do {
+        let chatMessage = try decoder.decode(ChatMessage.self, from: data)
+        return chatMessage
+    } catch {
+        print("Failed to deserialize ChatMessage: \(error.localizedDescription)")
+        return nil
     }
 }

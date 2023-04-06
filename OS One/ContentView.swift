@@ -19,16 +19,13 @@ struct ContentView: View {
     var body: some View {
         List {
             ForEach(conversations) { conversation in
-                // TODO: Add detail view with stylised messages
-                NavigationLink {
-                    Text("Conversation: at \(conversation.timestamp!, formatter: conversationFormatter)\n\n \(conversation.messages!)")
-                        .padding(20)
-                } label: {
+                NavigationLink(destination: ConversationView(conversation: conversation)) {
                     Text(conversation.timestamp!, formatter: conversationFormatter)
                 }
             }
             .onDelete(perform: deleteConversations)
         }
+        .navigationTitle("Conversations")
     }
 
     private func deleteConversations(offsets: IndexSet) {

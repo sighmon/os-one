@@ -57,30 +57,45 @@ struct HomeView: View {
                             size: 20,
                             weight: .light
                         ))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.primary)
                         .buttonStyle(.bordered)
 
+                    Image(systemName: "gear")
+                        .font(.system(size: 30))
+                        .frame(width: 40)
+                        .padding(.top, 20)
+                        .onTapGesture {
+                            showingSettingsSheet.toggle()
+                        }
+                        .sheet(isPresented: $showingSettingsSheet) {
+                            SettingsView()
+                        }
+
                     // TODO: silence detection instead of send button
-                    Button("Send", action: {
-                        speechRecognizer.stopTranscribing()
-                        print("Message: \(speechRecognizer.transcript)")
-                        chatHistory.addMessage(
-                            speechRecognizer.transcript,
-                            from: ChatMessage.Sender.user
-                        )
-                        chatCompletionAPI(her: her, messageHistory: chatHistory.messages) { result in
-                            switch result {
-                            case .success(let content):
-                                chatHistory.addMessage(
-                                    content,
-                                    from: ChatMessage.Sender.openAI
-                                )
-                                sayText(text: content)
-                            case .failure(let error):
-                                print("OpenAI API error: \(error.localizedDescription)")
+                    Image(systemName: "arrow.up.circle")
+                        .font(.system(size: 60))
+                        .frame(width: 40)
+                        .padding(.top, 60)
+                        .onTapGesture {
+                            speechRecognizer.stopTranscribing()
+                            print("Message: \(speechRecognizer.transcript)")
+                            chatHistory.addMessage(
+                                speechRecognizer.transcript,
+                                from: ChatMessage.Sender.user
+                            )
+                            chatCompletionAPI(her: her, messageHistory: chatHistory.messages) { result in
+                                switch result {
+                                case .success(let content):
+                                    chatHistory.addMessage(
+                                        content,
+                                        from: ChatMessage.Sender.openAI
+                                    )
+                                    sayText(text: content)
+                                case .failure(let error):
+                                    print("OpenAI API error: \(error.localizedDescription)")
+                                }
                             }
                         }
-                    })
                         .font(.system(
                             size: 20,
                             weight: .light
@@ -88,17 +103,6 @@ struct HomeView: View {
                         .foregroundColor(.primary)
                         .buttonStyle(.bordered)
                         .padding(.top, 40)
-
-                    Image(systemName: "gear")
-                        .font(.system(size: 20))
-                        .frame(width: 40)
-                        .padding(.top, 80)
-                        .onTapGesture {
-                            showingSettingsSheet.toggle()
-                        }
-                        .sheet(isPresented: $showingSettingsSheet) {
-                            SettingsView()
-                        }
                 }
                 .onAppear {
                     sayText(text: welcomeText)
@@ -141,10 +145,10 @@ struct HomeView: View {
             let newConversation = Conversation(context: viewContext)
             newConversation.timestamp = Date()
 
-            var messages: [[String: String]] = []
-            for item in chatHistory.messages {
+            var messages: [String] = []
+            for message in chatHistory.messages {
                 messages.append(
-                    ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": item.message]
+                    serialize(chatMessage: message) ?? "I failed, sorry."
                 )
             }
             do {

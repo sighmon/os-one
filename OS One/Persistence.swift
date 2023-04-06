@@ -16,6 +16,7 @@ struct PersistenceController {
         for _ in 0..<10 {
             let newConversation = Conversation(context: viewContext)
             newConversation.timestamp = Date()
+            newConversation.messages = "\\[\"{\\\"id\\\":\\\"B78BD918-E141-4594-BC5B-766D5BB943AE\\\",\\\"message\\\":\\\"How was your day\\\",\\\"sender\\\":\\\"user\\\"}\"\\]"
         }
         do {
             try viewContext.save()
