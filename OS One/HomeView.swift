@@ -34,7 +34,7 @@ struct HomeView: View {
                 VStack {
                     Text("OS One")
                         .font(.system(
-                            size: 60,
+                            size: 80,
                             weight: .light
                         ))
                         .padding(.bottom, 100)

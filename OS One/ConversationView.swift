@@ -53,7 +53,7 @@ struct SpeechBubble: View {
                 .padding(15)
                 .background(
                     RoundedRectangle(cornerRadius: 20)
-                        .foregroundColor(human ? .accentColor : Color(red: 0.8, green: 0.8, blue: 0.8))
+                        .foregroundColor(human ? .accentColor : Color(red: 0.9, green: 0.9, blue: 0.9))
                 )
             if !human {
                 Spacer()

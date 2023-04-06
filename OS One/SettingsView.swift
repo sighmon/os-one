@@ -18,8 +18,11 @@ struct SettingsView: View {
             ZStack {
                 Color(red: 0.9, green: 0.9, blue: 0.9).edgesIgnoringSafeArea(.all)
                 VStack {
-                    Text("OS One settings")
-                        .font(.system(size: 30, weight: .medium))
+                    Text("OS One")
+                        .font(.system(size: 50, weight: .light))
+                    Text("settings")
+                        .font(.system(size: 25, weight: .light))
+                        .padding(.bottom, 40)
                     SecureField("OpenAI API Key", text: $openAIApiKey)
                         .onChange(of: openAIApiKey) {
                             UserDefaults.standard.set($0, forKey: "openAIApiKey")
