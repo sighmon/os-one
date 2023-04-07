@@ -22,6 +22,9 @@ struct SettingsView: View {
                         .font(.system(size: 50, weight: .light))
                     Text("settings")
                         .font(.system(size: 25, weight: .light))
+                        .padding(.bottom, 10)
+                    Text(appVersionAndBuild())
+                        .font(.system(size: 15, weight: .light))
                         .padding(.bottom, 40)
                     SecureField("OpenAI API Key", text: $openAIApiKey)
                         .onChange(of: openAIApiKey) {
@@ -53,6 +56,13 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    func appVersionAndBuild() -> String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
+
+        return "\(version) (\(build))"
     }
 }
 

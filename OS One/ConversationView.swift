@@ -13,7 +13,7 @@ struct ConversationView: View {
 
     init(conversation: Conversation) {
         self.conversation = conversation
-        self.messages = deserialiseMessages(messages: conversation.messages ?? "\\[\\]")
+        self.messages = deserialiseMessages(messages: conversation.messages ?? "[\"{\\\"id\\\":\\\"5E2D5C50-DA37-4288-A1D5-7053A42BB68F\\\",\\\"message\\\":\\\"Sorry\\\",\\\"sender\\\":\\\"user\\\"}\",\"{\\\"id\\\":\\\"71C72D78-99C8-4655-BCFE-D190D04CB83F\\\",\\\"message\\\":\\\"This message is broken.\\\",\\\"sender\\\":\\\"openAI\\\"}\"]")
     }
 
     var body: some View {
@@ -32,6 +32,12 @@ struct ConversationView: View {
                         human: message.sender == ChatMessage.Sender.user
                     )
                         .padding(.horizontal)
+                        .padding(
+                            EdgeInsets(
+                                top: 0, leading: 0, bottom: 10, trailing: 0
+                            )
+                        )
+
                 }
             }
         }
@@ -50,10 +56,12 @@ struct SpeechBubble: View {
             Text(text)
                 .foregroundColor(human ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
                 .font(.system(size: 20))
-                .padding(15)
+                .padding(10)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .foregroundColor(human ? .accentColor : Color(red: 0.9, green: 0.9, blue: 0.9))
+                    RoundedRectangle(cornerRadius: 16)
+                        .foregroundColor(human ? .blue : Color(red: 0.9, green: 0.9, blue: 0.9))
+                        .opacity(0.7)
+
                 )
             if !human {
                 Spacer()

@@ -9,14 +9,15 @@ import AVFoundation
 import SwiftUI
 
 var speechRecognizer = SpeechRecognizer()
-var isRecording = false
 var her = UserDefaults.standard.bool(forKey: "her")
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
 
+    @State private var mute = false
     @State private var navigate = false
-    @State private var welcomeText = "Hello, how can I help?"
+    @State private var currentState = "chatting"
+    @State private var welcomeText = "Hello"
     @State private var showingSettingsSheet = false
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
@@ -37,47 +38,78 @@ struct HomeView: View {
                             size: 80,
                             weight: .light
                         ))
+                        .padding(.bottom, 1)
+                    Text(currentState)
+                        .font(.system(
+                            size: 20,
+                            weight: .light
+                        ))
                         .padding(.bottom, 100)
 
-                    Button("Conversations", action: {navigate = true})
-                        .font(.system(
-                            size: 20,
-                            weight: .light
-                        ))
-                        .foregroundColor(.primary)
-                        .buttonStyle(.bordered)
-                        .navigationDestination(isPresented: $navigate) {
-                            ContentView()
-                        }
+                    HStack {
+                        Image(systemName: "archivebox")
+                            .font(.system(size: 30))
+                            .frame(width: 40)
+                            .padding(10)
+                            .onTapGesture {
+                                navigate.toggle()
+                            }
+                            .navigationDestination(isPresented: $navigate) {
+                                ContentView()
+                            }
 
-                    Button("Save", action: {
-                        addConversation()
-                    })
-                        .font(.system(
-                            size: 20,
-                            weight: .light
-                        ))
-                        .foregroundColor(.primary)
-                        .buttonStyle(.bordered)
+                        Image(systemName: "gear")
+                            .font(.system(size: 30))
+                            .frame(width: 40)
+                            .padding(10)
+                            .onTapGesture {
+                                showingSettingsSheet.toggle()
+                            }
+                            .sheet(isPresented: $showingSettingsSheet) {
+                                SettingsView()
+                            }
 
-                    Image(systemName: "gear")
-                        .font(.system(size: 30))
-                        .frame(width: 40)
-                        .padding(.top, 20)
-                        .onTapGesture {
-                            showingSettingsSheet.toggle()
-                        }
-                        .sheet(isPresented: $showingSettingsSheet) {
-                            SettingsView()
-                        }
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 30))
+                            .frame(width: 40)
+                            .padding(10)
+                            .onTapGesture {
+                                addConversation()
+                                currentState = "conversation saved"
+                            }
 
-                    // TODO: silence detection instead of send button
+                        if mute {
+                            Image(systemName: "mic.slash")
+                                .font(.system(size: 30))
+                                .frame(width: 40)
+                                .padding(10)
+                                .onTapGesture {
+                                    mute.toggle()
+                                    currentState = "listening"
+                                    speechRecognizer.reset()
+                                    speechRecognizer.transcribe()
+                                }
+                        } else {
+                            Image(systemName: "mic")
+                                .font(.system(size: 30))
+                                .frame(width: 40)
+                                .padding(10)
+                                .onTapGesture {
+                                    mute.toggle()
+                                    currentState = "sleeping"
+                                    speechRecognizer.stopTranscribing()
+                                }
+                        }
+                    }
+
+                    // TODO: silence detection as well as send button?
                     Image(systemName: "arrow.up.circle")
-                        .font(.system(size: 60))
+                        .font(.system(size: 80, weight: .light))
                         .frame(width: 40)
                         .padding(.top, 60)
                         .onTapGesture {
                             speechRecognizer.stopTranscribing()
+                            currentState = speechRecognizer.transcript
                             print("Message: \(speechRecognizer.transcript)")
                             chatHistory.addMessage(
                                 speechRecognizer.transcript,
@@ -91,7 +123,9 @@ struct HomeView: View {
                                         from: ChatMessage.Sender.openAI
                                     )
                                     sayText(text: content)
+                                    currentState = "chatting"
                                 case .failure(let error):
+                                    currentState = "try again later"
                                     print("OpenAI API error: \(error.localizedDescription)")
                                 }
                             }
@@ -105,12 +139,13 @@ struct HomeView: View {
                         .padding(.top, 40)
                 }
                 .onAppear {
-                    sayText(text: welcomeText)
+                    if !mute {
+                        sayText(text: welcomeText)
+                    }
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
                     setAudioSession(active: false)
-                    isRecording = false
                 }
             }
         }
@@ -191,7 +226,6 @@ class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, Observabl
         setAudioSession(active: false)
 
         // Start recording
-        isRecording = true
         speechRecognizer.reset()
         speechRecognizer.transcribe()
     }
@@ -219,7 +253,6 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
         }
 
         // Start recording
-        isRecording = true
         speechRecognizer.reset()
         speechRecognizer.transcribe()
    }
