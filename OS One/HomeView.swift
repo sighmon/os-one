@@ -109,6 +109,7 @@ struct HomeView: View {
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
+                    setAudioSession(active: false)
                     isRecording = false
                 }
             }
@@ -199,20 +200,6 @@ class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, Observabl
 class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var audioPlayer: AVAudioPlayer?
 
-    func playAudioFile(url: URL) {
-        DispatchQueue.main.async {
-            do {
-                let audioData = try Data(contentsOf: url)
-                self.audioPlayer = try AVAudioPlayer(data: audioData)
-                self.audioPlayer?.delegate = self
-                self.audioPlayer?.prepareToPlay()
-                self.audioPlayer?.play()
-            } catch {
-                print("Error loading audio file: \(error.localizedDescription)")
-            }
-        }
-    }
-
     func playAudioFromData(data: Data) {
         DispatchQueue.main.async {
             do {
@@ -241,8 +228,7 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
 func setAudioSession(active: Bool) {
     let session = AVAudioSession.sharedInstance()
     do {
-        try session.setCategory(AVAudioSession.Category.playAndRecord, options: .duckOthers)
-        try session.overrideOutputAudioPort(AVAudioSession.PortOverride.speaker)
+        try session.setCategory(AVAudioSession.Category.playAndRecord, options: .allowBluetooth)
         try session.setActive(active, options: .notifyOthersOnDeactivation)
     } catch {
         print("Error resetting audio session: \(error)")

@@ -16,7 +16,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "40"
             endingLineNumber = "40"
-            landmarkName = "chatCompletionAPI(her:messageHistory:completion:)"
+            landmarkName = "chatCompletionAPI(her:name:messageHistory:completion:)"
             landmarkType = "9">
             <Locations>
                <Location

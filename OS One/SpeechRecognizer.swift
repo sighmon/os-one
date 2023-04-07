@@ -87,6 +87,12 @@ class SpeechRecognizer: ObservableObject {
         audioEngine = nil
         request = nil
         task = nil
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("Failed to end audio session")
+        }
     }
     
     private static func prepareEngine() throws -> (AVAudioEngine, SFSpeechAudioBufferRecognitionRequest) {
@@ -96,7 +102,7 @@ class SpeechRecognizer: ObservableObject {
         request.shouldReportPartialResults = true
         
         let audioSession = AVAudioSession.sharedInstance()
-        try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+        try audioSession.setCategory(.record, mode: .measurement)
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         let inputNode = audioEngine.inputNode
         
