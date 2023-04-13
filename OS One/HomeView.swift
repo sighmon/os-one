@@ -44,6 +44,7 @@ struct HomeView: View {
                             size: 20,
                             weight: .light
                         ))
+                        .padding([.leading, .trailing], 60)
                         .padding(.bottom, 100)
 
                     HStack {
@@ -261,9 +262,31 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
 func setAudioSession(active: Bool) {
     let session = AVAudioSession.sharedInstance()
     do {
-        try session.setCategory(AVAudioSession.Category.playAndRecord, options: .allowBluetooth)
+        try session.setCategory(AVAudioSession.Category.playAndRecord, mode: .default, options: .allowBluetooth)
+        if isDeviceAniPhone() && !areHeadphonesConnected() {
+            try session.overrideOutputAudioPort(.speaker)
+        } else {
+            try session.overrideOutputAudioPort(.none)
+        }
         try session.setActive(active, options: .notifyOthersOnDeactivation)
     } catch {
         print("Error resetting audio session: \(error)")
     }
+}
+
+func isDeviceAniPhone() -> Bool {
+    return UIDevice.current.userInterfaceIdiom == .phone
+}
+
+func areHeadphonesConnected() -> Bool {
+    let audioSession = AVAudioSession.sharedInstance()
+    let outputs = audioSession.currentRoute.outputs
+
+    for output in outputs {
+        if output.portType == .headphones || output.portType == .bluetoothA2DP {
+            return true
+        }
+    }
+
+    return false
 }
