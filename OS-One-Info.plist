@@ -4,6 +4,6 @@
 <dict>
 	<key>ITSAppUsesNonExemptEncryption
 </key>
-	<string>NO</string>
+	<false/>
 </dict>
 </plist>

@@ -46,6 +46,7 @@ struct HomeView: View {
                         ))
                         .padding([.leading, .trailing], 60)
                         .padding(.bottom, 100)
+                        .textSelection(.enabled)
 
                     HStack {
                         Image(systemName: "archivebox")

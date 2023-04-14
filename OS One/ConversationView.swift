@@ -26,6 +26,7 @@ struct ConversationView: View {
                 Text("\(conversation.timestamp ?? Date(), formatter: dateFormatter)")
                     .font(.system(size: 20, weight: .light))
                     .padding(.bottom, 20)
+                    .textSelection(.enabled)
                 ForEach(messages) { message in
                     SpeechBubble(
                         text: message.message,
@@ -63,6 +64,7 @@ struct SpeechBubble: View {
                         .opacity(0.7)
 
                 )
+                .textSelection(.enabled)
             if !human {
                 Spacer()
                 Spacer()
