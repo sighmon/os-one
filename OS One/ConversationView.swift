@@ -56,7 +56,6 @@ struct SpeechBubble: View {
             }
             Text(text)
                 .foregroundColor(human ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
-                .font(.system(size: 20))
                 .padding(10)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
