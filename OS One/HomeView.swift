@@ -143,6 +143,11 @@ struct HomeView: View {
                 .onAppear {
                     if !mute {
                         sayText(text: welcomeText)
+                        speechRecognizer.setUpdateStateHandler { newState in
+                            DispatchQueue.main.async {
+                                currentState = newState
+                            }
+                        }
                     }
                 }
                 .onDisappear {

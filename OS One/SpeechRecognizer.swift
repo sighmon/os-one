@@ -33,6 +33,7 @@ class SpeechRecognizer: ObservableObject {
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
     private let recognizer: SFSpeechRecognizer?
+    private var updateState: ((String) -> Void)?
     
     init() {
         recognizer = SFSpeechRecognizer()
@@ -57,7 +58,11 @@ class SpeechRecognizer: ObservableObject {
     deinit {
         reset()
     }
-    
+
+    func setUpdateStateHandler(_ handler: @escaping (String) -> Void) {
+        updateState = handler
+    }
+
     func transcribe() {
         DispatchQueue(label: "Speech Recognizer Queue", qos: .background).async { [weak self] in
             guard let self = self, let recognizer = self.recognizer, recognizer.isAvailable else {
@@ -132,6 +137,7 @@ class SpeechRecognizer: ObservableObject {
     
     private func speak(_ message: String) {
         transcript = message
+        updateState?(transcript)
     }
     
     private func speakError(_ error: Error) {
