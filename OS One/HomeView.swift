@@ -111,7 +111,7 @@ struct HomeView: View {
                         .padding(.top, 60)
                         .onTapGesture {
                             speechRecognizer.stopTranscribing()
-                            currentState = speechRecognizer.transcript
+                            currentState = "thinking"
                             print("Message: \(speechRecognizer.transcript)")
                             chatHistory.addMessage(
                                 speechRecognizer.transcript,
