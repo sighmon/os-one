@@ -39,14 +39,23 @@ struct HomeView: View {
                             weight: .light
                         ))
                         .padding(.bottom, 1)
-                    Text(currentState)
-                        .font(.system(
-                            size: 20,
-                            weight: .light
-                        ))
-                        .padding([.leading, .trailing], 60)
-                        .padding(.bottom, 100)
-                        .textSelection(.enabled)
+                    ScrollView {
+                        Text(currentState)
+                            .font(.system(
+                                size: 20,
+                                weight: .light
+                            ))
+                            .padding([.leading, .trailing], 60)
+                            .textSelection(.enabled)
+                            .onTapGesture {
+                                currentState = "listening"
+                                speechRecognizer.stopTranscribing()
+                                speechRecognizer.reset()
+                                speechRecognizer.transcribe()
+                            }
+                    }
+                        .frame(height: 100)
+                        .padding(.bottom, 20)
 
                     HStack {
                         Image(systemName: "archivebox")
