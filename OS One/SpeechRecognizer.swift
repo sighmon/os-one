@@ -34,6 +34,8 @@ class SpeechRecognizer: ObservableObject {
     private var task: SFSpeechRecognitionTask?
     private let recognizer: SFSpeechRecognizer?
     private var updateState: ((String) -> Void)?
+    private var onTimeout: (() -> Void)?
+    private var timeoutTimer: DispatchSourceTimer?
     
     init() {
         recognizer = SFSpeechRecognizer()
@@ -61,6 +63,21 @@ class SpeechRecognizer: ObservableObject {
 
     func setUpdateStateHandler(_ handler: @escaping (String) -> Void) {
         updateState = handler
+    }
+
+    func setOnTimeoutHandler(_ handler: @escaping () -> Void) {
+        onTimeout = handler
+    }
+
+    private func resetTimeoutTimer() {
+        timeoutTimer?.cancel()
+        timeoutTimer = DispatchSource.makeTimerSource(queue: .main)
+        timeoutTimer?.schedule(deadline: .now() + 3.0)
+        timeoutTimer?.setEventHandler { [weak self] in
+            self?.reset()
+            self?.onTimeout?()
+        }
+        timeoutTimer?.resume()
     }
 
     func transcribe() {
@@ -92,6 +109,8 @@ class SpeechRecognizer: ObservableObject {
         audioEngine = nil
         request = nil
         task = nil
+        timeoutTimer?.cancel()
+        timeoutTimer = nil
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
@@ -138,6 +157,7 @@ class SpeechRecognizer: ObservableObject {
     private func speak(_ message: String) {
         transcript = message
         updateState?(transcript)
+        resetTimeoutTimer()
     }
     
     private func speakError(_ error: Error) {

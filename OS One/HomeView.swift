@@ -19,6 +19,7 @@ struct HomeView: View {
     @State private var currentState = "chatting"
     @State private var welcomeText = "Hello"
     @State private var showingSettingsSheet = false
+    @State private var sendButtonEnabled: Bool = true
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
     @StateObject private var audioPlayer = AudioPlayer()
@@ -113,33 +114,12 @@ struct HomeView: View {
                         }
                     }
 
-                    // TODO: silence detection as well as send button?
                     Image(systemName: "arrow.up.circle")
                         .font(.system(size: 80, weight: .light))
                         .frame(width: 40)
                         .padding(.top, 60)
                         .onTapGesture {
-                            speechRecognizer.stopTranscribing()
-                            currentState = "thinking"
-                            print("Message: \(speechRecognizer.transcript)")
-                            chatHistory.addMessage(
-                                speechRecognizer.transcript,
-                                from: ChatMessage.Sender.user
-                            )
-                            chatCompletionAPI(her: her, messageHistory: chatHistory.messages) { result in
-                                switch result {
-                                case .success(let content):
-                                    chatHistory.addMessage(
-                                        content,
-                                        from: ChatMessage.Sender.openAI
-                                    )
-                                    sayText(text: content)
-                                    currentState = "chatting"
-                                case .failure(let error):
-                                    currentState = "try again later"
-                                    print("OpenAI API error: \(error.localizedDescription)")
-                                }
-                            }
+                            sendToOpenAI()
                         }
                         .font(.system(
                             size: 20,
@@ -148,6 +128,8 @@ struct HomeView: View {
                         .foregroundColor(.primary)
                         .buttonStyle(.bordered)
                         .padding(.top, 40)
+                        .disabled(!sendButtonEnabled)
+                        .opacity(sendButtonEnabled ? 1.0 : 0.2)
                 }
                 .onAppear {
                     if !mute {
@@ -156,6 +138,10 @@ struct HomeView: View {
                             DispatchQueue.main.async {
                                 currentState = newState
                             }
+                        }
+                        speechRecognizer.setOnTimeoutHandler {
+                            print("Silence detected...")
+                            sendToOpenAI()
                         }
                     }
                 }
@@ -190,6 +176,33 @@ struct HomeView: View {
             speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
         }
         setAudioSession(active: true)
+    }
+
+    func sendToOpenAI() {
+        speechRecognizer.stopTranscribing()
+        sendButtonEnabled = false
+        currentState = "thinking"
+        print("Message: \(speechRecognizer.transcript)")
+        chatHistory.addMessage(
+            speechRecognizer.transcript,
+            from: ChatMessage.Sender.user
+        )
+        chatCompletionAPI(her: her, messageHistory: chatHistory.messages) { result in
+            switch result {
+            case .success(let content):
+                chatHistory.addMessage(
+                    content,
+                    from: ChatMessage.Sender.openAI
+                )
+                sayText(text: content)
+                currentState = "chatting"
+                sendButtonEnabled = true
+            case .failure(let error):
+                currentState = "try again later"
+                print("OpenAI API error: \(error.localizedDescription)")
+                sendButtonEnabled = true
+            }
+        }
     }
 
     private func addConversation() {
