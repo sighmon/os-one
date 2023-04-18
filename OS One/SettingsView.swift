@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @State private var elevenLabsApiKey: String = ""
     @State private var openAIApiKey: String = ""
+    @State private var gpt4: Bool = true
     @State private var her: Bool = true
     @Environment(\.dismiss) var dismiss
 
@@ -34,6 +35,10 @@ struct SettingsView: View {
                         .onChange(of: elevenLabsApiKey) {
                             UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
                         }
+                    Toggle("GPT-4", isOn: $gpt4)
+                        .onChange(of: gpt4) {
+                            UserDefaults.standard.set($0, forKey: "gpt4")
+                        }
                     Toggle("Samantha from Her", isOn: $her)
                         .onChange(of: her) {
                             UserDefaults.standard.set($0, forKey: "her")
@@ -46,6 +51,7 @@ struct SettingsView: View {
                 .onAppear {
                     // Load OS One settings from user defaults
                     openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
+                    gpt4 = UserDefaults.standard.bool(forKey: "gpt4")
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                     her = UserDefaults.standard.bool(forKey: "her")
                 }

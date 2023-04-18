@@ -9,7 +9,7 @@ import Foundation
 
 func chatCompletionAPI(her: Bool, messageHistory: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    let model = "gpt-4"
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4" : "gpt-3.5-turbo"
 
     let headers = [
         "Content-Type": "application/json",

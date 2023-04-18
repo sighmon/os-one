@@ -20,7 +20,8 @@ struct ContentView: View {
         List {
             ForEach(conversations) { conversation in
                 NavigationLink(destination: ConversationView(conversation: conversation)) {
-                    Text(conversation.timestamp!, formatter: conversationFormatter)
+                    Text(deserialiseMessages(messages:conversation.messages!).first!.message)
+                        .lineLimit(1)
                 }
             }
             .onDelete(perform: deleteConversations)
