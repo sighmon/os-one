@@ -20,13 +20,22 @@ struct ContentView: View {
         List {
             ForEach(conversations) { conversation in
                 NavigationLink(destination: ConversationView(conversation: conversation)) {
-                    Text(deserialiseMessages(messages:conversation.messages!).first!.message)
+                    Text(messagePreview(messages:conversation.messages!))
                         .lineLimit(1)
                 }
             }
             .onDelete(perform: deleteConversations)
         }
         .navigationTitle("Conversations")
+    }
+
+    private func messagePreview(messages: String) -> String {
+        var preview = "Sorry, this conversation is broken"
+        if messages.isEmpty {
+            preview = "Empty chat"
+        }
+        preview = deserialiseMessages(messages: messages).first?.message ?? "Empty chat"
+        return preview
     }
 
     private func deleteConversations(offsets: IndexSet) {
