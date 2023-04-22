@@ -5,3 +5,6 @@ A voice assistant using the OpenAI ChatGPT completion API, and text-to-speech vi
 By default it emulates Samantha from the movie Her.
 
 See also the Python version: https://github.com/sighmon/chatgpt-voice
+
+<img src="os-one-v1.png" width="100%" />
+
