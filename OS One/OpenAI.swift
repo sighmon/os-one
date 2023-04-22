@@ -104,6 +104,7 @@ struct ChatMessage: Identifiable, Codable {
 }
 
 class ChatHistory: ObservableObject {
+    var id = UUID()
     @Published var messages: [ChatMessage] = []
 
     func addMessage(_ message: String, from sender: ChatMessage.Sender) {

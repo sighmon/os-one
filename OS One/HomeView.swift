@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import CoreData
 import SwiftUI
 
 var speechRecognizer = SpeechRecognizer()
@@ -17,7 +18,7 @@ struct HomeView: View {
     @State private var mute = false
     @State private var navigate = false
     @State private var currentState = "chatting"
-    @State private var welcomeText = "Hello"
+    @State private var welcomeText = "Hello, how can I help?"
     @State private var showingSettingsSheet = false
     @State private var sendButtonEnabled: Bool = true
 
@@ -183,17 +184,35 @@ struct HomeView: View {
         sendButtonEnabled = false
         currentState = "thinking"
         print("Message: \(speechRecognizer.transcript)")
-        chatHistory.addMessage(
-            speechRecognizer.transcript,
-            from: ChatMessage.Sender.user
-        )
+        var messageInChatHistory = false
+        for message in chatHistory.messages {
+            if message.message == speechRecognizer.transcript {
+                messageInChatHistory = true
+                break
+            }
+        }
+        if !messageInChatHistory {
+            chatHistory.addMessage(
+                speechRecognizer.transcript,
+                from: ChatMessage.Sender.user
+            )
+        }
         chatCompletionAPI(her: her, messageHistory: chatHistory.messages) { result in
             switch result {
             case .success(let content):
-                chatHistory.addMessage(
-                    content,
-                    from: ChatMessage.Sender.openAI
-                )
+                var messageInChatHistory = false
+                for message in chatHistory.messages {
+                    if message.message == content {
+                        messageInChatHistory = true
+                        break
+                    }
+                }
+                if !messageInChatHistory {
+                    chatHistory.addMessage(
+                        content,
+                        from: ChatMessage.Sender.openAI
+                    )
+                }
                 sayText(text: content)
                 currentState = "chatting"
                 sendButtonEnabled = true
@@ -207,29 +226,61 @@ struct HomeView: View {
 
     private func addConversation() {
         withAnimation {
-            let newConversation = Conversation(context: viewContext)
-            newConversation.timestamp = Date()
-
-            var messages: [String] = []
-            for message in chatHistory.messages {
-                messages.append(
-                    serialize(chatMessage: message) ?? "I failed, sorry."
-                )
-            }
-            do {
-                let data = try JSONSerialization.data(withJSONObject: messages)
-                newConversation.messages = String(data: data, encoding: String.Encoding.utf8)
-            } catch {
-                print("Failed to serialise chat history...")
-            }
+            // Check if the record exists in Core Data
+            let fetchRequest: NSFetchRequest<Conversation> = Conversation.fetchRequest()
+            fetchRequest.predicate = NSPredicate(format: "id == %@", chatHistory.id as CVarArg)
 
             do {
-                try viewContext.save()
+                let existingConversations = try viewContext.fetch(fetchRequest)
+
+                if let existingConversation = existingConversations.first {
+                    // Update the existing conversation
+                    existingConversation.timestamp = Date()
+                    
+                    var messages: [String] = []
+                    for message in chatHistory.messages {
+                        messages.append(
+                            serialize(chatMessage: message) ?? "I failed, sorry."
+                        )
+                    }
+                    do {
+                        let data = try JSONSerialization.data(withJSONObject: messages)
+                        existingConversation.messages = String(data: data, encoding: String.Encoding.utf8)
+                    } catch {
+                        print("Failed to serialise chat history...")
+                    }
+                } else {
+                    // Create a new conversation
+                    let newConversation = Conversation(context: viewContext)
+                    newConversation.timestamp = Date()
+                    newConversation.id = chatHistory.id
+
+                    var messages: [String] = []
+                    for message in chatHistory.messages {
+                        messages.append(
+                            serialize(chatMessage: message) ?? "I failed, sorry."
+                        )
+                    }
+                    do {
+                        let data = try JSONSerialization.data(withJSONObject: messages)
+                        newConversation.messages = String(data: data, encoding: String.Encoding.utf8)
+                    } catch {
+                        print("Failed to serialise chat history...")
+                    }
+                }
+
+                do {
+                    try viewContext.save()
+                } catch {
+                    let nsError = error as NSError
+                    currentState = "Error \(nsError)"
+                    // fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+                }
+
             } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
                 let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+                currentState = "Error \(nsError)"
+                // fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }
         }
     }
