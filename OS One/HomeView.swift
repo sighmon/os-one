@@ -228,7 +228,7 @@ struct HomeView: View {
         withAnimation {
             // Check if the record exists in Core Data
             let fetchRequest: NSFetchRequest<Conversation> = Conversation.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "id == %@", chatHistory.id as CVarArg)
+            fetchRequest.predicate = NSPredicate(format: "uuid == %@", chatHistory.id as CVarArg)
 
             do {
                 let existingConversations = try viewContext.fetch(fetchRequest)
@@ -253,7 +253,7 @@ struct HomeView: View {
                     // Create a new conversation
                     let newConversation = Conversation(context: viewContext)
                     newConversation.timestamp = Date()
-                    newConversation.id = chatHistory.id
+                    newConversation.uuid = chatHistory.id
 
                     var messages: [String] = []
                     for message in chatHistory.messages {
