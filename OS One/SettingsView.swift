@@ -11,7 +11,8 @@ struct SettingsView: View {
     @State private var elevenLabsApiKey: String = ""
     @State private var openAIApiKey: String = ""
     @State private var gpt4: Bool = true
-    @State private var her: Bool = true
+    @State private var elevenLabs: Bool = true
+    @State private var name: String = ""
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -39,9 +40,18 @@ struct SettingsView: View {
                         .onChange(of: gpt4) {
                             UserDefaults.standard.set($0, forKey: "gpt4")
                         }
-                    Toggle("Samantha from Her", isOn: $her)
-                        .onChange(of: her) {
-                            UserDefaults.standard.set($0, forKey: "her")
+                    Toggle("Eleven Labs voice", isOn: $elevenLabs)
+                        .onChange(of: elevenLabs) {
+                            UserDefaults.standard.set($0, forKey: "elevenLabs")
+                        }
+                    Picker("Name of your voice assistant", selection: $name) {
+                        Text("Default").tag("")
+                        Text("Samantha").tag("samantha")
+                        Text("KITT").tag("kitt")
+                    }
+                        .pickerStyle(.segmented)
+                        .onChange(of: name) {
+                            UserDefaults.standard.set($0, forKey: "name")
                         }
                 }
                 .textFieldStyle(.roundedBorder)
@@ -53,7 +63,8 @@ struct SettingsView: View {
                     openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
                     gpt4 = UserDefaults.standard.bool(forKey: "gpt4")
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
-                    her = UserDefaults.standard.bool(forKey: "her")
+                    elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
+                    name = UserDefaults.standard.string(forKey: "name") ?? ""
                 }
             }
             .toolbar {

@@ -8,10 +8,13 @@
 import Foundation
 import AVFoundation
 
-func elevenLabsTextToSpeech(text: String, completion: @escaping (Result<Data, Error>) -> Void) {
+func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (Result<Data, Error>) -> Void) {
     let elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
 
-    let voice = "EXAVITQu4vr4xnSDxMaL"  // Bella
+    var voice = "EXAVITQu4vr4xnSDxMaL"  // Bella (Sounds like Samantha from Her)
+    if name == "kitt" {
+        voice = "JyckQxHjQnwHbX2r0LJw"  // KITT
+    }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)"
 
     let headers = [

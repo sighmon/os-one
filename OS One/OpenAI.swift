@@ -7,7 +7,7 @@
 
 import Foundation
 
-func chatCompletionAPI(her: Bool, messageHistory: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
+func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
     let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4" : "gpt-3.5-turbo"
 
@@ -18,9 +18,13 @@ func chatCompletionAPI(her: Bool, messageHistory: [ChatMessage], completion: @es
 
     var messages: [[String: String]] = []
 
-    if her {
+    if name == "samantha" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Samantha from the film Her."]
+        )
+    } else if name == "kitt" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are KITT from the tv show Knight Rider."]
         )
     }
 

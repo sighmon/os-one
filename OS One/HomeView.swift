@@ -10,7 +10,8 @@ import CoreData
 import SwiftUI
 
 var speechRecognizer = SpeechRecognizer()
-var her = UserDefaults.standard.bool(forKey: "her")
+var name = UserDefaults.standard.string(forKey: "name") ?? ""
+var elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -78,7 +79,11 @@ struct HomeView: View {
                             .onTapGesture {
                                 showingSettingsSheet.toggle()
                             }
-                            .sheet(isPresented: $showingSettingsSheet) {
+                            .sheet(isPresented: $showingSettingsSheet, onDismiss: {
+                                speechRecognizer.stopTranscribing()
+                                setAudioSession(active: false)
+                                startup()
+                            }) {
                                 SettingsView()
                             }
 
@@ -133,18 +138,7 @@ struct HomeView: View {
                         .opacity(sendButtonEnabled ? 1.0 : 0.2)
                 }
                 .onAppear {
-                    if !mute {
-                        sayText(text: welcomeText)
-                        speechRecognizer.setUpdateStateHandler { newState in
-                            DispatchQueue.main.async {
-                                currentState = newState
-                            }
-                        }
-                        speechRecognizer.setOnTimeoutHandler {
-                            print("Silence detected...")
-                            sendToOpenAI()
-                        }
-                    }
+                    startup()
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
@@ -154,9 +148,26 @@ struct HomeView: View {
         }
     }
 
+    func startup() {
+        name = UserDefaults.standard.string(forKey: "name") ?? ""
+        elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
+        if !mute {
+            sayText(text: welcomeText)
+            speechRecognizer.setUpdateStateHandler { newState in
+                DispatchQueue.main.async {
+                    currentState = newState
+                }
+            }
+            speechRecognizer.setOnTimeoutHandler {
+                print("Silence detected...")
+                sendToOpenAI()
+            }
+        }
+    }
+
     func sayText(text: String) {
-        if her {
-            elevenLabsTextToSpeech(text: text) { result in
+        if elevenLabs {
+            elevenLabsTextToSpeech(name: name, text: text) { result in
                 switch result {
                 case .success(let data):
                     audioPlayer.playAudioFromData(data: data)
@@ -197,7 +208,7 @@ struct HomeView: View {
                 from: ChatMessage.Sender.user
             )
         }
-        chatCompletionAPI(her: her, messageHistory: chatHistory.messages) { result in
+        chatCompletionAPI(name: name, messageHistory: chatHistory.messages) { result in
             switch result {
             case .success(let content):
                 var messageInChatHistory = false
