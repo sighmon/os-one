@@ -11,9 +11,26 @@ import AVFoundation
 func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (Result<Data, Error>) -> Void) {
     let elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
 
+    var body = [
+        "text": text,
+        "voice_settings": [
+            "stability": 0.75,
+            "similarity_boost": 0.75
+        ]
+    ] as [String: Any]
+
     var voice = "EXAVITQu4vr4xnSDxMaL"  // Bella (Sounds like Samantha from Her)
     if name == "kitt" {
         voice = "JyckQxHjQnwHbX2r0LJw"  // KITT
+    } else if name == "mrrobot" {
+        voice = "eXLBstyxiNbZ4xNeaP6n"  // Mr.Robot
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.35,
+                "similarity_boost": 0.75
+            ]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)"
 
@@ -22,14 +39,6 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
         "xi-api-key": elevenLabsApiKey,
         "Content-Type": "application/json"
     ]
-
-    let body = [
-        "text": text,
-        "voice_settings": [
-            "stability": 0.75,
-            "similarity_boost": 0.75
-        ]
-    ] as [String: Any]
 
     guard let url = URL(string: elevenLabsApi) else {
         completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))

@@ -150,6 +150,9 @@ struct HomeView: View {
 
     func startup() {
         name = UserDefaults.standard.string(forKey: "name") ?? ""
+        if name == "mrrobot" {
+            welcomeText = "Hello Elliott."
+        }
         elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
         if !mute {
             sayText(text: welcomeText)
