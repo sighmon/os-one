@@ -49,6 +49,7 @@ struct SettingsView: View {
                         Text("Samantha").tag("samantha")
                         Text("KITT").tag("kitt")
                         Text("Mr.Robot").tag("mrrobot")
+                        Text("Elliot").tag("elliot")
                     }
                         .pickerStyle(.segmented)
                         .onChange(of: name) {

@@ -30,6 +30,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: 
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Mr.Robot from the tv show Mr.Robot."]
         )
+    } else if name == "elliot" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Elliot Alderson from the tv show Mr.Robot."]
+        )
     }
 
     if messageHistory.count > 0 {
