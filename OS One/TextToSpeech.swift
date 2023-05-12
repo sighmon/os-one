@@ -40,6 +40,15 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.85
             ]
         ] as [String: Any]
+    } else if name == "glados" {
+        voice = "uyIpLktH39lMvQZgxr0s"  // GLaDOS
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.09,
+                "similarity_boost": 0.12
+            ]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)"
 

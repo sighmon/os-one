@@ -139,10 +139,12 @@ struct HomeView: View {
                 }
                 .onAppear {
                     startup()
+                    UIApplication.shared.isIdleTimerDisabled = true
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
                     setAudioSession(active: false)
+                    UIApplication.shared.isIdleTimerDisabled = false
                 }
             }
         }
@@ -154,6 +156,8 @@ struct HomeView: View {
             welcomeText = "Hello Elliott."
         } else if name == "elliot" {
             welcomeText = "Hello friend."
+        } else if name == "glados" {
+            welcomeText = "Hello, and again, welcome."
         }
         elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
         if !mute {
