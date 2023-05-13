@@ -158,6 +158,8 @@ struct HomeView: View {
             welcomeText = "Hello friend."
         } else if name == "glados" {
             welcomeText = "Hello, and again, welcome."
+        } else if name == "spock" {
+            welcomeText = "Live long, and prosper."
         }
         elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
         if !mute {

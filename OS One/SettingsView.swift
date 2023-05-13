@@ -50,6 +50,7 @@ struct SettingsView: View {
                         Text("Mr.Robot").tag("mrrobot")
                         Text("Elliot").tag("elliot")
                         Text("GLaDOS").tag("glados")
+                        Text("Spock").tag("spock")
                     }
                         .pickerStyle(.wheel)
                         .onChange(of: name) {

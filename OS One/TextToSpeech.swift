@@ -21,9 +21,9 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
 
     var voice = "EXAVITQu4vr4xnSDxMaL"  // Bella (Sounds like Samantha from Her)
     if name == "kitt" {
-        voice = "JyckQxHjQnwHbX2r0LJw"  // KITT
+        voice = "JyckQxHjQnwHbX2r0LJw"  // KITT from Knight Rider
     } else if name == "mrrobot" {
-        voice = "eXLBstyxiNbZ4xNeaP6n"  // Mr.Robot
+        voice = "eXLBstyxiNbZ4xNeaP6n"  // Mr.Robot from Mr.Robot
         body = [
             "text": text,
             "voice_settings": [
@@ -41,12 +41,21 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
             ]
         ] as [String: Any]
     } else if name == "glados" {
-        voice = "uyIpLktH39lMvQZgxr0s"  // GLaDOS
+        voice = "uyIpLktH39lMvQZgxr0s"  // GLaDOS from Portal
         body = [
             "text": text,
             "voice_settings": [
                 "stability": 0.09,
                 "similarity_boost": 0.12
+            ]
+        ] as [String: Any]
+    } else if name == "spock" {
+        voice = "D2BIZ9JrDxLJfJy2bvS7"  // Spock from Star Trek
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.75,
+                "similarity_boost": 0.75
             ]
         ] as [String: Any]
     }
