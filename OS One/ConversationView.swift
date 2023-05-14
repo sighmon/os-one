@@ -19,7 +19,7 @@ struct ConversationView: View {
     var body: some View {
         ScrollView {
             VStack {
-                Text("Conversation")
+                Text(conversation.name ?? "Conversation")
                     .font(.system(size: 30, weight: .medium))
                     .padding(.bottom, 1)
                     .padding(.top, 10)

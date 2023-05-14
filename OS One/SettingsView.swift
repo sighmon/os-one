@@ -45,13 +45,13 @@ struct SettingsView: View {
                             UserDefaults.standard.set($0, forKey: "elevenLabs")
                         }
                     Picker("Name of your voice assistant", selection: $name) {
-                        Text("Samantha").tag("samantha")
-                        Text("KITT").tag("kitt")
-                        Text("Mr.Robot").tag("mrrobot")
-                        Text("Elliot").tag("elliot")
-                        Text("GLaDOS").tag("glados")
-                        Text("Spock").tag("spock")
-                        Text("The Oracle").tag("oracle")
+                        Text("Samantha").tag("Samantha")
+                        Text("KITT").tag("KITT")
+                        Text("Mr.Robot").tag("Mr.Robot")
+                        Text("Elliot").tag("Elliot")
+                        Text("GLaDOS").tag("GLaDOS")
+                        Text("Spock").tag("Spock")
+                        Text("The Oracle").tag("The Oracle")
                     }
                         .pickerStyle(.wheel)
                         .onChange(of: name) {

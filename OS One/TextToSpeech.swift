@@ -20,9 +20,9 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
     ] as [String: Any]
 
     var voice = "EXAVITQu4vr4xnSDxMaL"  // Bella (Sounds like Samantha from Her)
-    if name == "kitt" {
+    if name == "KITT" {
         voice = "JyckQxHjQnwHbX2r0LJw"  // KITT from Knight Rider
-    } else if name == "mrrobot" {
+    } else if name == "Mr.Robot" {
         voice = "eXLBstyxiNbZ4xNeaP6n"  // Mr.Robot from Mr.Robot
         body = [
             "text": text,
@@ -31,7 +31,7 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.75
             ]
         ] as [String: Any]
-    } else if name == "elliot" {
+    } else if name == "Elliot" {
         voice = "HsecoGZh5BmrNsPYD72I"  // Elliot from Mr.Robot
         body = [
             "text": text,
@@ -40,7 +40,7 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.85
             ]
         ] as [String: Any]
-    } else if name == "glados" {
+    } else if name == "GLaDOS" {
         voice = "uyIpLktH39lMvQZgxr0s"  // GLaDOS from Portal
         body = [
             "text": text,
@@ -49,7 +49,7 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.12
             ]
         ] as [String: Any]
-    } else if name == "spock" {
+    } else if name == "Spock" {
         voice = "D2BIZ9JrDxLJfJy2bvS7"  // Spock from Star Trek
         body = [
             "text": text,
@@ -58,7 +58,7 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.75
             ]
         ] as [String: Any]
-    } else if name == "oracle" {
+    } else if name == "The Oracle" {
         voice = "VKQUIjLDfJWnQZJBvTnz"  // The Oracle from The Matrix
         body = [
             "text": text,

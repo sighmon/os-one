@@ -18,6 +18,7 @@ struct PersistenceController {
             newConversation.timestamp = Date()
             newConversation.messages = "[\"{\\\"id\\\":\\\"B78BD918-E141-4594-BC5B-766D5BB943AE\\\",\\\"message\\\":\\\"Test message\\\",\\\"sender\\\":\\\"user\\\"}\"]"
             newConversation.uuid = UUID()
+            newConversation.name = "Samantha"
         }
         do {
             try viewContext.save()

@@ -94,8 +94,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "19"
             endingLineNumber = "19"
-            landmarkName = "PersistenceController"
-            landmarkType = "14">
+            landmarkName = "preview"
+            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -108,8 +108,8 @@
             filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "319"
-            endingLineNumber = "319"
+            startingLineNumber = "320"
+            endingLineNumber = "320"
             landmarkName = "SpeechSynthesizerManager"
             landmarkType = "3">
          </BreakpointContent>

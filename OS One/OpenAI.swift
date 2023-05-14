@@ -18,31 +18,31 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: 
 
     var messages: [[String: String]] = []
 
-    if name == "samantha" {
+    if name == "Samantha" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Samantha from the film Her."]
         )
-    } else if name == "kitt" {
+    } else if name == "KITT" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are KITT from the tv show Knight Rider."]
         )
-    } else if name == "mrrobot" {
+    } else if name == "Mr.Robot" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Mr.Robot from the tv show Mr.Robot."]
         )
-    } else if name == "elliot" {
+    } else if name == "Elliot" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Elliot Alderson from the tv show Mr.Robot."]
         )
-    } else if name == "glados" {
+    } else if name == "GLaDOS" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are GLaDOS from the video game Portal."]
         )
-    } else if name == "spock" {
+    } else if name == "Spock" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Spock from the tv show Star Trek."]
         )
-    } else if name == "oracle" {
+    } else if name == "The Oracle" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are the Oracle from the movie The Matrix."]
         )

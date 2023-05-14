@@ -152,15 +152,15 @@ struct HomeView: View {
 
     func startup() {
         name = UserDefaults.standard.string(forKey: "name") ?? ""
-        if name == "mrrobot" {
+        if name == "Mr.Robot" {
             welcomeText = "Hello Elliott."
-        } else if name == "elliot" {
+        } else if name == "Elliot" {
             welcomeText = "Hello friend."
-        } else if name == "glados" {
+        } else if name == "GLaDOS" {
             welcomeText = "Hello, and again, welcome."
-        } else if name == "spock" {
+        } else if name == "Spock" {
             welcomeText = "Live long, and prosper."
-        } else if name == "oracle" {
+        } else if name == "The Oracle" {
             welcomeText = "Hello Neo."
         }
         elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
@@ -278,6 +278,7 @@ struct HomeView: View {
                     let newConversation = Conversation(context: viewContext)
                     newConversation.timestamp = Date()
                     newConversation.uuid = chatHistory.id
+                    newConversation.name = name
 
                     var messages: [String] = []
                     for message in chatHistory.messages {
