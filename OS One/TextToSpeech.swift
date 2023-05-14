@@ -58,6 +58,15 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.75
             ]
         ] as [String: Any]
+    } else if name == "oracle" {
+        voice = "VKQUIjLDfJWnQZJBvTnz"  // The Oracle from The Matrix
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.20,
+                "similarity_boost": 0.60
+            ]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)"
 
