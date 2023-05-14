@@ -14,6 +14,6 @@ Other assistants include:
 
 Available on the App Store: https://apps.apple.com/app/os-one/id6447306476
 
-<img src="os-one-v1.2.png" width="100%" />
+<img src="os-one-v1.png" width="100%" />
 
 Also available as a command line Python application using OpenAI [Whisper](https://github.com/openai/whisper): https://github.com/sighmon/chatgpt-voice
