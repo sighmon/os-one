@@ -19,7 +19,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.9, green: 0.9, blue: 0.9).edgesIgnoringSafeArea(.all)
+                Color(red: 0.5, green: 0.5, blue: 0.5).edgesIgnoringSafeArea(.all).opacity(0.1)
                 VStack {
                     Text("OS One")
                         .font(.system(size: 50, weight: .light))
@@ -45,7 +45,10 @@ struct SettingsView: View {
                         .onChange(of: elevenLabs) {
                             UserDefaults.standard.set($0, forKey: "elevenLabs")
                         }
-                    ProgressView(value: elevenLabsUsage)
+                    ProgressView(value: elevenLabsUsage) {
+                        Text("\(floatToPercent(float:elevenLabsUsage)) used")
+                            .opacity(elevenLabs ? 1.0 : 0.5)
+                    }
                     Picker("Name of your voice assistant", selection: $name) {
                         Text("Samantha").tag("Samantha")
                         Text("KITT").tag("KITT")
@@ -96,6 +99,12 @@ struct SettingsView: View {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
 
         return "\(version) (\(build))"
+    }
+
+    func floatToPercent(float: Float) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .percent
+        return formatter.string(from: float as NSNumber) ?? "0%"
     }
 }
 
