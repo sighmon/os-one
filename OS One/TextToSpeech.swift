@@ -101,3 +101,48 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
     }
     task.resume()
 }
+
+func elevenLabsGetUsage(completion: @escaping (Result<Float, Error>) -> Void) {
+    let elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
+    let elevenLabsApi = "https://api.elevenlabs.io/v1/user/subscription"
+    let headers = [
+        "accept": "application/json",
+        "xi-api-key": elevenLabsApiKey
+    ]
+
+    guard let url = URL(string: elevenLabsApi) else {
+        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+        return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    request.allHTTPHeaderFields = headers
+
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            completion(.failure(error))
+            return
+        }
+
+        guard let data = data else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+            return
+        }
+
+        do {
+            let responseObject = try JSONDecoder().decode(ElevenLabsResponse.self, from: data)
+            let usage = Float(responseObject.character_count) / Float(responseObject.character_limit)
+            print("ElevenLabs Usage: \(usage)")
+            completion(.success(usage))
+        } catch {
+            completion(.failure(error))
+        }
+    }
+    task.resume()
+}
+
+struct ElevenLabsResponse: Codable {
+    let character_count: Int
+    let character_limit: Int
+}

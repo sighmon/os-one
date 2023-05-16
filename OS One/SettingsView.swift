@@ -9,9 +9,10 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var elevenLabsApiKey: String = ""
+    @State private var elevenLabs: Bool = true
+    @State private var elevenLabsUsage: Float = 0
     @State private var openAIApiKey: String = ""
     @State private var gpt4: Bool = true
-    @State private var elevenLabs: Bool = true
     @State private var name: String = ""
     @Environment(\.dismiss) var dismiss
 
@@ -44,6 +45,7 @@ struct SettingsView: View {
                         .onChange(of: elevenLabs) {
                             UserDefaults.standard.set($0, forKey: "elevenLabs")
                         }
+                    ProgressView(value: elevenLabsUsage)
                     Picker("Name of your voice assistant", selection: $name) {
                         Text("Samantha").tag("Samantha")
                         Text("KITT").tag("KITT")
@@ -69,6 +71,16 @@ struct SettingsView: View {
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                     elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
                     name = UserDefaults.standard.string(forKey: "name") ?? ""
+                    if (elevenLabs) {
+                        elevenLabsGetUsage { result in
+                            switch result {
+                            case .success(let usage):
+                                elevenLabsUsage = usage
+                            case .failure(let error):
+                                print("Eleven Labs API error: \(error.localizedDescription)")
+                            }
+                        }
+                    }
                 }
             }
             .toolbar {
