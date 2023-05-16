@@ -164,3 +164,68 @@ func deserialize(jsonString: String) -> ChatMessage? {
         return nil
     }
 }
+
+func getOpenAIUsage(completion: @escaping (Result<Float, Error>) -> Void) {
+    let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
+    let openAIUsageApi = "https://api.openai.com/dashboard/billing/usage?end_date=\(firstDayOfNextMonth())&start_date=\(firstDayOfCurrentMonth())"
+    let headers = [
+        "Content-Type": "application/json",
+        "Authorization": "Bearer \(openAIApiKey)"
+    ]
+
+    guard let url = URL(string: openAIUsageApi) else {
+        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+        return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    request.allHTTPHeaderFields = headers
+
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            completion(.failure(error))
+            return
+        }
+
+        guard let data = data else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+            return
+        }
+
+        do {
+            let responseObject = try JSONDecoder().decode(OpenAIUsageResponse.self, from: data)
+            let usage = responseObject.total_usage
+            print("OpenAI Usage: $\(usage / 100)")
+            completion(.success(usage))
+        } catch {
+            completion(.failure(error))
+        }
+    }
+    task.resume()
+}
+
+struct OpenAIUsageResponse: Codable {
+    let total_usage: Float
+}
+
+func firstDayOfCurrentMonth() -> String {
+    let now = Date()
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
+    let calendar = Calendar.current
+    let components = calendar.dateComponents([.year, .month], from: now)
+    guard let firstDay = calendar.date(from: components) else { return "" }
+    return dateFormatter.string(from: firstDay)
+}
+
+func firstDayOfNextMonth() -> String {
+    let now = Date()
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
+    let calendar = Calendar.current
+    guard let nextMonth = calendar.date(byAdding: .month, value: 1, to: now) else { return "" }
+    let components = calendar.dateComponents([.year, .month], from: nextMonth)
+    guard let firstDay = calendar.date(from: components) else { return "" }
+    return dateFormatter.string(from: firstDay)
+}

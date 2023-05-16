@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var elevenLabs: Bool = true
     @State private var elevenLabsUsage: Float = 0
     @State private var openAIApiKey: String = ""
+    @State private var openAIUsage: Float = 0
     @State private var gpt4: Bool = true
     @State private var name: String = ""
     @Environment(\.dismiss) var dismiss
@@ -41,12 +42,17 @@ struct SettingsView: View {
                         .onChange(of: gpt4) {
                             UserDefaults.standard.set($0, forKey: "gpt4")
                         }
+                    ProgressView(value: openAIUsage / 1000) {
+                        Text("$\((openAIUsage / 100), specifier: "%.2f")")
+                            .opacity(openAIApiKey != "" ? 1.0 : 0.5)
+                    }
+                        .padding(.bottom, 10)
                     Toggle("Eleven Labs voice", isOn: $elevenLabs)
                         .onChange(of: elevenLabs) {
                             UserDefaults.standard.set($0, forKey: "elevenLabs")
                         }
                     ProgressView(value: elevenLabsUsage) {
-                        Text("\(floatToPercent(float:elevenLabsUsage)) used")
+                        Text("\(floatToPercent(float:elevenLabsUsage))")
                             .opacity(elevenLabs ? 1.0 : 0.5)
                     }
                     Picker("Name of your voice assistant", selection: $name) {
@@ -74,6 +80,7 @@ struct SettingsView: View {
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                     elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
                     name = UserDefaults.standard.string(forKey: "name") ?? ""
+
                     if (elevenLabs) {
                         elevenLabsGetUsage { result in
                             switch result {
@@ -81,6 +88,17 @@ struct SettingsView: View {
                                 elevenLabsUsage = usage
                             case .failure(let error):
                                 print("Eleven Labs API error: \(error.localizedDescription)")
+                            }
+                        }
+                    }
+
+                    if (openAIApiKey != "") {
+                        getOpenAIUsage { result in
+                            switch result {
+                            case .success(let usage):
+                                openAIUsage = usage
+                            case .failure(let error):
+                                print("OpenAI API error: \(error.localizedDescription)")
                             }
                         }
                     }
