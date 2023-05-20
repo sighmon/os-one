@@ -10,6 +10,7 @@ import CoreData
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @State private var searchText = ""
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Conversation.timestamp, ascending: false)],
@@ -18,7 +19,11 @@ struct ContentView: View {
 
     var body: some View {
         List {
-            ForEach(conversations) { conversation in
+            ForEach(conversations.filter(
+                { searchText.isEmpty ? true : messagesContainSearchQuery(
+                    messages: $0.messages!,
+                    query: searchText
+                )})) { conversation in
                 NavigationLink(destination: ConversationView(conversation: conversation)) {
                     Text(messagePreview(messages:conversation.messages!))
                         .lineLimit(1)
@@ -27,6 +32,7 @@ struct ContentView: View {
             .onDelete(perform: deleteConversations)
         }
         .navigationTitle("Conversations")
+        .searchable(text: $searchText)
     }
 
     private func messagePreview(messages: String) -> String {
@@ -36,6 +42,19 @@ struct ContentView: View {
         }
         preview = deserialiseMessages(messages: messages).first?.message ?? "Empty chat"
         return preview
+    }
+
+    private func messagesContainSearchQuery(messages: String, query: String) -> Bool {
+        var containsQuery = false
+        if messages.isEmpty {
+            return false
+        }
+        for chat in deserialiseMessages(messages: messages) {
+            if chat.message.lowercased().contains(query.lowercased()) {
+                containsQuery = true
+            }
+        }
+        return containsQuery
     }
 
     private func deleteConversations(offsets: IndexSet) {

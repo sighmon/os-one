@@ -81,7 +81,7 @@ struct SettingsView: View {
                     elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
                     name = UserDefaults.standard.string(forKey: "name") ?? ""
 
-                    if (elevenLabs) {
+                    if (elevenLabsApiKey != "" && elevenLabs) {
                         elevenLabsGetUsage { result in
                             switch result {
                             case .success(let usage):
