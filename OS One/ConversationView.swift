@@ -5,11 +5,14 @@
 //  Created by Simon Loffler on 6/4/2023.
 //
 
+import AVFoundation
 import SwiftUI
 
 struct ConversationView: View {
     var conversation: Conversation
     var messages: [ChatMessage]
+
+    @StateObject private var audioPlayer = SmallAudioPlayer()
 
     init(conversation: Conversation) {
         self.conversation = conversation
@@ -38,8 +41,32 @@ struct ConversationView: View {
                                 top: 0, leading: 0, bottom: 10, trailing: 0
                             )
                         )
+                        .onTapGesture {
+                            if message.sender != ChatMessage.Sender.user {
+                                elevenLabsGetAudioId(text: message.message) { result in
+                                    switch result {
+                                    case .success(let audioId):
+                                        print("Audio ID found: \(audioId)")
+                                        elevenLabsGetHistoricAudio(audioId: audioId) { result in
+                                            switch result {
+                                            case .success(let data):
+                                                setAudioSession(active: true)
+                                                audioPlayer.playAudioFromData(data: data)
+                                            case .failure(let error):
+                                                print("Eleven Labs API error: \(error.localizedDescription)")
+                                            }
+                                        }
+                                    case .failure(let error):
+                                        print("ElevenLabs API error: \(error.localizedDescription)")
+                                    }
+                                }
+                            }
+                        }
 
                 }
+            }
+            .onDisappear() {
+                setAudioSession(active: false)
             }
         }
     }
@@ -104,6 +131,30 @@ func deserializeJSONStringToArray(_ jsonString: String) -> [String]? {
         print("Failed to deserialize JSON string to an array: \(error.localizedDescription)")
         return []
     }
+}
+
+class SmallAudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    @Published var audioPlayer: AVAudioPlayer?
+
+    func playAudioFromData(data: Data) {
+        DispatchQueue.main.async {
+            do {
+                self.audioPlayer = try AVAudioPlayer(data: data)
+                self.audioPlayer?.delegate = self
+                self.audioPlayer?.prepareToPlay()
+                self.audioPlayer?.play()
+            } catch {
+                print("Error loading audio data: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        if !flag {
+            print("Audio playback finished, but there was an issue")
+        }
+        setAudioSession(active: false)
+   }
 }
 
 struct ConversationView_Previews: PreviewProvider {

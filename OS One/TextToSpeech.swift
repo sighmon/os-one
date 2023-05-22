@@ -68,7 +68,7 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
             ]
         ] as [String: Any]
     }
-    let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)"
+    let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 
     let headers = [
         "accept": "audio/mpeg",
@@ -131,7 +131,7 @@ func elevenLabsGetUsage(completion: @escaping (Result<Float, Error>) -> Void) {
         }
 
         do {
-            let responseObject = try JSONDecoder().decode(ElevenLabsResponse.self, from: data)
+            let responseObject = try JSONDecoder().decode(ElevenLabsUsageResponse.self, from: data)
             let usage = Float(responseObject.character_count) / Float(responseObject.character_limit)
             print("ElevenLabs Usage: \(usage)")
             completion(.success(usage))
@@ -142,7 +142,95 @@ func elevenLabsGetUsage(completion: @escaping (Result<Float, Error>) -> Void) {
     task.resume()
 }
 
-struct ElevenLabsResponse: Codable {
+struct ElevenLabsUsageResponse: Codable {
     let character_count: Int
     let character_limit: Int
+}
+
+func elevenLabsGetAudioId(text: String, completion: @escaping (Result<String, Error>) -> Void) {
+    let elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
+    let elevenLabsApi = "https://api.elevenlabs.io/v1/history?page_size=666"
+    let headers = [
+        "accept": "application/json",
+        "xi-api-key": elevenLabsApiKey
+    ]
+
+    guard let url = URL(string: elevenLabsApi) else {
+        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+        return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    request.allHTTPHeaderFields = headers
+
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            completion(.failure(error))
+            return
+        }
+
+        guard let data = data else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+            return
+        }
+
+        do {
+            var matchedItemId = ""
+            let responseObject = try JSONDecoder().decode(ElevenLabsHistoryResponse.self, from: data)
+            for item in responseObject.history {
+                if item.text == text {
+                    matchedItemId = item.history_item_id
+                }
+            }
+            completion(.success(matchedItemId))
+        } catch {
+            completion(.failure(error))
+        }
+    }
+    task.resume()
+}
+
+struct ElevenLabsHistoryResponse: Codable {
+    let history: Array<ElevenLabsHistoryItem>
+}
+
+struct ElevenLabsHistoryItem: Codable {
+    let history_item_id: String
+    let text: String
+}
+
+func elevenLabsGetHistoricAudio(audioId: String, completion: @escaping (Result<Data, Error>) -> Void) {
+    let elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
+    let elevenLabsApi = "https://api.elevenlabs.io/v1/history/\(audioId)/audio"
+
+    let headers = [
+        "accept": "audio/mpeg",
+        "xi-api-key": elevenLabsApiKey,
+        "Content-Type": "application/json"
+    ]
+
+    guard let url = URL(string: elevenLabsApi) else {
+        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+        return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "GET"
+    request.allHTTPHeaderFields = headers
+
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            completion(.failure(error))
+            return
+        }
+
+        guard let data = data else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+            return
+        }
+
+        completion(.success(data))
+    }
+    task.resume()
 }
