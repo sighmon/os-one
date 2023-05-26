@@ -76,6 +76,24 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.70
             ]
         ] as [String: Any]
+    } else if name == "J.A.R.V.I.S." {
+        voice = "BzqEIOx7W7jh5lDytq7b"  // J.A.R.V.I.S. from Iron Man
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.75,
+                "similarity_boost": 0.65
+            ]
+        ] as [String: Any]
+    } else if name == "J.A.R.V.I.S. 2" {
+        voice = "mXhKzyxcYgqJrrLSkO0D"  // J.A.R.V.I.S. from Iron Man
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.35,
+                "similarity_boost": 0.90
+            ]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 
