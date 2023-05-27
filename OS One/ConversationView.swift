@@ -13,6 +13,7 @@ struct ConversationView: View {
     var messages: [ChatMessage]
 
     @StateObject private var audioPlayer = SmallAudioPlayer()
+    @State private var speechBubbleTapped: String = ""
 
     init(conversation: Conversation) {
         self.conversation = conversation
@@ -41,8 +42,10 @@ struct ConversationView: View {
                                 top: 0, leading: 0, bottom: 10, trailing: 0
                             )
                         )
+                        .opacity(message.message == speechBubbleTapped ? 0.5 : 1.0)
                         .onTapGesture {
                             if message.sender != ChatMessage.Sender.user {
+                                speechBubbleTapped = message.message
                                 elevenLabsGetAudioId(text: message.message) { result in
                                     switch result {
                                     case .success(let audioId):
@@ -50,13 +53,16 @@ struct ConversationView: View {
                                         elevenLabsGetHistoricAudio(audioId: audioId) { result in
                                             switch result {
                                             case .success(let data):
+                                                speechBubbleTapped = ""
                                                 setAudioSession(active: true)
                                                 audioPlayer.playAudioFromData(data: data)
                                             case .failure(let error):
+                                                speechBubbleTapped = ""
                                                 print("Eleven Labs API error: \(error.localizedDescription)")
                                             }
                                         }
                                     case .failure(let error):
+                                        speechBubbleTapped = ""
                                         print("ElevenLabs API error: \(error.localizedDescription)")
                                     }
                                 }

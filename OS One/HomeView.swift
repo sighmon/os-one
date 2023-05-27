@@ -22,6 +22,7 @@ struct HomeView: View {
     @State private var welcomeText = "Hello, how can I help?"
     @State private var showingSettingsSheet = false
     @State private var sendButtonEnabled: Bool = true
+    @State private var saveButtonTapped: Bool = false
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
     @StateObject private var audioPlayer = AudioPlayer()
@@ -65,6 +66,7 @@ struct HomeView: View {
                             .font(.system(size: 30))
                             .frame(width: 40)
                             .padding(10)
+                            .opacity(navigate ? 0.4 : 1.0)
                             .onTapGesture {
                                 navigate.toggle()
                             }
@@ -76,6 +78,7 @@ struct HomeView: View {
                             .font(.system(size: 30))
                             .frame(width: 40)
                             .padding(10)
+                            .opacity(showingSettingsSheet ? 0.4 : 1.0)
                             .onTapGesture {
                                 showingSettingsSheet.toggle()
                             }
@@ -91,8 +94,10 @@ struct HomeView: View {
                             .font(.system(size: 30))
                             .frame(width: 40)
                             .padding(10)
+                            .opacity(saveButtonTapped ? 0.4 : 1.0)
                             .onTapGesture {
                                 addConversation()
+                                saveButtonTapped = true
                                 currentState = "conversation saved"
                             }
 
@@ -101,6 +106,7 @@ struct HomeView: View {
                                 .font(.system(size: 30))
                                 .frame(width: 40)
                                 .padding(10)
+                                .opacity(0.4)
                                 .onTapGesture {
                                     mute.toggle()
                                     currentState = "listening"
@@ -140,11 +146,13 @@ struct HomeView: View {
                 .onAppear {
                     startup()
                     UIApplication.shared.isIdleTimerDisabled = true
+                    saveButtonTapped = false
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
                     setAudioSession(active: false)
                     UIApplication.shared.isIdleTimerDisabled = false
+                    saveButtonTapped = false
                 }
             }
         }
