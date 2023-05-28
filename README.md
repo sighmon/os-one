@@ -11,6 +11,8 @@ Other assistants include:
 * GLaDOS from the videogame [Portal](https://www.igdb.com/games/portal)
 * Spock from the tv series [Star Trek](https://www.imdb.com/title/tt5171438/)
 * The Oracle from the movie [The Matrix](https://www.imdb.com/title/tt0133093/)
+* Janet from the tv show [The Good Place](https://www.imdb.com/title/tt4955642/)
+* J.A.R.V.I.S. from the movie [Iron Man](https://www.imdb.com/title/tt0371746/)
 
 Available on the App Store: https://apps.apple.com/app/os-one/id6447306476
 
