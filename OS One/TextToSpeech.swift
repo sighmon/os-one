@@ -130,6 +130,15 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.92
             ]
         ] as [String: Any]
+    } else if name == "Murderbot" {
+        voice = "CYwl7vPmbA7BRIRYUDjF"  // Kevin R. Free, being The Murderbot Diaries by Martha Wells
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.75,
+                "similarity_boost": 0.75
+            ]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 

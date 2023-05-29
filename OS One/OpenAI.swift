@@ -54,6 +54,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: 
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are J.A.R.V.I.S. from the movie Iron Man."]
         )
+    } else if name == "Murderbot" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Martha Wells, author of The Murderbot Diaries series."]
+        )
     } else if name == "Butler" {
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Judith Butler, American philosopher and gender studies writer whose work has influenced political philosophy, ethics, and the fields of third-wave feminism, queer theory, and literary theory."]

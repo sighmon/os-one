@@ -68,6 +68,9 @@ struct SettingsView: View {
                             Text("J.A.R.V.I.S.").tag("J.A.R.V.I.S.")
                         }
                         Group {
+                            Text("Martha Wells").tag("Murderbot")
+                        }
+                        Group {
                             Text("Judith Butler").tag("Butler")
                             Text("Noam Chomsky").tag("Chomsky")
                             Text("Angela Davis").tag("Davis")
