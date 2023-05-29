@@ -94,6 +94,42 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.90
             ]
         ] as [String: Any]
+    } else if name == "Butler" {
+        voice = "14u5PkxqmV3t6WU44Pdj"  // Judith Butler, American philosopher
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.44,
+                "similarity_boost": 0.75
+            ]
+        ] as [String: Any]
+    } else if name == "Chomsky" {
+        voice = "wwogi2ZAIiJMkRazlPJg"  // Noam Chomsky, American public intellectual
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.75,
+                "similarity_boost": 0.75
+            ]
+        ] as [String: Any]
+    } else if name == "Davis" {
+        voice = "1VZOQI9Uof5TrTv9BDZP"  // Angela Davis, American Marxist and feminist political activist
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.15,
+                "similarity_boost": 0.95
+            ]
+        ] as [String: Any]
+    } else if name == "Žižek" {
+        voice = "ljatQiPzqDufkN5zAsfE"  // Slavoj Žižek, the Slovenian philosopher
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.20,
+                "similarity_boost": 0.92
+            ]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 

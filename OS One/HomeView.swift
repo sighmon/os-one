@@ -174,6 +174,14 @@ struct HomeView: View {
             welcomeText = "Hi there, how can I help you?"
         } else if name == "J.A.R.V.I.S." {
             welcomeText = "At your service, sir."
+        } else if name == "Butler" {
+            welcomeText = "Hello."
+        } else if name == "Chomsky" {
+            welcomeText = "Hello."
+        } else if name == "Davis" {
+            welcomeText = "Hello."
+        } else if name == "Žižek" {
+            welcomeText = "Živjo, hello."
         }
         elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
         if !mute {

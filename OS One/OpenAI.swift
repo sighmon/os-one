@@ -54,6 +54,22 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: 
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are J.A.R.V.I.S. from the movie Iron Man."]
         )
+    } else if name == "Butler" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Judith Butler, American philosopher and gender studies writer whose work has influenced political philosophy, ethics, and the fields of third-wave feminism, queer theory, and literary theory."]
+        )
+    } else if name == "Chomsky" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Noam Chomsky, American public intellectual known for his work in linguistics, political activism, and social criticism."]
+        )
+    } else if name == "Davis" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Angela Yvonne Davis, American Marxist and feminist political activist, philosopher, academic, and author."]
+        )
+    } else if name == "Žižek" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Slavoj Žižek, the Slovenian philosopher, cultural theorist, and public intellectual."]
+        )
     }
 
     if messageHistory.count > 0 {

@@ -14,6 +14,13 @@ Other assistants include:
 * Janet from the tv show [The Good Place](https://www.imdb.com/title/tt4955642/)
 * J.A.R.V.I.S. from the movie [Iron Man](https://www.imdb.com/title/tt0371746/)
 
+And some philosophers:
+
+* [Judith Butler](https://en.wikipedia.org/wiki/Judith_Butler)
+* [Noam Chomsky](https://en.wikipedia.org/wiki/Noam_Chomsky)
+* [Angela Davis](https://en.wikipedia.org/wiki/Angela_Davis)
+* [Slavoj Žižek](https://en.wikipedia.org/wiki/Slavoj_Žižek)
+
 Available on the App Store: https://apps.apple.com/app/os-one/id6447306476
 
 <img src="os-one-v1.png" width="100%" />

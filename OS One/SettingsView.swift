@@ -56,15 +56,23 @@ struct SettingsView: View {
                             .opacity(elevenLabs ? 1.0 : 0.5)
                     }
                     Picker("Name of your voice assistant", selection: $name) {
-                        Text("Samantha").tag("Samantha")
-                        Text("KITT").tag("KITT")
-                        Text("Mr.Robot").tag("Mr.Robot")
-                        Text("Elliot").tag("Elliot")
-                        Text("GLaDOS").tag("GLaDOS")
-                        Text("Spock").tag("Spock")
-                        Text("The Oracle").tag("The Oracle")
-                        Text("Janet").tag("Janet")
-                        Text("J.A.R.V.I.S.").tag("J.A.R.V.I.S.")
+                        Group {
+                            Text("Samantha").tag("Samantha")
+                            Text("KITT").tag("KITT")
+                            Text("Mr.Robot").tag("Mr.Robot")
+                            Text("Elliot").tag("Elliot")
+                            Text("GLaDOS").tag("GLaDOS")
+                            Text("Spock").tag("Spock")
+                            Text("The Oracle").tag("The Oracle")
+                            Text("Janet").tag("Janet")
+                            Text("J.A.R.V.I.S.").tag("J.A.R.V.I.S.")
+                        }
+                        Group {
+                            Text("Judith Butler").tag("Butler")
+                            Text("Noam Chomsky").tag("Chomsky")
+                            Text("Angela Davis").tag("Davis")
+                            Text("Slavoj Žižek").tag("Žižek")
+                        }
                     }
                         .pickerStyle(.wheel)
                         .onChange(of: name) {
