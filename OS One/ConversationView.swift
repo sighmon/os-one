@@ -12,8 +12,10 @@ struct ConversationView: View {
     var conversation: Conversation
     var messages: [ChatMessage]
 
+    @EnvironmentObject var chatHistory: ChatHistory
     @StateObject private var audioPlayer = SmallAudioPlayer()
     @State private var speechBubbleTapped: String = ""
+    @State private var addButtonTapped: Bool = false
 
     init(conversation: Conversation) {
         self.conversation = conversation
@@ -70,6 +72,20 @@ struct ConversationView: View {
                         }
 
                 }
+                Image(systemName: addButtonTapped ? "checkmark.circle.fill" : "plus.circle.fill")
+                    .font(.system(size: 45, weight: .light))
+                    .frame(width: 40)
+                    .padding(.top, 20)
+                    .onTapGesture {
+                        addButtonTapped = true
+                        chatHistory.messages = messages
+                    }
+                    .font(.system(
+                        size: 20,
+                        weight: .light
+                    ))
+                    .foregroundColor(.blue)
+                    .opacity(addButtonTapped ? 0.3 : 0.7)
             }
             .onDisappear() {
                 setAudioSession(active: false)

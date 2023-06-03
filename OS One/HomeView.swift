@@ -23,6 +23,7 @@ struct HomeView: View {
     @State private var showingSettingsSheet = false
     @State private var sendButtonEnabled: Bool = true
     @State private var saveButtonTapped: Bool = false
+    @State private var deleteButtonTapped: Bool = false
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
     @StateObject private var audioPlayer = AudioPlayer()
@@ -69,9 +70,11 @@ struct HomeView: View {
                             .opacity(navigate ? 0.4 : 1.0)
                             .onTapGesture {
                                 navigate.toggle()
+                                speechRecognizer.stopTranscribing()
+                                setAudioSession(active: false)
                             }
                             .navigationDestination(isPresented: $navigate) {
-                                ContentView()
+                                ContentView().environmentObject(chatHistory)
                             }
 
                         Image(systemName: "gear")
@@ -81,6 +84,8 @@ struct HomeView: View {
                             .opacity(showingSettingsSheet ? 0.4 : 1.0)
                             .onTapGesture {
                                 showingSettingsSheet.toggle()
+                                speechRecognizer.stopTranscribing()
+                                setAudioSession(active: false)
                             }
                             .sheet(isPresented: $showingSettingsSheet, onDismiss: {
                                 speechRecognizer.stopTranscribing()
@@ -99,6 +104,17 @@ struct HomeView: View {
                                 addConversation()
                                 saveButtonTapped = true
                                 currentState = "conversation saved"
+                            }
+
+                        Image(systemName: "trash")
+                            .font(.system(size: 30))
+                            .frame(width: 40)
+                            .padding(10)
+                            .opacity(deleteButtonTapped ? 0.4 : 1.0)
+                            .onTapGesture {
+                                deleteButtonTapped = true
+                                currentState = "conversation deleted"
+                                chatHistory.messages = []
                             }
 
                         if mute {
@@ -147,12 +163,14 @@ struct HomeView: View {
                     startup()
                     UIApplication.shared.isIdleTimerDisabled = true
                     saveButtonTapped = false
+                    deleteButtonTapped = false
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
                     setAudioSession(active: false)
                     UIApplication.shared.isIdleTimerDisabled = false
                     saveButtonTapped = false
+                    deleteButtonTapped = false
                 }
             }
         }
@@ -262,6 +280,7 @@ struct HomeView: View {
                 sayText(text: content)
                 currentState = "chatting"
                 sendButtonEnabled = true
+                deleteButtonTapped = false
             case .failure(let error):
                 currentState = "try again later"
                 print("OpenAI API error: \(error.localizedDescription)")

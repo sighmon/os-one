@@ -9,6 +9,7 @@ import SwiftUI
 import CoreData
 
 struct ContentView: View {
+    @EnvironmentObject var chatHistory: ChatHistory
     @Environment(\.managedObjectContext) private var viewContext
     @State private var searchText = ""
 
@@ -24,7 +25,7 @@ struct ContentView: View {
                     messages: $0.messages!,
                     query: searchText
                 )})) { conversation in
-                NavigationLink(destination: ConversationView(conversation: conversation)) {
+                NavigationLink(destination: ConversationView(conversation: conversation).environmentObject(chatHistory)) {
                     Text(messagePreview(messages:conversation.messages!))
                         .lineLimit(1)
                 }
