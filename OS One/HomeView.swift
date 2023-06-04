@@ -115,6 +115,9 @@ struct HomeView: View {
                                 deleteButtonTapped = true
                                 currentState = "conversation deleted"
                                 chatHistory.messages = []
+                                speechSynthesizerManager.speechSynthesizer.stopSpeaking(at: .immediate)
+                                audioPlayer.audioPlayer?.stop()
+                                setAudioSession(active: false)
                             }
 
                         if mute {
@@ -167,6 +170,7 @@ struct HomeView: View {
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
+                    speechSynthesizerManager.speechSynthesizer.stopSpeaking(at: .immediate)
                     setAudioSession(active: false)
                     UIApplication.shared.isIdleTimerDisabled = false
                     saveButtonTapped = false

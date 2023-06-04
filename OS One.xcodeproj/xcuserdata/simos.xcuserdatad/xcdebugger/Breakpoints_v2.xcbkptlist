@@ -30,8 +30,8 @@
             filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "361"
-            endingLineNumber = "361"
+            startingLineNumber = "365"
+            endingLineNumber = "365"
             landmarkName = "SpeechSynthesizerManager"
             landmarkType = "3">
          </BreakpointContent>
