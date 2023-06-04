@@ -14,6 +14,10 @@ Other assistants include:
 * Janet from the tv show [The Good Place](https://www.imdb.com/title/tt4955642/)
 * J.A.R.V.I.S. from the movie [Iron Man](https://www.imdb.com/title/tt0371746/)
 
+Authors:
+
+* [Martha Wells (Murderbot series)](https://en.wikipedia.org/wiki/Martha_Wells), read by Kevin R. Free
+
 And some philosophers:
 
 * [Judith Butler](https://en.wikipedia.org/wiki/Judith_Butler)
