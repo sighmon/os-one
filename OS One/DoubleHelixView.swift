@@ -17,10 +17,16 @@ struct DoubleHelixView: View {
                 green: 88/255,
                 blue: 56/255
             ).edgesIgnoringSafeArea(.all)
-            Helix(color: .accentColor, rotationOffset: 0, reverseRotation: false)
+            Helix(
+                color: .black,
+                rotationOffset: 180,
+                reverseRotation: true
+            )
                 .rotation3DEffect(
                     .degrees(rotate ? 360 : 0),
-                    axis: (x: 0, y: 1, z: 0)
+                    axis: (x: 0, y: 1, z: 0),
+                    anchor: .center,
+                    perspective: 0
                 )
                 .rotationEffect(.degrees(90))
         }
@@ -40,11 +46,10 @@ struct Helix: View {
     var body: some View {
         ForEach(0..<3) { i in
             Circle()
-                // .stroke(color, lineWidth: 2)
+                .stroke(color, lineWidth: 3)
                 .frame(width: 100, height: 100)
-                .offset(y: CGFloat(i) * 60)
-                .padding(.top, -110)
-                // .foregroundColor(.white)
+                .offset(y: CGFloat(i) * 80)
+                .padding(.top, -130)
         }
     }
 }
