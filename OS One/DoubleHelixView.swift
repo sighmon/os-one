@@ -1,14 +1,8 @@
-//
-//  DoubleHelixView.swift
-//  OS One
-//
-//  Created by Simon Loffler on 14/4/2023.
-//
-
 import SwiftUI
 
 struct DoubleHelixView: View {
-    @State private var rotate = false
+
+    @State private var speed: Double = 300
 
     var body: some View {
         ZStack {
@@ -17,23 +11,12 @@ struct DoubleHelixView: View {
                 green: 88/255,
                 blue: 56/255
             ).edgesIgnoringSafeArea(.all)
-            Helix(
-                color: .black,
-                rotationOffset: 180,
-                reverseRotation: true
-            )
-                .rotation3DEffect(
-                    .degrees(rotate ? 360 : 0),
-                    axis: (x: 0, y: 1, z: 0),
-                    anchor: .center,
-                    perspective: 0
-                )
-                .rotationEffect(.degrees(90))
-        }
-        .onAppear {
-            withAnimation(Animation.linear(duration: 2).repeatForever(autoreverses: false)) {
-                rotate.toggle()
+            ZStack {
+                Helix(color: .black, rotationOffset: 0, reverseRotation: false, speed: $speed)
+                Helix(color: .black, rotationOffset: 120, reverseRotation: true, speed: $speed)
+                Helix(color: .black, rotationOffset: 240, reverseRotation: false, speed: $speed)
             }
+            .opacity(0.2)
         }
     }
 }
@@ -42,20 +25,53 @@ struct Helix: View {
     let color: Color
     let rotationOffset: Double
     let reverseRotation: Bool
+    @Binding var speed: Double
+    @State private var rotate = false
 
     var body: some View {
-        ForEach(0..<3) { i in
-            Circle()
-                .stroke(color, lineWidth: 3)
-                .frame(width: 100, height: 100)
-                .offset(y: CGFloat(i) * 80)
-                .padding(.top, -130)
+        ForEach(0..<12) { i in
+            SineWave(amplitude: 90, frequency: 1)
+                .stroke(color, lineWidth: 4)
+                .frame(height: 90)
+                .offset(y: CGFloat(i) * 90)
+                .rotation3DEffect(
+                    .degrees(Double(i) * 36 + rotationOffset + (rotate ? 360 : 0)),
+                    axis: (x: 1, y: 0, z: 0),
+                    anchor: .top,
+                    anchorZ: 0.0,
+                    perspective: 0
+                )
+        }
+        .onAppear {
+            withAnimation(Animation.linear(duration: speed).repeatForever(autoreverses: false)) {
+                rotate.toggle()
+            }
+        }
+        .rotation3DEffect(.degrees(reverseRotation ? 180 : 0), axis: (x: 0, y: 1, z: 0))
+    }
+}
+
+struct SineWave: Shape {
+    var amplitude: CGFloat
+    var frequency: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            let midHeight = rect.height / 2
+            let width = rect.width
+
+            path.move(to: CGPoint(x: 0, y: midHeight))
+
+            for x in stride(from: CGFloat(0), through: width, by: 1) {
+                let relativeX = x / width
+                let y = midHeight + amplitude * sin(relativeX * .pi * 2 * frequency)
+                path.addLine(to: CGPoint(x: x, y: y))
+            }
         }
     }
 }
 
-
-struct Helix_Previews: PreviewProvider {
+struct DoubleHelixView_Previews: PreviewProvider {
     static var previews: some View {
         DoubleHelixView()
     }

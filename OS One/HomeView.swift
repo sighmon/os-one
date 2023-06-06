@@ -17,6 +17,7 @@ struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
 
     @State private var mute = false
+    @State private var speed: Double = 300
     @State private var navigate = false
     @State private var currentState = "chatting"
     @State private var welcomeText = "Hello, how can I help?"
@@ -37,6 +38,12 @@ struct HomeView: View {
                     green: 88/255,
                     blue: 56/255
                 ).edgesIgnoringSafeArea(.all)
+                ZStack {
+                     Helix(color: .black, rotationOffset: 0, reverseRotation: false, speed: $speed)
+                     Helix(color: .black, rotationOffset: 120, reverseRotation: true, speed: $speed)
+                     Helix(color: .black, rotationOffset: 240, reverseRotation: false, speed: $speed)
+                }
+                    .opacity(0.1)
                 VStack {
                     Text("OS One")
                         .font(.system(
@@ -251,6 +258,7 @@ struct HomeView: View {
         speechRecognizer.stopTranscribing()
         sendButtonEnabled = false
         currentState = "thinking"
+        speed = 20
         print("Message: \(speechRecognizer.transcript)")
         var messageInChatHistory = false
         for message in chatHistory.messages {
@@ -283,6 +291,7 @@ struct HomeView: View {
                 }
                 sayText(text: content)
                 currentState = "chatting"
+                speed = 300
                 sendButtonEnabled = true
                 deleteButtonTapped = false
             case .failure(let error):
