@@ -33,17 +33,12 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(
-                    red: 240/255,
-                    green: 88/255,
-                    blue: 56/255
-                ).edgesIgnoringSafeArea(.all)
-                ZStack {
-                     Helix(color: .black, rotationOffset: 0, reverseRotation: false, speed: $speed)
-                     Helix(color: .black, rotationOffset: 120, reverseRotation: true, speed: $speed)
-                     Helix(color: .black, rotationOffset: 240, reverseRotation: false, speed: $speed)
-                }
-                    .opacity(0.1)
+                LinearGradient(
+                    colors: [getColour(), .accentColor],
+                    startPoint: .top,
+                    endPoint: .center
+                )
+                    .edgesIgnoringSafeArea(.all)
                 VStack {
                     Text("OS One")
                         .font(.system(
@@ -361,6 +356,19 @@ struct HomeView: View {
                 currentState = "Error \(nsError)"
                 // fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }
+        }
+    }
+
+    func getColour() -> Color {
+        switch currentState {
+        case "thinking":
+            return .mint
+        case "sleeping":
+            return .indigo
+        case "try again later":
+            return .red
+        default:
+            return .pink
         }
     }
 }

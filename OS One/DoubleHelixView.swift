@@ -11,12 +11,12 @@ struct DoubleHelixView: View {
                 green: 88/255,
                 blue: 56/255
             ).edgesIgnoringSafeArea(.all)
-            ZStack {
-                Helix(color: .black, rotationOffset: 0, reverseRotation: false, speed: $speed)
-                Helix(color: .black, rotationOffset: 120, reverseRotation: true, speed: $speed)
-                Helix(color: .black, rotationOffset: 240, reverseRotation: false, speed: $speed)
-            }
-            .opacity(0.2)
+//            ZStack {
+//                Helix(color: .black, rotationOffset: 0, reverseRotation: false, speed: $speed)
+//                Helix(color: .black, rotationOffset: 120, reverseRotation: true, speed: $speed)
+//                Helix(color: .black, rotationOffset: 240, reverseRotation: false, speed: $speed)
+//            }
+//            .opacity(0.2)
         }
     }
 }
