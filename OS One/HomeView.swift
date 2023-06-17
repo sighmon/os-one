@@ -178,48 +178,64 @@ struct HomeView: View {
                     saveButtonTapped = false
                     deleteButtonTapped = false
                 }
+                .onReceive(audioPlayer.$playbackFinished) { finished in
+                    if finished {
+                        currentState = "listening"
+                        if UserDefaults.standard.string(forKey: "openAIApiKey") ?? "" == "" {
+                            showingSettingsSheet.toggle()
+                            speechRecognizer.stopTranscribing()
+                            setAudioSession(active: false)
+                        }
+                    }
+                }
             }
         }
     }
 
     func startup() {
-        name = UserDefaults.standard.string(forKey: "name") ?? ""
-        if name == "Mr.Robot" {
-            welcomeText = "Hello Elliott."
-        } else if name == "Elliot" {
-            welcomeText = "Hello friend."
-        } else if name == "GLaDOS" {
-            welcomeText = "Hello, and again, welcome."
-        } else if name == "Spock" {
-            welcomeText = "Live long, and prosper."
-        } else if name == "The Oracle" {
-            welcomeText = "Hello Neo."
-        } else if name == "Janet" {
-            welcomeText = "Hi there, how can I help you?"
-        } else if name == "J.A.R.V.I.S." {
-            welcomeText = "At your service, sir."
-        } else if name == "Murderbot" {
-            welcomeText = "Hello rogue SecUnit."
-        } else if name == "Butler" {
-            welcomeText = "Hello."
-        } else if name == "Chomsky" {
-            welcomeText = "Hello."
-        } else if name == "Davis" {
-            welcomeText = "Hello."
-        } else if name == "Žižek" {
-            welcomeText = "Živjo, hello."
-        }
-        elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
-        if !mute {
-            sayText(text: welcomeText)
-            speechRecognizer.setUpdateStateHandler { newState in
-                DispatchQueue.main.async {
-                    currentState = newState
-                }
+        if UserDefaults.standard.string(forKey: "openAIApiKey") ?? "" == "" {
+            if let fileURL = Bundle.main.url(forResource: "hello", withExtension: "mp3") {
+                audioPlayer.playAudioFromFile(url: fileURL)
             }
-            speechRecognizer.setOnTimeoutHandler {
-                print("Silence detected...")
-                sendToOpenAI()
+        } else {
+            name = UserDefaults.standard.string(forKey: "name") ?? ""
+            if name == "Mr.Robot" {
+                welcomeText = "Hello Elliott."
+            } else if name == "Elliot" {
+                welcomeText = "Hello friend."
+            } else if name == "GLaDOS" {
+                welcomeText = "Hello, and again, welcome."
+            } else if name == "Spock" {
+                welcomeText = "Live long, and prosper."
+            } else if name == "The Oracle" {
+                welcomeText = "Hello Neo."
+            } else if name == "Janet" {
+                welcomeText = "Hi there, how can I help you?"
+            } else if name == "J.A.R.V.I.S." {
+                welcomeText = "At your service, sir."
+            } else if name == "Murderbot" {
+                welcomeText = "Hello rogue SecUnit."
+            } else if name == "Butler" {
+                welcomeText = "Hello."
+            } else if name == "Chomsky" {
+                welcomeText = "Hello."
+            } else if name == "Davis" {
+                welcomeText = "Hello."
+            } else if name == "Žižek" {
+                welcomeText = "Živjo, hello."
+            }
+            elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
+            if !mute {
+                sayText(text: welcomeText)
+                speechRecognizer.setUpdateStateHandler { newState in
+                    DispatchQueue.main.async {
+                        currentState = newState
+                    }
+                }
+                speechRecognizer.setOnTimeoutHandler {
+                    print("Silence detected...")
+                    sendToOpenAI()
+                }
             }
         }
     }
@@ -232,6 +248,9 @@ struct HomeView: View {
                     audioPlayer.playAudioFromData(data: data)
                 case .failure(let error):
                     print("Eleven Labs API error: \(error.localizedDescription)")
+                    if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
+                        audioPlayer.playAudioFromFile(url: fileURL)
+                    }
                 }
             }
         } else {
@@ -292,6 +311,9 @@ struct HomeView: View {
             case .failure(let error):
                 currentState = "try again later"
                 print("OpenAI API error: \(error.localizedDescription)")
+                if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
+                    audioPlayer.playAudioFromFile(url: fileURL)
+                }
                 sendButtonEnabled = true
             }
         }
@@ -367,6 +389,8 @@ struct HomeView: View {
             return .indigo
         case "try again later":
             return .red
+        case "listening":
+            return .orange
         default:
             return .pink
         }
@@ -400,6 +424,7 @@ class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, Observabl
 
 class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var audioPlayer: AVAudioPlayer?
+    @Published var playbackFinished = false
 
     func playAudioFromData(data: Data) {
         DispatchQueue.main.async {
@@ -407,9 +432,24 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
                 self.audioPlayer = try AVAudioPlayer(data: data)
                 self.audioPlayer?.delegate = self
                 self.audioPlayer?.prepareToPlay()
+                self.playbackFinished = false
                 self.audioPlayer?.play()
             } catch {
                 print("Error loading audio data: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func playAudioFromFile(url: URL) {
+        DispatchQueue.main.async {
+            do {
+                self.audioPlayer = try AVAudioPlayer(contentsOf: url)
+                self.audioPlayer?.delegate = self
+                self.audioPlayer?.prepareToPlay()
+                self.playbackFinished = false
+                self.audioPlayer?.play()
+            } catch {
+                print("Error loading audio from file: \(error.localizedDescription)")
             }
         }
     }
@@ -418,6 +458,7 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
         if !flag {
             print("Audio playback finished, but there was an issue")
         }
+        self.playbackFinished = true
 
         // Start recording
         speechRecognizer.reset()
