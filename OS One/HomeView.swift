@@ -199,7 +199,9 @@ struct HomeView: View {
             }
         } else {
             name = UserDefaults.standard.string(forKey: "name") ?? ""
-            if name == "Mr.Robot" {
+            if name == "Samantha" {
+                welcomeText = "Hello, how can I help?"
+            } else if name == "Mr.Robot" {
                 welcomeText = "Hello Elliott."
             } else if name == "Elliot" {
                 welcomeText = "Hello friend."
@@ -223,6 +225,14 @@ struct HomeView: View {
                 welcomeText = "Hello."
             } else if name == "Žižek" {
                 welcomeText = "Živjo, hello."
+            } else if name == "Fei-Fei Li" {
+                welcomeText = "Welcome, how can I help?"
+            } else if name == "Andrew Ng" {
+                welcomeText = "Hello, how can I help?"
+            } else if name == "Corinna Cortes" {
+                welcomeText = "Welcome, how can I help?"
+            } else if name == "Andrej Karpathy" {
+                welcomeText = "Hi, how can I help?"
             }
             elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
             if !mute {

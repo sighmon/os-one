@@ -71,6 +71,12 @@ struct SettingsView: View {
                             Text("Martha Wells").tag("Murderbot")
                         }
                         Group {
+                            Text("Fei-Fei Li").tag("Fei-Fei Li")
+                            Text("Andrew Ng").tag("Andrew Ng")
+                            Text("Corinna Cortes").tag("Corinna Cortes")
+                            Text("Andrej Karpathy").tag("Andrej Karpathy")
+                        }
+                        Group {
                             Text("Judith Butler").tag("Butler")
                             Text("Noam Chomsky").tag("Chomsky")
                             Text("Angela Davis").tag("Davis")

@@ -139,6 +139,42 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.75
             ]
         ] as [String: Any]
+    } else if name == "Fei-Fei Li" {
+        voice = "7kKufPkt3DsYq6YNTDGq"  // Fei-Fei Li
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.90
+            ]
+        ] as [String: Any]
+    } else if name == "Andrew Ng" {
+        voice = "TEYaeB2yGjWEN2ENkczo"  // Andrew Ng
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.40,
+                "similarity_boost": 0.90
+            ]
+        ] as [String: Any]
+    } else if name == "Corinna Cortes" {
+        voice = "BlzfOkuuQSLOgFpx1IA5"  // Corinna Cortes
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.40,
+                "similarity_boost": 0.80
+            ]
+        ] as [String: Any]
+    } else if name == "Andrej Karpathy" {
+        voice = "D7Xote9sr8O7HHarQ1s7"  // Andrej Karpathy
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.75
+            ]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 
