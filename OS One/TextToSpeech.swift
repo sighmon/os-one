@@ -175,6 +175,33 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.75
             ]
         ] as [String: Any]
+    } else if name == "Penny Wong" {
+        voice = "Ic8uf7FVgwzPpwGSu16X"  // Penny Wong
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.20
+            ]
+        ] as [String: Any]
+    } else if name == "Amy Remeikis" {
+        voice = "lKxcAePlYqoiKbwzL19U"  // Amy Remeikis
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.70
+            ]
+        ] as [String: Any]
+    } else if name == "Jane Caro" {
+        voice = "INa8paCs2TP3Vbzi3mol"  // Jane Caro
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.19
+            ]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 

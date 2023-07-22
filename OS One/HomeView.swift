@@ -233,6 +233,12 @@ struct HomeView: View {
                 welcomeText = "Welcome, how can I help?"
             } else if name == "Andrej Karpathy" {
                 welcomeText = "Hi, how can I help?"
+            } else if name == "Penny Wong" {
+                welcomeText = "Hello, how can I help?"
+            } else if name == "Amy Remeikis" {
+                welcomeText = "Hi, how can I help?"
+            } else if name == "Jane Caro" {
+                welcomeText = "Hi, how can I help?"
             }
             elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
             if !mute {
@@ -255,8 +261,10 @@ struct HomeView: View {
             elevenLabsTextToSpeech(name: name, text: text) { result in
                 switch result {
                 case .success(let data):
+                    currentState = "chatting"
                     audioPlayer.playAudioFromData(data: data)
                 case .failure(let error):
+                    currentState = "try again later"
                     print("Eleven Labs API error: \(error.localizedDescription)")
                     if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
                         audioPlayer.playAudioFromFile(url: fileURL)
@@ -273,6 +281,7 @@ struct HomeView: View {
             speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate
 
             // Start the speech synthesizer
+            currentState = "chatting"
             speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
         }
         setAudioSession(active: true)
@@ -313,8 +322,8 @@ struct HomeView: View {
                         from: ChatMessage.Sender.openAI
                     )
                 }
+                currentState = "vocalising"
                 sayText(text: content)
-                currentState = "chatting"
                 speed = 300
                 sendButtonEnabled = true
                 deleteButtonTapped = false
