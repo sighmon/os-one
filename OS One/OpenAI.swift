@@ -222,11 +222,11 @@ func deserialize(jsonString: String) -> ChatMessage? {
 }
 
 func getOpenAIUsage(completion: @escaping (Result<Float, Error>) -> Void) {
-    let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
+    let openAISessionKey = UserDefaults.standard.string(forKey: "openAISessionKey") ?? ""
     let openAIUsageApi = "https://api.openai.com/dashboard/billing/usage?end_date=\(firstDayOfNextMonth())&start_date=\(firstDayOfCurrentMonth())"
     let headers = [
         "Content-Type": "application/json",
-        "Authorization": "Bearer \(openAIApiKey)"
+        "Authorization": "Bearer \(openAISessionKey)"
     ]
 
     guard let url = URL(string: openAIUsageApi) else {

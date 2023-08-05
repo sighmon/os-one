@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var elevenLabs: Bool = true
     @State private var elevenLabsUsage: Float = 0
     @State private var openAIApiKey: String = ""
+    @State private var openAISessionKey: String = ""
     @State private var openAIUsage: Float = 0
     @State private var gpt4: Bool = true
     @State private var name: String = ""
@@ -26,27 +27,34 @@ struct SettingsView: View {
                         .font(.system(size: 50, weight: .light))
                     Text("settings")
                         .font(.system(size: 25, weight: .light))
-                        .padding(.bottom, 10)
+                        .padding(.bottom, 5)
                     Text(appVersionAndBuild())
                         .font(.system(size: 15, weight: .light))
-                        .padding(.bottom, 40)
-                    SecureField("OpenAI API Key", text: $openAIApiKey)
-                        .onChange(of: openAIApiKey) {
-                            UserDefaults.standard.set($0, forKey: "openAIApiKey")
-                        }
-                    SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
-                        .onChange(of: elevenLabsApiKey) {
-                            UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
-                        }
+                        .padding(.bottom, 20)
+                    Group {
+                        SecureField("OpenAI API Key", text: $openAIApiKey)
+                            .onChange(of: openAIApiKey) {
+                                UserDefaults.standard.set($0, forKey: "openAIApiKey")
+                            }
+                        SecureField("OpenAI Session Key (optional)", text: $openAISessionKey)
+                            .onChange(of: openAISessionKey) {
+                                UserDefaults.standard.set($0, forKey: "openAISessionKey")
+                            }
+                        SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
+                            .onChange(of: elevenLabsApiKey) {
+                                UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
+                            }
+                    }
                     Toggle("GPT-4", isOn: $gpt4)
                         .onChange(of: gpt4) {
                             UserDefaults.standard.set($0, forKey: "gpt4")
                         }
-                    ProgressView(value: openAIUsage / 1000) {
-                        Text("$\((openAIUsage / 100), specifier: "%.2f")")
-                            .opacity(openAIApiKey != "" ? 1.0 : 0.5)
-                    }
+                    if openAISessionKey != "" {
+                        ProgressView(value: openAIUsage / 1000) {
+                            Text("$\((openAIUsage / 100), specifier: "%.2f")")
+                        }
                         .padding(.bottom, 10)
+                    }
                     Toggle("Eleven Labs voice", isOn: $elevenLabs)
                         .onChange(of: elevenLabs) {
                             UserDefaults.standard.set($0, forKey: "elevenLabs")
@@ -100,6 +108,7 @@ struct SettingsView: View {
                 .onAppear {
                     // Load OS One settings from user defaults
                     openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
+                    openAISessionKey = UserDefaults.standard.string(forKey: "openAISessionKey") ?? ""
                     gpt4 = UserDefaults.standard.bool(forKey: "gpt4")
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                     elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
@@ -116,7 +125,7 @@ struct SettingsView: View {
                         }
                     }
 
-                    if (openAIApiKey != "") {
+                    if (openAISessionKey != "") {
                         getOpenAIUsage { result in
                             switch result {
                             case .success(let usage):
