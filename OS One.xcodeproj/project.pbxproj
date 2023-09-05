@@ -17,6 +17,7 @@
 		05496C7F29D956D40080C503 /* OS_OneUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C7E29D956D40080C503 /* OS_OneUITests.swift */; };
 		05496C8129D956D40080C503 /* OS_OneUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8029D956D40080C503 /* OS_OneUITestsLaunchTests.swift */; };
 		05496C8E29D958550080C503 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8D29D958550080C503 /* HomeView.swift */; };
+		057052902AA7494500B05FD6 /* LocationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0570528F2AA7494500B05FD6 /* LocationController.swift */; };
 		05744E7C29DAE5D40013FB54 /* TextToSpeech.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */; };
 		05744E7E29DAEED90013FB54 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7D29DAEED90013FB54 /* SettingsView.swift */; };
 		05744E8029DAF2B60013FB54 /* OpenAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7F29DAF2B60013FB54 /* OpenAI.swift */; };
@@ -59,6 +60,7 @@
 		05496C7E29D956D40080C503 /* OS_OneUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OS_OneUITests.swift; sourceTree = "<group>"; };
 		05496C8029D956D40080C503 /* OS_OneUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OS_OneUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		05496C8D29D958550080C503 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		0570528F2AA7494500B05FD6 /* LocationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationController.swift; sourceTree = "<group>"; };
 		05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeech.swift; sourceTree = "<group>"; };
 		05744E7D29DAEED90013FB54 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		05744E7F29DAF2B60013FB54 /* OpenAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAI.swift; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 				05496C5F29D956D20080C503 /* ContentView.swift */,
 				05F0AE3C29DEE1DD00E68AC6 /* ConversationView.swift */,
 				05496C8D29D958550080C503 /* HomeView.swift */,
+				0570528F2AA7494500B05FD6 /* LocationController.swift */,
 				05C3FFF729E8C8AB00B33D0F /* DoubleHelixView.swift */,
 				05744E7D29DAEED90013FB54 /* SettingsView.swift */,
 				05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */,
@@ -308,6 +311,7 @@
 				05496C6729D956D40080C503 /* Persistence.swift in Sources */,
 				05744E7E29DAEED90013FB54 /* SettingsView.swift in Sources */,
 				05496C6029D956D20080C503 /* ContentView.swift in Sources */,
+				057052902AA7494500B05FD6 /* LocationController.swift in Sources */,
 				05744E8029DAF2B60013FB54 /* OpenAI.swift in Sources */,
 				0597AE5829D98B9B00C5CCF4 /* SpeechRecognizer.swift in Sources */,
 				05496C6A29D956D40080C503 /* OS_One.xcdatamodeld in Sources */,

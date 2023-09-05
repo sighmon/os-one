@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var openAISessionKey: String = ""
     @State private var openAIUsage: Float = 0
     @State private var gpt4: Bool = true
+    @State private var allowLocation: Bool = false
     @State private var name: String = ""
     @Environment(\.dismiss) var dismiss
 
@@ -30,7 +31,7 @@ struct SettingsView: View {
                         .padding(.bottom, 5)
                     Text(appVersionAndBuild())
                         .font(.system(size: 15, weight: .light))
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 10)
                     Group {
                         SecureField("OpenAI API Key", text: $openAIApiKey)
                             .onChange(of: openAIApiKey) {
@@ -45,6 +46,10 @@ struct SettingsView: View {
                                 UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
                             }
                     }
+                    Toggle("Allow location", isOn: $allowLocation)
+                        .onChange(of: allowLocation) {
+                            UserDefaults.standard.set($0, forKey: "allowLocation")
+                        }
                     Toggle("GPT-4", isOn: $gpt4)
                         .onChange(of: gpt4) {
                             UserDefaults.standard.set($0, forKey: "gpt4")
@@ -113,6 +118,7 @@ struct SettingsView: View {
                     openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
                     openAISessionKey = UserDefaults.standard.string(forKey: "openAISessionKey") ?? ""
                     gpt4 = UserDefaults.standard.bool(forKey: "gpt4")
+                    allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                     elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
                     name = UserDefaults.standard.string(forKey: "name") ?? ""

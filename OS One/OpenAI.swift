@@ -108,6 +108,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: 
         )
     }
 
+    messages.append(
+        ["role": "system", "content": "If the user provides latitude and longitude location data, you have permission to use them to give a more accurate response."]
+    )
+
     if messageHistory.count > 0 {
         for item in messageHistory {
             messages.append(

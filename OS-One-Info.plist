@@ -4,5 +4,7 @@
 <dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Optional location can be sent so that suggestions are more accurate to where you currently are.</string>
 </dict>
 </plist>
