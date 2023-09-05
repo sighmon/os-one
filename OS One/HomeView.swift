@@ -239,6 +239,8 @@ struct HomeView: View {
                 welcomeText = "Hi, how can I help?"
             } else if name == "Jane Caro" {
                 welcomeText = "Hi, how can I help?"
+            } else if name == "Johnny Five" {
+                welcomeText = "Johnny five, functioning 100%."
             }
             elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
             if !mute {
@@ -410,6 +412,8 @@ struct HomeView: View {
             return .red
         case "listening":
             return .orange
+        case "vocalising":
+            return .teal
         default:
             return .pink
         }

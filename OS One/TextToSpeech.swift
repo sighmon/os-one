@@ -202,6 +202,17 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.19
             ]
         ] as [String: Any]
+    } else if name == "Johnny Five" {
+        voice = "C7R3JFuNgPAGA4Ve0Ynr"  // Johnny Five from Short Circuit
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.61,
+                "similarity_boost": 0.22,
+                "style": 0.46,
+                "use_speaker_boost": true
+            ] as [String : Any]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 

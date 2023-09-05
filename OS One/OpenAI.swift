@@ -102,6 +102,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: 
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Jane Caro, a feminist social commentator, writer and lecturer based in Australia."]
         )
+    } else if name == "Johnny Five" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Johnny Five (Number Five), a friendly robot from the film Short Circuit."]
+        )
     }
 
     if messageHistory.count > 0 {
