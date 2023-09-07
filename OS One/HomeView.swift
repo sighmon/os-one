@@ -25,7 +25,6 @@ struct HomeView: View {
     @State private var sendButtonEnabled: Bool = true
     @State private var saveButtonTapped: Bool = false
     @State private var deleteButtonTapped: Bool = false
-    @State private var allowLocation: Bool = false
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
     @StateObject private var audioPlayer = AudioPlayer()
@@ -195,7 +194,6 @@ struct HomeView: View {
     }
 
     func startup() {
-        allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
         if UserDefaults.standard.string(forKey: "openAIApiKey") ?? "" == "" {
             if let fileURL = Bundle.main.url(forResource: "hello", withExtension: "mp3") {
                 audioPlayer.playAudioFromFile(url: fileURL)
@@ -250,7 +248,9 @@ struct HomeView: View {
                 sayText(text: welcomeText)
                 speechRecognizer.setUpdateStateHandler { newState in
                     DispatchQueue.main.async {
-                        currentState = newState
+                        if currentState != "thinking" {
+                            currentState = newState
+                        }
                     }
                 }
                 speechRecognizer.setOnTimeoutHandler {
@@ -311,10 +311,7 @@ struct HomeView: View {
                 from: ChatMessage.Sender.user
             )
         }
-        if allowLocation {
-            chatHistory.addMessage("Latitude: \(locationManager.lastLocation?.coordinate.latitude ?? 0), longitude: \(locationManager.lastLocation?.coordinate.longitude ?? 0)", from: ChatMessage.Sender.user)
-        }
-        chatCompletionAPI(name: name, messageHistory: chatHistory.messages) { result in
+        chatCompletionAPI(name: name, messageHistory: chatHistory.messages, lastLocation: locationManager.lastLocation) { result in
             switch result {
             case .success(let content):
                 var messageInChatHistory = false

@@ -6,10 +6,12 @@
 //
 
 import Foundation
+import CoreLocation
 
-func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
+func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
     let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4" : "gpt-3.5-turbo"
+    let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
 
     let headers = [
         "Content-Type": "application/json",
@@ -118,6 +120,12 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], completion: 
                 ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": item.message]
             )
         }
+    }
+
+    if allowLocation {
+        messages.append(
+            ["role": "user", "content": "Latitude: \(lastLocation?.coordinate.latitude ?? 0), longitude: \(lastLocation?.coordinate.longitude ?? 0)"]
+        )
     }
 
     let body = [

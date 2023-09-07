@@ -27,7 +27,7 @@ class SpeechRecognizer: ObservableObject {
         }
     }
     
-    var transcript: String = ""
+    @MainActor var transcript: String = ""
     
     private var audioEngine: AVAudioEngine?
     private var request: SFSpeechAudioBufferRecognitionRequest?
@@ -40,7 +40,7 @@ class SpeechRecognizer: ObservableObject {
     init() {
         recognizer = SFSpeechRecognizer()
         
-        Task(priority: .background) {
+        Task(priority: .medium) {
             do {
                 guard recognizer != nil else {
                     throw RecognizerError.nilRecognizer
@@ -69,19 +69,19 @@ class SpeechRecognizer: ObservableObject {
         onTimeout = handler
     }
 
-    private func resetTimeoutTimer() {
+    @MainActor private func resetTimeoutTimer() {
         timeoutTimer?.cancel()
         timeoutTimer = DispatchSource.makeTimerSource(queue: .main)
         timeoutTimer?.schedule(deadline: .now() + 3.0)
         timeoutTimer?.setEventHandler { [weak self] in
-            self?.reset()
             self?.onTimeout?()
+            self?.stopTranscribing()
         }
         timeoutTimer?.resume()
     }
 
     func transcribe() {
-        DispatchQueue(label: "Speech Recognizer Queue", qos: .background).async { [weak self] in
+        DispatchQueue(label: "Speech Recognizer Queue", qos: .default).async { [weak self] in
             guard let self = self, let recognizer = self.recognizer, recognizer.isAvailable else {
                 self?.speakError(RecognizerError.recognizerIsUnavailable)
                 return
@@ -99,7 +99,7 @@ class SpeechRecognizer: ObservableObject {
         }
     }
     
-    func stopTranscribing() {
+    @MainActor func stopTranscribing() {
         reset()
     }
     
@@ -155,9 +155,15 @@ class SpeechRecognizer: ObservableObject {
     }
     
     private func speak(_ message: String) {
-        transcript = message
-        updateState?(transcript)
-        resetTimeoutTimer()
+        Task { @MainActor in
+            transcript = message
+            if transcript != "" {
+                updateState?(transcript)
+                resetTimeoutTimer()
+            } else {
+                stopTranscribing()
+            }
+        }
     }
     
     private func speakError(_ error: Error) {
@@ -167,7 +173,9 @@ class SpeechRecognizer: ObservableObject {
         } else {
             errorMessage += error.localizedDescription
         }
-        transcript = "<< \(errorMessage) >>"
+        Task { @MainActor [errorMessage] in
+            transcript = "<< \(errorMessage) >>"
+        }
     }
 }
 
