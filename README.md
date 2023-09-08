@@ -13,10 +13,24 @@ Other assistants include:
 * The Oracle from the movie [The Matrix](https://www.imdb.com/title/tt0133093/)
 * Janet from the tv show [The Good Place](https://www.imdb.com/title/tt4955642/)
 * J.A.R.V.I.S. from the movie [Iron Man](https://www.imdb.com/title/tt0371746/)
+* Johnny 5 from the movie [Short Circuit](https://www.imdb.com/title/tt0091949/)
 
 Authors:
 
 * [Martha Wells (Murderbot series)](https://en.wikipedia.org/wiki/Martha_Wells), read by Kevin R. Free
+
+My parents favourite people:
+
+* [Penny Wong](https://en.wikipedia.org/wiki/Penny_Wong)
+* [Amy Remeikis](https://www.theguardian.com/profile/amy-remeikis)
+* [Jane Caro](https://en.wikipedia.org/wiki/Jane_Caro)
+
+Some machine learning experts:
+
+* [Fei-Fei Li](https://en.wikipedia.org/wiki/Fei-Fei_Li)
+* [Andrew Ng](https://en.wikipedia.org/wiki/Andrew_Ng)
+* [Corinna Cortes](https://en.wikipedia.org/wiki/Corinna_Cortes)
+* [Andrej Karpathy](https://en.wikipedia.org/wiki/Andrej_Karpathy)
 
 And some philosophers:
 
@@ -29,4 +43,14 @@ Available on the App Store: https://apps.apple.com/app/os-one/id6447306476
 
 <img src="os-one-v1.png" width="100%" />
 
-Also available as a command line Python application using OpenAI [Whisper](https://github.com/openai/whisper): https://github.com/sighmon/chatgpt-voice
+## Hints
+
+* If the voice recognition is inaccurate, tap the recognised speech to reset it
+* In the conversation archive, pull down to reveal a search bar to search your conversations
+* In the conversation archive detail view, tap one of your previous conversations to re-play the audio again
+* Tapping the + icon allows you to continue conversations
+
+## Links
+
+It started off life as a command line Python application using OpenAI [Whisper](https://github.com/openai/whisper): https://github.com/sighmon/chatgpt-voice
+
