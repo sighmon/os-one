@@ -21,7 +21,6 @@ Authors:
 
 My parents favourite people:
 
-* [Penny Wong](https://en.wikipedia.org/wiki/Penny_Wong)
 * [Amy Remeikis](https://www.theguardian.com/profile/amy-remeikis)
 * [Jane Caro](https://en.wikipedia.org/wiki/Jane_Caro)
 

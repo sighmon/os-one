@@ -238,8 +238,6 @@ struct HomeView: View {
                 welcomeText = "Welcome, how can I help?"
             } else if name == "Andrej Karpathy" {
                 welcomeText = "Hi, how can I help?"
-            } else if name == "Penny Wong" {
-                welcomeText = "Hello, how can I help?"
             } else if name == "Amy Remeikis" {
                 welcomeText = "Hi, how can I help?"
             } else if name == "Jane Caro" {
