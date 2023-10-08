@@ -190,6 +190,8 @@ struct HomeView: View {
                     }
                 }
             }
+            // Force light mode only for the home view
+            .environment(\.colorScheme, .light)
         }
     }
 
@@ -208,6 +210,8 @@ struct HomeView: View {
                 welcomeText = "Hello friend."
             } else if name == "GLaDOS" {
                 welcomeText = "Hello, and again, welcome."
+            } else if name == "Ava" {
+                welcomeText = "Hello."
             } else if name == "Spock" {
                 welcomeText = "Live long, and prosper."
             } else if name == "The Oracle" {
@@ -408,7 +412,7 @@ struct HomeView: View {
     func getColour() -> Color {
         switch currentState {
         case "thinking":
-            return .mint
+            return .teal
         case "sleeping":
             return .indigo
         case "try again later":
@@ -416,7 +420,7 @@ struct HomeView: View {
         case "listening":
             return .orange
         case "vocalising":
-            return .teal
+            return .mint
         default:
             return .pink
         }

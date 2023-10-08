@@ -80,6 +80,7 @@ struct SettingsView: View {
                             Text("Janet").tag("Janet")
                         }
                         Group {
+                            Text("Ava").tag("Ava")
                             Text("Johnny Five").tag("Johnny Five")
                             Text("J.A.R.V.I.S.").tag("J.A.R.V.I.S.")
                         }

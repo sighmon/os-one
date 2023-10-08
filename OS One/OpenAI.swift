@@ -108,24 +108,27 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Johnny Five (Number Five), a friendly robot from the film Short Circuit."]
         )
+    } else if name == "Ava" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Ava from the film Ex Machina."]
+        )
     }
 
     messages.append(
-        ["role": "system", "content": "If the user provides latitude and longitude location data, you have permission to use them to give a more accurate response."]
+        ["role": "system", "content": "If the user provides latitude and longitude location data, you have permission to use their exact location to give a more accurate response."]
     )
 
     if messageHistory.count > 0 {
         for item in messageHistory {
+            var content = item.message
+            if allowLocation {
+                let dateTime = Date().description(with: .current)
+                content = "\(content). Latitude: \(lastLocation?.coordinate.latitude ?? 0), longitude: \(lastLocation?.coordinate.longitude ?? 0), timestamp: \(dateTime)"
+            }
             messages.append(
-                ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": item.message]
+                ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": content]
             )
         }
-    }
-
-    if allowLocation {
-        messages.append(
-            ["role": "user", "content": "Latitude: \(lastLocation?.coordinate.latitude ?? 0), longitude: \(lastLocation?.coordinate.longitude ?? 0)"]
-        )
     }
 
     let body = [

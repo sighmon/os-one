@@ -213,6 +213,17 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "use_speaker_boost": true
             ] as [String : Any]
         ] as [String: Any]
+    } else if name == "Ava" {
+        voice = "TFO1qe26TWEIpmiyZfzR"  // Ava from Ex Machina
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.15,
+                "style": 0.0,
+                "use_speaker_boost": false
+            ] as [String : Any]
+        ] as [String: Any]
     }
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 
