@@ -8,6 +8,7 @@
 import AVFoundation
 import CoreData
 import SwiftUI
+import UIKit
 
 var speechRecognizer = SpeechRecognizer()
 var name = UserDefaults.standard.string(forKey: "name") ?? ""
@@ -25,6 +26,8 @@ struct HomeView: View {
     @State private var sendButtonEnabled: Bool = true
     @State private var saveButtonTapped: Bool = false
     @State private var deleteButtonTapped: Bool = false
+    @State private var showingImagePicker = false
+    @State private var currentImage: UIImage?
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
     @StateObject private var audioPlayer = AudioPlayer()
@@ -41,11 +44,19 @@ struct HomeView: View {
                 )
                     .edgesIgnoringSafeArea(.all)
                 VStack {
-                    Text("OS One")
-                        .font(.system(
-                            size: 80,
-                            weight: .light
-                        ))
+                    HStack {
+                        Text("OS")
+                            .font(.system(
+                                size: 80,
+                                weight: .light
+                            ))
+                        Text("1")
+                            .font(.system(
+                                size: 50,
+                                weight: .regular
+                            ))
+                            .baselineOffset(25.0)
+                    }
                         .padding(.bottom, 1)
                     ScrollView {
                         Text(currentState)
@@ -189,6 +200,12 @@ struct HomeView: View {
                         }
                     }
                 }
+                .sheet(isPresented: $showingImagePicker) {
+                    ImagePicker(image: self.$currentImage, onImagePicked: { selectedImage in
+                        self.currentImage = selectedImage
+                        self.continueSendingToOpenAI()
+                    })
+                }
             }
             // Force light mode only for the home view
             .environment(\.colorScheme, .light)
@@ -300,6 +317,16 @@ struct HomeView: View {
         currentState = "thinking"
         speed = 20
         print("Message: \(speechRecognizer.transcript)")
+
+        if UserDefaults.standard.bool(forKey: "vision") {
+            self.showingImagePicker = true
+            return
+        }
+
+        continueSendingToOpenAI()
+    }
+
+    func continueSendingToOpenAI() {
         var messageInChatHistory = false
         for message in chatHistory.messages {
             if message.message == speechRecognizer.transcript {
@@ -310,7 +337,8 @@ struct HomeView: View {
         if !messageInChatHistory {
             chatHistory.addMessage(
                 speechRecognizer.transcript,
-                from: ChatMessage.Sender.user
+                from: ChatMessage.Sender.user,
+                with: (currentImage != nil) ? encodeToBase64(image: currentImage!)! : ""
             )
         }
         chatCompletionAPI(name: name, messageHistory: chatHistory.messages, lastLocation: locationManager.lastLocation) { result in
@@ -326,9 +354,11 @@ struct HomeView: View {
                 if !messageInChatHistory {
                     chatHistory.addMessage(
                         content,
-                        from: ChatMessage.Sender.openAI
+                        from: ChatMessage.Sender.openAI,
+                        with: (currentImage != nil) ? encodeToBase64(image: currentImage!)! : ""
                     )
                 }
+                currentImage = nil
                 currentState = "vocalising"
                 sayText(text: content)
                 speed = 300
@@ -336,6 +366,7 @@ struct HomeView: View {
                 deleteButtonTapped = false
             case .failure(let error):
                 currentState = "try again later"
+                currentImage = nil
                 print("OpenAI API error: \(error.localizedDescription)")
                 if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
                     audioPlayer.playAudioFromFile(url: fileURL)
@@ -422,6 +453,11 @@ struct HomeView: View {
         default:
             return .pink
         }
+    }
+
+    func encodeToBase64(image: UIImage) -> String? {
+        guard let imageData = image.jpegData(compressionQuality: 0.85) else { return nil }
+        return imageData.base64EncodedString()
     }
 }
 
@@ -524,4 +560,43 @@ func areHeadphonesConnected() -> Bool {
     }
 
     return false
+}
+
+class ImagePickerCoordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+    var parent: ImagePicker
+
+    init(_ parent: ImagePicker) {
+        self.parent = parent
+    }
+
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        if let uiImage = info[.originalImage] as? UIImage {
+            parent.onImagePicked(uiImage)
+        }
+        parent.presentationMode.wrappedValue.dismiss()
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        parent.presentationMode.wrappedValue.dismiss()
+    }
+}
+
+struct ImagePicker: UIViewControllerRepresentable {
+    @Environment(\.presentationMode) var presentationMode
+    @Binding var image: UIImage?
+    var onImagePicked: (UIImage) -> Void
+
+    func makeUIViewController(context: UIViewControllerRepresentableContext<ImagePicker>) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: UIViewControllerRepresentableContext<ImagePicker>) {
+        // Not needed for basic functionality
+    }
+
+    func makeCoordinator() -> ImagePickerCoordinator {
+        ImagePickerCoordinator(self)
+    }
 }

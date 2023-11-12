@@ -10,7 +10,8 @@ import CoreLocation
 
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4" : "gpt-3.5-turbo"
+    var model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4-1106-preview" : "gpt-3.5-turbo"
+    let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
 
     let headers = [
@@ -18,7 +19,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         "Authorization": "Bearer \(openAIApiKey)"
     ]
 
-    var messages: [[String: String]] = []
+    var messages: [[String: Any]] = []
 
     if name == "Samantha" {
         messages.append(
@@ -115,15 +116,39 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
     )
 
     if messageHistory.count > 0 {
-        for item in messageHistory {
-            var content = item.message
-            if allowLocation {
-                let dateTime = Date().description(with: .current)
-                content = "\(content). Latitude: \(lastLocation?.coordinate.latitude ?? 0), longitude: \(lastLocation?.coordinate.longitude ?? 0), timestamp: \(dateTime)"
+        if vision {
+            model = "gpt-4-vision-preview"
+            let item = messageHistory.last
+            if item?.image != "" {
+                let content = item?.message
+                messages = [
+                    [
+                        "role": item?.sender == ChatMessage.Sender.user ? "user" : "assistant",
+                        "content": [
+                            [
+                                "type": "text",
+                                "content": content
+                            ],
+                            [
+                                "type": "image_url",
+                                "image_url": "data:image/jpeg;base64,\(String(describing: item?.image))"
+                            ]
+                        ]
+                    ]
+                ]
             }
-            messages.append(
-                ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": content]
-            )
+
+        } else {
+            for item in messageHistory {
+                var content = item.message
+                if allowLocation {
+                    let dateTime = Date().description(with: .current)
+                    content = "\(content). Latitude: \(lastLocation?.coordinate.latitude ?? 0), longitude: \(lastLocation?.coordinate.longitude ?? 0), timestamp: \(dateTime)"
+                }
+                messages.append(
+                    ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": content]
+                )
+            }
         }
     }
 
@@ -164,6 +189,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                 completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))
             }
         } catch {
+            print("OpenAI Error: \(String(decoding: data, as: UTF8.self))")
             completion(.failure(error))
         }
     }
@@ -191,6 +217,7 @@ struct ChatMessage: Identifiable, Codable {
     var id = UUID()
     let message: String
     let sender: Sender
+    let image: String
 
     enum Sender: String, Codable {
         case user
@@ -202,8 +229,8 @@ class ChatHistory: ObservableObject {
     var id = UUID()
     @Published var messages: [ChatMessage] = []
 
-    func addMessage(_ message: String, from sender: ChatMessage.Sender) {
-        messages.append(ChatMessage(message: message, sender: sender))
+    func addMessage(_ message: String, from sender: ChatMessage.Sender, with image: String) {
+        messages.append(ChatMessage(message: message, sender: sender, image: image))
     }
 }
 

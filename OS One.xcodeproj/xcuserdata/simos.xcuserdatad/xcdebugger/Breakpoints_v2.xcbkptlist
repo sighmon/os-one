@@ -30,10 +30,10 @@
             filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "434"
-            endingLineNumber = "434"
-            landmarkName = "unknown"
-            landmarkType = "0">
+            startingLineNumber = "470"
+            endingLineNumber = "470"
+            landmarkName = "SpeechSynthesizerManager"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -46,24 +46,8 @@
             filePath = "OS One/OpenAI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "16"
-            endingLineNumber = "16"
-            landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
-            landmarkType = "9">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "DB11FE9C-C2DF-4C70-ACC7-5CF4AB6BD5AA"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "OS One/OpenAI.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "124"
-            endingLineNumber = "124"
+            startingLineNumber = "17"
+            endingLineNumber = "17"
             landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
             landmarkType = "9">
          </BreakpointContent>
@@ -119,17 +103,190 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "D95F41BA-B29E-4660-9D62-029809124167"
+            uuid = "9E7E2F60-37EC-422F-B727-D3FC83971200"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "OS One/HomeView.swift"
+            filePath = "OS One/OpenAI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "302"
-            endingLineNumber = "302"
-            landmarkName = "sendToOpenAI()"
-            landmarkType = "7">
+            startingLineNumber = "155"
+            endingLineNumber = "155"
+            landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "OS One/OpenAI.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "182"
+            endingLineNumber = "182"
+            landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1 - cce58bcb6dc2e00a"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "OS One"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "177"
+                  endingLineNumber = "177"
+                  offsetFromSymbolStart = "1021">
+               </Location>
+               <Location
+                  uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1 - cce58bcb6dc2e36f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "OS One"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "182"
+                  endingLineNumber = "182"
+                  offsetFromSymbolStart = "1021">
+               </Location>
+               <Location
+                  uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1 - cce58bcb6dc2e36f"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "OS One"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "182"
+                  endingLineNumber = "182"
+                  offsetFromSymbolStart = "1024">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "OS One/OpenAI.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "160"
+            endingLineNumber = "160"
+            landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
+            landmarkType = "9">
+            <Locations>
+               <Location
+                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f5e1"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "OS One"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "155"
+                  endingLineNumber = "155"
+                  offsetFromSymbolStart = "17561">
+               </Location>
+               <Location
+                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f5e1"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "OS One"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "155"
+                  endingLineNumber = "155"
+                  offsetFromSymbolStart = "15712">
+               </Location>
+               <Location
+                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f504"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "OS One"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "160"
+                  endingLineNumber = "160"
+                  offsetFromSymbolStart = "18899">
+               </Location>
+               <Location
+                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f504"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "OS One"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "160"
+                  endingLineNumber = "160"
+                  offsetFromSymbolStart = "18898">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "0C876551-12D4-4E04-95EA-8D1B32E73B8B"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "OS One/OpenAI.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "124"
+            endingLineNumber = "124"
+            landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "89197162-D5DF-4EB8-BDDA-05A66A8DDC87"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "OS One/OpenAI.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "193"
+            endingLineNumber = "193"
+            landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
+            landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

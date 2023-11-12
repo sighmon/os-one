@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var openAISessionKey: String = ""
     @State private var openAIUsage: Float = 0
     @State private var gpt4: Bool = true
+    @State private var vision: Bool = false
     @State private var allowLocation: Bool = false
     @State private var name: String = ""
     @Environment(\.dismiss) var dismiss
@@ -53,6 +54,10 @@ struct SettingsView: View {
                     Toggle("GPT-4", isOn: $gpt4)
                         .onChange(of: gpt4) {
                             UserDefaults.standard.set($0, forKey: "gpt4")
+                        }
+                    Toggle("GPT-4-Vision", isOn: $vision)
+                        .onChange(of: vision) {
+                            UserDefaults.standard.set($0, forKey: "vision")
                         }
                     if openAISessionKey != "" {
                         ProgressView(value: openAIUsage / 1000) {
@@ -118,6 +123,7 @@ struct SettingsView: View {
                     openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
                     openAISessionKey = UserDefaults.standard.string(forKey: "openAISessionKey") ?? ""
                     gpt4 = UserDefaults.standard.bool(forKey: "gpt4")
+                    vision = UserDefaults.standard.bool(forKey: "vision")
                     allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                     elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")

@@ -10,5 +10,9 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Share realtime photos with your assistant</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Share photos from your library with your assistant</string>
 </dict>
 </plist>
