@@ -334,11 +334,12 @@ struct HomeView: View {
                 break
             }
         }
+        let base64String = currentImage.map { encodeToBase64(image: $0) } ?? ""
         if !messageInChatHistory {
             chatHistory.addMessage(
                 speechRecognizer.transcript,
                 from: ChatMessage.Sender.user,
-                with: (currentImage != nil) ? encodeToBase64(image: currentImage!)! : ""
+                with: base64String
             )
         }
         chatCompletionAPI(name: name, messageHistory: chatHistory.messages, lastLocation: locationManager.lastLocation) { result in
@@ -355,7 +356,7 @@ struct HomeView: View {
                     chatHistory.addMessage(
                         content,
                         from: ChatMessage.Sender.openAI,
-                        with: (currentImage != nil) ? encodeToBase64(image: currentImage!)! : ""
+                        with: base64String
                     )
                 }
                 currentImage = nil
@@ -455,9 +456,30 @@ struct HomeView: View {
         }
     }
 
-    func encodeToBase64(image: UIImage) -> String? {
-        guard let imageData = image.jpegData(compressionQuality: 0.85) else { return nil }
+    func encodeToBase64(image: UIImage) -> String {
+        guard let scaledImage = scaledImage(image, width: 1920),
+              let imageData = scaledImage.jpegData(compressionQuality: 0.8) else {
+            return ""
+        }
         return imageData.base64EncodedString()
+    }
+
+    func scaledImage(_ image: UIImage, width: CGFloat) -> UIImage? {
+        let oldWidth = image.size.width
+        let scaleFactor = width / oldWidth
+
+        let newHeight = image.size.height * scaleFactor
+        let newSize = CGSize(width: width, height: newHeight)
+
+        return resizeImage(image: image, targetSize: newSize)
+    }
+
+    func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage? {
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        let newImage = renderer.image { (context) in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+        return newImage
     }
 }
 

@@ -127,11 +127,13 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                         "content": [
                             [
                                 "type": "text",
-                                "content": content
+                                "text": content as Any
                             ],
                             [
                                 "type": "image_url",
-                                "image_url": "data:image/jpeg;base64,\(String(describing: item?.image))"
+                                "image_url": [
+                                    "url": "data:image/jpeg;base64,\(item?.image ?? "")"
+                                ]
                             ]
                         ]
                     ]

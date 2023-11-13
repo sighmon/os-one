@@ -30,10 +30,10 @@
             filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "470"
-            endingLineNumber = "470"
-            landmarkName = "SpeechSynthesizerManager"
-            landmarkType = "3">
+            startingLineNumber = "492"
+            endingLineNumber = "492"
+            landmarkName = "previews"
+            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -110,8 +110,8 @@
             filePath = "OS One/OpenAI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "155"
-            endingLineNumber = "155"
+            startingLineNumber = "157"
+            endingLineNumber = "157"
             landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
             landmarkType = "9">
          </BreakpointContent>
@@ -126,13 +126,13 @@
             filePath = "OS One/OpenAI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "182"
-            endingLineNumber = "182"
+            startingLineNumber = "184"
+            endingLineNumber = "184"
             landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1 - cce58bcb6dc2e00a"
+                  uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1 - cce58bcb6dc2e32d"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -142,12 +142,12 @@
                   urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "177"
-                  endingLineNumber = "177"
-                  offsetFromSymbolStart = "1021">
+                  startingLineNumber = "184"
+                  endingLineNumber = "184"
+                  offsetFromSymbolStart = "2049">
                </Location>
                <Location
-                  uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1 - cce58bcb6dc2e36f"
+                  uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1 - cce58bcb6dc2e32d"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -157,23 +157,8 @@
                   urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "182"
-                  endingLineNumber = "182"
-                  offsetFromSymbolStart = "1021">
-               </Location>
-               <Location
-                  uuid = "6A137D5F-8D0E-4EFF-ADA9-F651095953C1 - cce58bcb6dc2e36f"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "OS One"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "182"
-                  endingLineNumber = "182"
+                  startingLineNumber = "184"
+                  endingLineNumber = "184"
                   offsetFromSymbolStart = "1024">
                </Location>
             </Locations>
@@ -189,13 +174,13 @@
             filePath = "OS One/OpenAI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "160"
-            endingLineNumber = "160"
+            startingLineNumber = "162"
+            endingLineNumber = "162"
             landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
             landmarkType = "9">
             <Locations>
                <Location
-                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f5e1"
+                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f2ca"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -205,12 +190,12 @@
                   urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "155"
-                  endingLineNumber = "155"
-                  offsetFromSymbolStart = "17561">
+                  startingLineNumber = "162"
+                  endingLineNumber = "162"
+                  offsetFromSymbolStart = "20616">
                </Location>
                <Location
-                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f5e1"
+                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f2ca"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -220,12 +205,12 @@
                   urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "155"
-                  endingLineNumber = "155"
-                  offsetFromSymbolStart = "15712">
+                  startingLineNumber = "162"
+                  endingLineNumber = "162"
+                  offsetFromSymbolStart = "19122">
                </Location>
                <Location
-                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f504"
+                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f2ca"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -235,24 +220,9 @@
                   urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "160"
-                  endingLineNumber = "160"
-                  offsetFromSymbolStart = "18899">
-               </Location>
-               <Location
-                  uuid = "5D60494A-0707-49DC-8058-BF6C8AC1868D - 11b37e0a7ce3f504"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "OS_One.chatCompletionAPI(name: Swift.String, messageHistory: Swift.Array&lt;OS_One.ChatMessage&gt;, lastLocation: Swift.Optional&lt;__C.CLLocation&gt;, completion: (Swift.Result&lt;Swift.String, Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "OS One"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/OpenAI.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "160"
-                  endingLineNumber = "160"
-                  offsetFromSymbolStart = "18898">
+                  startingLineNumber = "162"
+                  endingLineNumber = "162"
+                  offsetFromSymbolStart = "19248">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -283,8 +253,8 @@
             filePath = "OS One/OpenAI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "193"
-            endingLineNumber = "193"
+            startingLineNumber = "195"
+            endingLineNumber = "195"
             landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
             landmarkType = "9">
          </BreakpointContent>
