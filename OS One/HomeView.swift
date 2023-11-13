@@ -28,6 +28,11 @@ struct HomeView: View {
     @State private var deleteButtonTapped: Bool = false
     @State private var showingImagePicker = false
     @State private var currentImage: UIImage?
+    @State private var visionEnabled: Bool = UserDefaults.standard.bool(forKey: "vision") {
+        didSet {
+            UserDefaults.standard.set(visionEnabled, forKey: "vision")
+        }
+    }
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
     @StateObject private var audioPlayer = AudioPlayer()
@@ -80,7 +85,7 @@ struct HomeView: View {
                         Image(systemName: "archivebox")
                             .font(.system(size: 30))
                             .frame(width: 40)
-                            .padding(10)
+                            .padding(6)
                             .opacity(navigate ? 0.4 : 1.0)
                             .onTapGesture {
                                 navigate.toggle()
@@ -94,7 +99,7 @@ struct HomeView: View {
                         Image(systemName: "gear")
                             .font(.system(size: 30))
                             .frame(width: 40)
-                            .padding(10)
+                            .padding(6)
                             .opacity(showingSettingsSheet ? 0.4 : 1.0)
                             .onTapGesture {
                                 showingSettingsSheet.toggle()
@@ -112,7 +117,7 @@ struct HomeView: View {
                         Image(systemName: "square.and.arrow.down")
                             .font(.system(size: 30))
                             .frame(width: 40)
-                            .padding(10)
+                            .padding(6)
                             .opacity(saveButtonTapped ? 0.4 : 1.0)
                             .onTapGesture {
                                 addConversation()
@@ -123,7 +128,7 @@ struct HomeView: View {
                         Image(systemName: "trash")
                             .font(.system(size: 30))
                             .frame(width: 40)
-                            .padding(10)
+                            .padding(6)
                             .opacity(deleteButtonTapped ? 0.4 : 1.0)
                             .onTapGesture {
                                 deleteButtonTapped = true
@@ -138,7 +143,7 @@ struct HomeView: View {
                             Image(systemName: "mic.slash")
                                 .font(.system(size: 30))
                                 .frame(width: 40)
-                                .padding(10)
+                                .padding(6)
                                 .opacity(0.4)
                                 .onTapGesture {
                                     mute.toggle()
@@ -150,13 +155,21 @@ struct HomeView: View {
                             Image(systemName: "mic")
                                 .font(.system(size: 30))
                                 .frame(width: 40)
-                                .padding(10)
+                                .padding(6)
                                 .onTapGesture {
                                     mute.toggle()
                                     currentState = "sleeping"
                                     speechRecognizer.stopTranscribing()
                                 }
                         }
+                        Image(systemName: "camera")
+                            .font(.system(size: 30))
+                            .frame(width: 40)
+                            .padding(6)
+                            .opacity(visionEnabled ? 1.0 : 0.4)
+                            .onTapGesture {
+                                visionEnabled.toggle()
+                            }
                     }
 
                     Image(systemName: "arrow.up.circle")

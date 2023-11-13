@@ -219,7 +219,7 @@ struct ChatMessage: Identifiable, Codable {
     var id = UUID()
     let message: String
     let sender: Sender
-    let image: String
+    let image: String?
 
     enum Sender: String, Codable {
         case user
