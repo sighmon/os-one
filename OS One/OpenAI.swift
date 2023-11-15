@@ -116,37 +116,37 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
     )
 
     if messageHistory.count > 0 {
-        if vision {
-            model = "gpt-4-vision-preview"
-            let item = messageHistory.last
-            if item?.image != "" {
-                let content = item?.message
-                messages = [
+        for item in messageHistory {
+            var content = item.message
+            if content == messageHistory.last?.message && allowLocation {
+                let dateTime = Date().description(with: .current)
+                content = "\(content). Latitude: \(lastLocation?.coordinate.latitude ?? 0), longitude: \(lastLocation?.coordinate.longitude ?? 0), timestamp: \(dateTime)"
+            }
+            if vision {
+                var messageContent: [[String: Any]] = [
                     [
-                        "role": item?.sender == ChatMessage.Sender.user ? "user" : "assistant",
-                        "content": [
-                            [
-                                "type": "text",
-                                "text": content as Any
-                            ],
-                            [
-                                "type": "image_url",
-                                "image_url": [
-                                    "url": "data:image/jpeg;base64,\(item?.image ?? "")"
-                                ]
-                            ]
-                        ]
+                        "type": "text",
+                        "text": content as Any
                     ]
                 ]
-            }
-
-        } else {
-            for item in messageHistory {
-                var content = item.message
-                if allowLocation {
-                    let dateTime = Date().description(with: .current)
-                    content = "\(content). Latitude: \(lastLocation?.coordinate.latitude ?? 0), longitude: \(lastLocation?.coordinate.longitude ?? 0), timestamp: \(dateTime)"
+                if let image = item.image {
+                    messageContent.append(
+                        [
+                            "type": "image_url",
+                            "image_url": [
+                                "url": "data:image/jpeg;base64,\(image)"
+                            ]
+                        ]
+                    )
                 }
+                messages.append(
+                    [
+                        "role": item.sender == ChatMessage.Sender.user ? "user" : "assistant",
+                        "content": messageContent
+                    ]
+                )
+
+            } else {
                 messages.append(
                     ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": content]
                 )
@@ -154,10 +154,15 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         }
     }
 
-    let body = [
+    var body: [String: Any] = [
         "model": model,
         "messages": messages
-    ] as [String: Any]
+    ]
+
+    if vision {
+        body["max_tokens"] = 300
+        body["model"] = "gpt-4-vision-preview"
+    }
 
     guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
         completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
