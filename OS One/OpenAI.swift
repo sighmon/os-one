@@ -10,7 +10,7 @@ import CoreLocation
 
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    var model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4-1106-preview" : "gpt-3.5-turbo"
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4-1106-preview" : "gpt-3.5-turbo"
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
 
@@ -312,6 +312,48 @@ func getOpenAIUsage(completion: @escaping (Result<Float, Error>) -> Void) {
 
 struct OpenAIUsageResponse: Codable {
     let total_usage: Float
+}
+
+func openAItextToSpeechAPI(name: String, text: String, completion: @escaping (Result<Data, Error>) -> Void) {
+    let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
+
+    let body: [String: Any] = [
+        "model": "tts-1",
+        "input": text,
+        "voice": name
+    ]
+
+    let openAISpeechAPIURL = "https://api.openai.com/v1/audio/speech"
+
+    let headers = [
+        "Authorization": "Bearer \(openAIApiKey)",
+        "Content-Type": "application/json"
+    ]
+
+    guard let url = URL(string: openAISpeechAPIURL) else {
+        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+        return
+    }
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.allHTTPHeaderFields = headers
+    request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
+
+    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            completion(.failure(error))
+            return
+        }
+
+        guard let data = data else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+            return
+        }
+
+        completion(.success(data))
+    }
+    task.resume()
 }
 
 func firstDayOfCurrentMonth() -> String {

@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @State private var elevenLabsApiKey: String = ""
     @State private var elevenLabs: Bool = true
+    @State private var openAIVoice: Bool = false
     @State private var elevenLabsUsage: Float = 0
     @State private var openAIApiKey: String = ""
     @State private var openAISessionKey: String = ""
@@ -58,6 +59,10 @@ struct SettingsView: View {
                     Toggle("GPT-4-Vision", isOn: $vision)
                         .onChange(of: vision) {
                             UserDefaults.standard.set($0, forKey: "vision")
+                        }
+                    Toggle("OpenAI voice", isOn: $openAIVoice)
+                        .onChange(of: openAIVoice) {
+                            UserDefaults.standard.set($0, forKey: "openAIVoice")
                         }
                     if openAISessionKey != "" {
                         ProgressView(value: openAIUsage / 1000) {
@@ -124,6 +129,7 @@ struct SettingsView: View {
                     openAISessionKey = UserDefaults.standard.string(forKey: "openAISessionKey") ?? ""
                     gpt4 = UserDefaults.standard.bool(forKey: "gpt4")
                     vision = UserDefaults.standard.bool(forKey: "vision")
+                    openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
                     allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                     elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")

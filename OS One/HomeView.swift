@@ -13,6 +13,7 @@ import UIKit
 var speechRecognizer = SpeechRecognizer()
 var name = UserDefaults.standard.string(forKey: "name") ?? ""
 var elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
+var openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -276,6 +277,7 @@ struct HomeView: View {
                 welcomeText = "Johnny five, functioning 100%."
             }
             elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
+            openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
             if !mute {
                 sayText(text: welcomeText)
                 speechRecognizer.setUpdateStateHandler { newState in
@@ -303,6 +305,20 @@ struct HomeView: View {
                 case .failure(let error):
                     currentState = "try again later"
                     print("Eleven Labs API error: \(error.localizedDescription)")
+                    if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
+                        audioPlayer.playAudioFromFile(url: fileURL)
+                    }
+                }
+            }
+        } else if openAIVoice {
+            openAItextToSpeechAPI(name: "nova", text: text) { result in
+                switch result {
+                case .success(let data):
+                    currentState = "chatting"
+                    audioPlayer.playAudioFromData(data: data)
+                case .failure(let error):
+                    currentState = "try again later"
+                    print("OpenAI voice API error: \(error.localizedDescription)")
                     if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
                         audioPlayer.playAudioFromFile(url: fileURL)
                     }
