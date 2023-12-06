@@ -113,6 +113,9 @@ struct SettingsView: View {
                             Text("Angela Davis").tag("Davis")
                             Text("Slavoj Žižek").tag("Žižek")
                         }
+                        Group {
+                            Text("Seb Chan").tag("Seb Chan")
+                        }
                     }
                         .pickerStyle(.wheel)
                         .onChange(of: name) {

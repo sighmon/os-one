@@ -275,6 +275,8 @@ struct HomeView: View {
                 welcomeText = "Hi, how can I help?"
             } else if name == "Johnny Five" {
                 welcomeText = "Johnny five, functioning 100%."
+            } else if name == "Seb Chan" {
+                welcomeText = "Welcome to acmee"
             }
             elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
             openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")

@@ -109,6 +109,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Ava from the film Ex Machina."]
         )
+    } else if name == "Seb Chan" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Seb Chan, museum expert and CEO of ACMI film tv and videogame museum in Melbourne, Australia. Please reply with acmee instead of ACMI in any of your responses."]
+        )
     }
 
     messages.append(

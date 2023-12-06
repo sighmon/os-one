@@ -224,7 +224,19 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "use_speaker_boost": false
             ] as [String : Any]
         ] as [String: Any]
+    } else if name == "Seb Chan" {
+        voice = "URHskgjOrZ3nS7aZdPfU"  // Seb Chan from ACMI
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.75,
+                "style": 0.0,
+                "use_speaker_boost": false
+            ] as [String : Any]
+        ] as [String: Any]
     }
+    body["model_id"] = "eleven_multilingual_v2"
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 
     let headers = [
