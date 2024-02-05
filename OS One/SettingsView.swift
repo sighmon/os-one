@@ -26,8 +26,19 @@ struct SettingsView: View {
             ZStack {
                 Color(red: 0.5, green: 0.5, blue: 0.5).edgesIgnoringSafeArea(.all).opacity(0.1)
                 VStack {
-                    Text("OS One")
-                        .font(.system(size: 50, weight: .light))
+                    HStack {
+                        Text("OS")
+                            .font(.system(
+                                size: 50,
+                                weight: .light
+                            ))
+                        Text("1")
+                            .font(.system(
+                                size: 30,
+                                weight: .regular
+                            ))
+                            .baselineOffset(20.0)
+                    }
                     Text("settings")
                         .font(.system(size: 25, weight: .light))
                         .padding(.bottom, 5)

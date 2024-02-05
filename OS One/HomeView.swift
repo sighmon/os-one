@@ -586,7 +586,7 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
 func setAudioSession(active: Bool) {
     let session = AVAudioSession.sharedInstance()
     do {
-        try session.setCategory(AVAudioSession.Category.playAndRecord, mode: .default, options: .allowBluetooth)
+        try session.setCategory(AVAudioSession.Category.playAndRecord, mode: .default, options: [.allowBluetoothA2DP, .allowBluetooth])
         if isDeviceAniPhone() && !areHeadphonesConnected() {
             try session.overrideOutputAudioPort(.speaker)
         } else {
@@ -607,7 +607,7 @@ func areHeadphonesConnected() -> Bool {
     let outputs = audioSession.currentRoute.outputs
 
     for output in outputs {
-        if output.portType == .headphones || output.portType == .bluetoothA2DP {
+        if output.portType == .headphones || output.portType == .bluetoothA2DP || output.portType == .bluetoothHFP || output.portType == .bluetoothLE {
             return true
         }
     }

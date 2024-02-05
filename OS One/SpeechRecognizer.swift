@@ -121,22 +121,35 @@ class SpeechRecognizer: ObservableObject {
     
     private static func prepareEngine() throws -> (AVAudioEngine, SFSpeechAudioBufferRecognitionRequest) {
         let audioEngine = AVAudioEngine()
-        
+
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
         
         let audioSession = AVAudioSession.sharedInstance()
-        try audioSession.setCategory(.record, mode: .measurement)
+        try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.allowBluetoothA2DP, .allowBluetooth])
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         let inputNode = audioEngine.inputNode
-        
+
+        if let availableInputs = audioSession.availableInputs {
+            for input in availableInputs {
+                if input.portType == .headphones || input.portType == .bluetoothA2DP || input.portType == .bluetoothHFP || input.portType == .bluetoothLE {
+                    do {
+                        try audioSession.setPreferredInput(input)
+                        break
+                    } catch {
+                        print("Error setting preferred input to headphones: \(error)")
+                    }
+                }
+            }
+        }
+
         let recordingFormat = inputNode.outputFormat(forBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
             request.append(buffer)
         }
         audioEngine.prepare()
         try audioEngine.start()
-        
+
         return (audioEngine, request)
     }
     
