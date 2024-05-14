@@ -10,7 +10,7 @@ import CoreLocation
 
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4-1106-preview" : "gpt-3.5-turbo"
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4o" : "gpt-4-turbo"
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
 
@@ -165,7 +165,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
 
     if vision {
         body["max_tokens"] = 300
-        body["model"] = "gpt-4-vision-preview"
+        body["model"] = "gpt-4o"
     }
 
     guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {

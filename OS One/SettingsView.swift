@@ -63,13 +63,9 @@ struct SettingsView: View {
                         .onChange(of: allowLocation) {
                             UserDefaults.standard.set($0, forKey: "allowLocation")
                         }
-                    Toggle("GPT-4", isOn: $gpt4)
+                    Toggle("GPT-4o", isOn: $gpt4)
                         .onChange(of: gpt4) {
                             UserDefaults.standard.set($0, forKey: "gpt4")
-                        }
-                    Toggle("GPT-4-Vision", isOn: $vision)
-                        .onChange(of: vision) {
-                            UserDefaults.standard.set($0, forKey: "vision")
                         }
                     Toggle("OpenAI voice", isOn: $openAIVoice)
                         .onChange(of: openAIVoice) {
