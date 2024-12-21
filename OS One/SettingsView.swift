@@ -98,6 +98,7 @@ struct SettingsView: View {
                         }
                         Group {
                             Text("Ava").tag("Ava")
+                            Text("Darth Vader").tag("Darth Vader")
                             Text("Johnny Five").tag("Johnny Five")
                             Text("J.A.R.V.I.S.").tag("J.A.R.V.I.S.")
                         }

@@ -30,8 +30,8 @@
             filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "452"
-            endingLineNumber = "452"
+            startingLineNumber = "454"
+            endingLineNumber = "454"
             landmarkName = "addConversation()"
             landmarkType = "7">
          </BreakpointContent>
@@ -62,8 +62,8 @@
             filePath = "OS One/OpenAI.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "128"
-            endingLineNumber = "128"
+            startingLineNumber = "132"
+            endingLineNumber = "132"
             landmarkName = "chatCompletionAPI(name:messageHistory:lastLocation:completion:)"
             landmarkType = "9">
          </BreakpointContent>
@@ -126,8 +126,8 @@
             filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "306"
-            endingLineNumber = "306"
+            startingLineNumber = "308"
+            endingLineNumber = "308"
             landmarkName = "sayText(text:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -142,40 +142,10 @@
             filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "555"
-            endingLineNumber = "555"
+            startingLineNumber = "557"
+            endingLineNumber = "557"
             landmarkName = "playAudioFromData(data:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "5213EE10-5B9A-4B74-8864-4BD9C4FADF62 - 50afd6fe517311d2"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 @Swift.MainActor () -&gt; () in OS_One.AudioPlayer.playAudioFromData(data: Foundation.Data) -&gt; ()"
-                  moduleName = "OS One"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/HomeView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "555"
-                  endingLineNumber = "555">
-               </Location>
-               <Location
-                  uuid = "5213EE10-5B9A-4B74-8864-4BD9C4FADF62 - 50afd6fe517311d2"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 @Swift.MainActor () -&gt; () in OS_One.AudioPlayer.playAudioFromData(data: Foundation.Data) -&gt; ()"
-                  moduleName = "OS One"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/HomeView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "555"
-                  endingLineNumber = "555">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -192,36 +162,6 @@
             endingLineNumber = "58"
             landmarkName = "messagesContainSearchQuery(messages:query:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "6A01F87C-415D-4902-AA4F-75FD7BBC1A7B - b4ddbdba9131f653"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "OS_One.ContentView.messagesContainSearchQuery(messages: Swift.String, query: Swift.String) -&gt; Swift.Bool"
-                  moduleName = "OS One"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/ContentView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "58"
-                  endingLineNumber = "58">
-               </Location>
-               <Location
-                  uuid = "6A01F87C-415D-4902-AA4F-75FD7BBC1A7B - b4ddbdba9131f653"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "OS_One.ContentView.messagesContainSearchQuery(messages: Swift.String, query: Swift.String) -&gt; Swift.Bool"
-                  moduleName = "OS One"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/ContentView.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "58"
-                  endingLineNumber = "58">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -266,8 +206,8 @@
             filePath = "OS One/HomeView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "591"
-            endingLineNumber = "591"
+            startingLineNumber = "593"
+            endingLineNumber = "593"
             landmarkName = "setAudioSession(active:)"
             landmarkType = "9">
          </BreakpointContent>
@@ -302,36 +242,6 @@
             endingLineNumber = "137"
             landmarkName = "prepareEngine()"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "7B4C78B3-6F06-4E71-82A7-5D71DC2C550B - 890315a87b9f71c2"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "static OS_One.SpeechRecognizer.prepareEngine() throws -&gt; (__C.AVAudioEngine, __C.SFSpeechAudioBufferRecognitionRequest)"
-                  moduleName = "OS One"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/SpeechRecognizer.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "137"
-                  endingLineNumber = "137">
-               </Location>
-               <Location
-                  uuid = "7B4C78B3-6F06-4E71-82A7-5D71DC2C550B - 890315a87b9f71c2"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "static OS_One.SpeechRecognizer.prepareEngine() throws -&gt; (__C.AVAudioEngine, __C.SFSpeechAudioBufferRecognitionRequest)"
-                  moduleName = "OS One"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/simos/Coding/iOS/OS%20One/OS%20One/SpeechRecognizer.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "137"
-                  endingLineNumber = "137">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

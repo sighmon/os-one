@@ -10,7 +10,7 @@ import CoreLocation
 
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4o" : "gpt-4-turbo"
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4o" : "gpt-4o-mini"
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
 
@@ -113,6 +113,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         messages.append(
             ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Seb Chan, museum expert and CEO of ACMI film tv and videogame museum in Melbourne, Australia. Please reply with acmee instead of ACMI in any of your responses."]
         )
+    } else if name == "Darth Vader" {
+        messages.append(
+            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Darth Vader from the film Star Wars."]
+        )
     }
 
     messages.append(
@@ -194,7 +198,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             if let content = responseObject.choices.first?.message.content {
                 print("ChatGPT Response: \(content)")
                 let tokens = String(responseObject.usage.total_tokens)
-                print("OpenAI Tokens: \(tokens)")
+                print("OpenAI \(model) Tokens: \(tokens)")
                 completion(.success(content))
             } else {
                 completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))

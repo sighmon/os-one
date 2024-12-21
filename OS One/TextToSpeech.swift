@@ -94,6 +94,16 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "similarity_boost": 0.90
             ]
         ] as [String: Any]
+    } else if name == "Darth Vader" {
+        voice = "cmArHk9HUIzliMhLTxzS"  // Darth Vader from Star Wars
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.75,
+                "use_speaker_boost": true
+            ]
+        ] as [String: Any]
     } else if name == "Butler" {
         voice = "14u5PkxqmV3t6WU44Pdj"  // Judith Butler, American philosopher
         body = [
@@ -236,7 +246,7 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
             ] as [String : Any]
         ] as [String: Any]
     }
-    body["model_id"] = "eleven_multilingual_v2"
+    body["model_id"] = "eleven_flash_v2_5"
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 
     let headers = [
