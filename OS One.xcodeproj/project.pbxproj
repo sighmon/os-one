@@ -17,6 +17,7 @@
 		05496C7F29D956D40080C503 /* OS_OneUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C7E29D956D40080C503 /* OS_OneUITests.swift */; };
 		05496C8129D956D40080C503 /* OS_OneUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8029D956D40080C503 /* OS_OneUITestsLaunchTests.swift */; };
 		05496C8E29D958550080C503 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05496C8D29D958550080C503 /* HomeView.swift */; };
+		056929F52DD3650D004FD9DD /* HomeKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 056929F42DD3650D004FD9DD /* HomeKitManager.swift */; };
 		057052902AA7494500B05FD6 /* LocationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0570528F2AA7494500B05FD6 /* LocationController.swift */; };
 		05744E7C29DAE5D40013FB54 /* TextToSpeech.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */; };
 		05744E7E29DAEED90013FB54 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05744E7D29DAEED90013FB54 /* SettingsView.swift */; };
@@ -60,6 +61,8 @@
 		05496C7E29D956D40080C503 /* OS_OneUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OS_OneUITests.swift; sourceTree = "<group>"; };
 		05496C8029D956D40080C503 /* OS_OneUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OS_OneUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		05496C8D29D958550080C503 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		056929F42DD3650D004FD9DD /* HomeKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeKitManager.swift; sourceTree = "<group>"; };
+		056929F62DD36AAB004FD9DD /* OS One.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "OS One.entitlements"; sourceTree = "<group>"; };
 		0570528F2AA7494500B05FD6 /* LocationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationController.swift; sourceTree = "<group>"; };
 		05744E7B29DAE5D40013FB54 /* TextToSpeech.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeech.swift; sourceTree = "<group>"; };
 		05744E7D29DAEED90013FB54 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -120,12 +123,14 @@
 		05496C5C29D956D20080C503 /* OS One */ = {
 			isa = PBXGroup;
 			children = (
+				056929F62DD36AAB004FD9DD /* OS One.entitlements */,
 				057BD3CC2A3D524500D37193 /* Audio */,
 				05744E8129DB052E0013FB54 /* OS-One-Info.plist */,
 				05496C5D29D956D20080C503 /* OS_OneApp.swift */,
 				05496C5F29D956D20080C503 /* ContentView.swift */,
 				05F0AE3C29DEE1DD00E68AC6 /* ConversationView.swift */,
 				05496C8D29D958550080C503 /* HomeView.swift */,
+				056929F42DD3650D004FD9DD /* HomeKitManager.swift */,
 				0570528F2AA7494500B05FD6 /* LocationController.swift */,
 				05C3FFF729E8C8AB00B33D0F /* DoubleHelixView.swift */,
 				05744E7D29DAEED90013FB54 /* SettingsView.swift */,
@@ -313,6 +318,7 @@
 				05496C6029D956D20080C503 /* ContentView.swift in Sources */,
 				057052902AA7494500B05FD6 /* LocationController.swift in Sources */,
 				05744E8029DAF2B60013FB54 /* OpenAI.swift in Sources */,
+				056929F52DD3650D004FD9DD /* HomeKitManager.swift in Sources */,
 				0597AE5829D98B9B00C5CCF4 /* SpeechRecognizer.swift in Sources */,
 				05496C6A29D956D40080C503 /* OS_One.xcdatamodeld in Sources */,
 				05744E7C29DAE5D40013FB54 /* TextToSpeech.swift in Sources */,
@@ -478,8 +484,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "OS One/OS One.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 68;
+				CURRENT_PROJECT_VERSION = 69;
 				DEVELOPMENT_ASSET_PATHS = "\"OS One/Preview Content\"";
 				DEVELOPMENT_TEAM = 4P8S9W2NYL;
 				ENABLE_PREVIEWS = YES;
@@ -496,7 +503,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.4;
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sighmon.OS-One";
 				PRODUCT_NAME = "OS One";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -510,8 +517,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "OS One/OS One.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 68;
+				CURRENT_PROJECT_VERSION = 69;
 				DEVELOPMENT_ASSET_PATHS = "\"OS One/Preview Content\"";
 				DEVELOPMENT_TEAM = 4P8S9W2NYL;
 				ENABLE_PREVIEWS = YES;
@@ -528,7 +536,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.4;
+				MARKETING_VERSION = 2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sighmon.OS-One";
 				PRODUCT_NAME = "OS One";
 				SWIFT_EMIT_LOC_STRINGS = YES;

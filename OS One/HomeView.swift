@@ -24,6 +24,7 @@ struct HomeView: View {
     @State private var currentState = "chatting"
     @State private var welcomeText = "Hello, how can I help?"
     @State private var showingSettingsSheet = false
+    @State private var showingHomeKitSheet = false
     @State private var sendButtonEnabled: Bool = true
     @State private var saveButtonTapped: Bool = false
     @State private var deleteButtonTapped: Bool = false
@@ -50,12 +51,23 @@ struct HomeView: View {
                 )
                     .edgesIgnoringSafeArea(.all)
                 VStack {
+                    Spacer()
                     HStack {
                         Text("OS")
                             .font(.system(
                                 size: 80,
                                 weight: .light
                             ))
+                            .onTapGesture {
+                                showingHomeKitSheet.toggle()
+                            }
+                            .sheet(isPresented: $showingHomeKitSheet, onDismiss: {
+                                speechRecognizer.stopTranscribing()
+                                setAudioSession(active: false)
+                                startup()
+                            }) {
+                                HomeKitScannerView()
+                            }
                         Text("1")
                             .font(.system(
                                 size: 50,
@@ -82,6 +94,7 @@ struct HomeView: View {
                         .frame(height: 100)
                         .padding(.bottom, 20)
 
+                    Spacer()
                     HStack {
                         Image(systemName: "archivebox")
                             .font(.system(size: 30))
@@ -172,23 +185,6 @@ struct HomeView: View {
                                 visionEnabled.toggle()
                             }
                     }
-
-                    Image(systemName: "arrow.up.circle")
-                        .font(.system(size: 80, weight: .light))
-                        .frame(width: 40)
-                        .padding(.top, 60)
-                        .onTapGesture {
-                            sendToOpenAI()
-                        }
-                        .font(.system(
-                            size: 20,
-                            weight: .light
-                        ))
-                        .foregroundColor(.primary)
-                        .buttonStyle(.bordered)
-                        .padding(.top, 40)
-                        .disabled(!sendButtonEnabled)
-                        .opacity(sendButtonEnabled ? 1.0 : 0.2)
                 }
                 .onAppear {
                     startup()

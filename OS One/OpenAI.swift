@@ -7,8 +7,75 @@
 
 import Foundation
 import CoreLocation
+import HomeKit
+
+class HomeKitManagerSingleton {
+    static let shared = HomeKitManager()
+
+    static func initialize() {
+        // Force initialization
+        _ = shared
+        print("HomeKitManagerSingleton initialized")
+    }
+}
+
+struct OpenAITool: Codable {
+    let type: String
+    let function: OpenAIFunction
+}
+
+struct OpenAIFunction: Codable {
+    let name: String
+    let description: String
+    let parameters: OpenAIParameters
+}
+
+struct OpenAIParameters: Codable {
+    let type: String
+    let properties: [String: OpenAIProperty]
+    let required: [String]
+}
+
+struct OpenAIProperty: Codable {
+    let type: String
+    let description: String
+}
+
+struct OpenAIResponse: Codable {
+    let choices: [OpenAIChoice]
+    let usage: OpenAIUsage
+}
+
+struct OpenAIChoice: Codable {
+    let message: OpenAIMessage
+    let finish_reason: String?
+}
+
+struct OpenAIUsage: Codable {
+    let total_tokens: Int
+}
+
+struct OpenAIMessage: Codable {
+    let role: String
+    let content: String?
+    let tool_calls: [OpenAIToolCall]?
+}
+
+struct OpenAIToolCall: Codable {
+    let id: String
+    let type: String
+    let function: OpenAIToolCallFunction
+}
+
+struct OpenAIToolCallFunction: Codable {
+    let name: String
+    let arguments: String
+}
 
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
+    // Initialize HomeKitManager
+    HomeKitManagerSingleton.initialize()
+
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
     let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4o" : "gpt-4o-mini"
     let vision = UserDefaults.standard.bool(forKey: "vision")
@@ -153,7 +220,6 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                         "content": messageContent
                     ]
                 )
-
             } else {
                 messages.append(
                     ["role": item.sender == ChatMessage.Sender.user ? "user" : "assistant", "content": content]
@@ -162,9 +228,23 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         }
     }
 
+    let homeKitTool = OpenAITool(
+        type: "function",
+        function: OpenAIFunction(
+            name: "getHomeKitData",
+            description: "Retrieves data about HomeKit homes, accessories, and their characteristics, including names, types, and values.",
+            parameters: OpenAIParameters(
+                type: "object",
+                properties: [:],
+                required: []
+            )
+        )
+    )
+
     var body: [String: Any] = [
         "model": model,
-        "messages": messages
+        "messages": messages,
+        "tools": [try? JSONEncoder().encode(homeKitTool)].compactMap { $0 }.map { try? JSONSerialization.jsonObject(with: $0, options: []) }
     ]
 
     if vision {
@@ -177,55 +257,86 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         return
     }
 
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.allHTTPHeaderFields = headers
-    request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
+    func sendRequest(body: [String: Any], completion: @escaping (Result<String, Error>) -> Void) {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.allHTTPHeaderFields = headers
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
 
-    let task = URLSession.shared.dataTask(with: request) { data, response, error in
-        if let error = error {
-            completion(.failure(error))
-            return
-        }
-
-        guard let data = data else {
-            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
-            return
-        }
-
-        do {
-            let responseObject = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-            if let content = responseObject.choices.first?.message.content {
-                print("ChatGPT Response: \(content)")
-                let tokens = String(responseObject.usage.total_tokens)
-                print("OpenAI \(model) Tokens: \(tokens)")
-                completion(.success(content))
-            } else {
-                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
             }
-        } catch {
-            print("OpenAI Error: \(String(decoding: data, as: UTF8.self))")
-            completion(.failure(error))
+
+            guard let data = data else {
+                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+
+            do {
+                let responseObject = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+                guard let choice = responseObject.choices.first else {
+                    completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No choices in response"])))
+                    return
+                }
+
+                if let toolCalls = choice.message.tool_calls, choice.finish_reason == "tool_calls" {
+                    for toolCall in toolCalls {
+                        if toolCall.function.name == "getHomeKitData" {
+                            // Fetch HomeKit data asynchronously
+                            HomeKitManagerSingleton.shared.fetchHomeKitData { homeKitData in
+                                print("Tool call: getHomeKitData, returned: \(homeKitData.prefix(100))...")
+                                let toolResponseMessage: [String: Any] = [
+                                    "role": "tool",
+                                    "content": homeKitData,
+                                    "tool_call_id": toolCall.id
+                                ]
+
+                                var newMessages = messages
+                                newMessages.append([
+                                    "role": "assistant",
+                                    "tool_calls": toolCalls.map { [
+                                        "id": $0.id,
+                                        "type": $0.type,
+                                        "function": [
+                                            "name": $0.function.name,
+                                            "arguments": $0.function.arguments
+                                        ]
+                                    ] }
+                                ])
+                                newMessages.append(toolResponseMessage)
+
+                                let newBody: [String: Any] = [
+                                    "model": model,
+                                    "messages": newMessages,
+                                    "tools": body["tools"] ?? []
+                                ]
+                                sendRequest(body: newBody, completion: completion)
+                            }
+                            return
+                        }
+                    }
+                }
+
+                // Handle regular response
+                if let content = choice.message.content {
+                    print("ChatGPT Response: \(content)")
+                    let tokens = String(responseObject.usage.total_tokens)
+                    print("OpenAI \(model) Tokens: \(tokens)")
+                    completion(.success(content))
+                } else {
+                    completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))
+                }
+            } catch {
+                print("OpenAI Error: \(String(decoding: data, as: UTF8.self))")
+                completion(.failure(error))
+            }
         }
+        task.resume()
     }
-    task.resume()
-}
 
-struct OpenAIResponse: Codable {
-    let choices: [OpenAIChoice]
-    let usage: OpenAIUsage
-}
-
-struct OpenAIChoice: Codable {
-    let message: OpenAIMessage
-}
-
-struct OpenAIUsage: Codable {
-    let total_tokens: Int
-}
-
-struct OpenAIMessage: Codable {
-    let content: String
+    sendRequest(body: body, completion: completion)
 }
 
 struct ChatMessage: Identifiable, Codable {
