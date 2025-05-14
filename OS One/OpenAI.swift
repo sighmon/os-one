@@ -15,7 +15,7 @@ class HomeKitManagerSingleton {
     static func initialize() {
         // Force initialization
         _ = shared
-        print("HomeKitManagerSingleton initialized")
+        print("HomeKitManagerSingleton initialized at \(Date())")
     }
 }
 
@@ -73,7 +73,6 @@ struct OpenAIToolCallFunction: Codable {
 }
 
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
-    // Initialize HomeKitManager
     HomeKitManagerSingleton.initialize()
 
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
@@ -232,7 +231,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         type: "function",
         function: OpenAIFunction(
             name: "getHomeKitData",
-            description: "Retrieves data about HomeKit homes, accessories, and their characteristics, including names, types, and values.",
+            description: "Retrieves data about HomeKit homes, accessories, and their characteristics, including names, types, and values. Returns a message if data is unavailable.",
             parameters: OpenAIParameters(
                 type: "object",
                 properties: [:],
@@ -265,11 +264,13 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
+                print("API request failed: \(error.localizedDescription)")
                 completion(.failure(error))
                 return
             }
 
             guard let data = data else {
+                print("No data received from API")
                 completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
                 return
             }
@@ -277,6 +278,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             do {
                 let responseObject = try JSONDecoder().decode(OpenAIResponse.self, from: data)
                 guard let choice = responseObject.choices.first else {
+                    print("No choices in API response")
                     completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No choices in response"])))
                     return
                 }
@@ -319,13 +321,13 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                     }
                 }
 
-                // Handle regular response
                 if let content = choice.message.content {
                     print("ChatGPT Response: \(content)")
                     let tokens = String(responseObject.usage.total_tokens)
                     print("OpenAI \(model) Tokens: \(tokens)")
                     completion(.success(content))
                 } else {
+                    print("Invalid response format: no content")
                     completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))
                 }
             } catch {
