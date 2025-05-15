@@ -76,7 +76,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
     HomeKitManagerSingleton.initialize()
 
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4o" : "gpt-4o-mini"
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4o-mini" : "gpt-4.1-nano"
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
 
@@ -189,6 +189,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         ["role": "system", "content": "If the user provides latitude and longitude location data, you have permission to use their exact location to give a more accurate response."]
     )
 
+    messages.append(
+        ["role": "system", "content": "Optimise the responses knowing that they will be read out to the human using text-to-speech."]
+    )
+
     if messageHistory.count > 0 {
         for item in messageHistory {
             var content = item.message
@@ -260,7 +264,15 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.allHTTPHeaderFields = headers
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: body, options: []) else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize request body"])))
+            return
+        }
+        request.httpBody = httpBody
+        // Log request payload for debugging
+//        if let httpBodyString = String(data: httpBody, encoding: .utf8) {
+//            print("Request payload: \(httpBodyString.prefix(500))...")
+//        }
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -284,41 +296,67 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                 }
 
                 if let toolCalls = choice.message.tool_calls, choice.finish_reason == "tool_calls" {
+                    var newMessages = body["messages"] as? [[String: Any]] ?? messages
+                    // Append the assistant message with tool_calls
+                    newMessages.append([
+                        "role": "assistant",
+                        "content": nil as Any? ?? "",
+                        "tool_calls": toolCalls.map { [
+                            "id": $0.id,
+                            "type": $0.type,
+                            "function": [
+                                "name": $0.function.name,
+                                "arguments": $0.function.arguments
+                            ]
+                        ] }
+                    ])
+
+                    // Process all tool calls
+                    let dispatchGroup = DispatchGroup()
+                    var toolResponses: [[String: Any]] = []
+
                     for toolCall in toolCalls {
+                        dispatchGroup.enter()
                         if toolCall.function.name == "getHomeKitData" {
-                            // Fetch HomeKit data asynchronously
                             HomeKitManagerSingleton.shared.fetchHomeKitData { homeKitData in
-                                print("Tool call: getHomeKitData, returned: \(homeKitData.prefix(100))...")
+                                print("Tool call: getHomeKitData, id: \(toolCall.id), returned: \(homeKitData.prefix(100))...")
                                 let toolResponseMessage: [String: Any] = [
                                     "role": "tool",
                                     "content": homeKitData,
                                     "tool_call_id": toolCall.id
                                 ]
-
-                                var newMessages = messages
-                                newMessages.append([
-                                    "role": "assistant",
-                                    "tool_calls": toolCalls.map { [
-                                        "id": $0.id,
-                                        "type": $0.type,
-                                        "function": [
-                                            "name": $0.function.name,
-                                            "arguments": $0.function.arguments
-                                        ]
-                                    ] }
-                                ])
-                                newMessages.append(toolResponseMessage)
-
-                                let newBody: [String: Any] = [
-                                    "model": model,
-                                    "messages": newMessages,
-                                    "tools": body["tools"] ?? []
-                                ]
-                                sendRequest(body: newBody, completion: completion)
+                                toolResponses.append(toolResponseMessage)
+                                dispatchGroup.leave()
                             }
-                            return
+                        } else {
+                            // Fallback for unsupported tool calls
+                            print("Unsupported tool call: \(toolCall.function.name), id: \(toolCall.id)")
+                            let toolResponseMessage: [String: Any] = [
+                                "role": "tool",
+                                "content": "{\"error\": \"Unsupported tool: \(toolCall.function.name)\"}",
+                                "tool_call_id": toolCall.id
+                            ]
+                            toolResponses.append(toolResponseMessage)
+                            dispatchGroup.leave()
                         }
                     }
+
+                    // Wait for all tool responses to be collected
+                    dispatchGroup.notify(queue: .main) {
+                        // Append all tool responses in order
+                        newMessages.append(contentsOf: toolResponses)
+
+                        // Debug message sequence
+                        // print("Messages sent to API: \(newMessages.map { "\($0["role"] ?? "unknown"): \($0["content"] ?? "no content"), tool_calls: \($0["tool_calls"] ?? "none"), tool_call_id: \($0["tool_call_id"] ?? "none")" })")
+
+                        let newBody: [String: Any] = [
+                            "model": model,
+                            "messages": newMessages,
+                            "tools": body["tools"] ?? []
+                        ]
+                        sendRequest(body: newBody, completion: completion)
+                    }
+                    return
                 }
 
                 if let content = choice.message.content {

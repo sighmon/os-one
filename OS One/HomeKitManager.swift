@@ -116,6 +116,9 @@ class HomeKitManager: NSObject, ObservableObject, HMHomeManagerDelegate {
             }
         }
 
+        // Append Powerwall note
+        output += "\nNote: Powerwall solar/load values are the solar power produced and the home load use in Watts.\n"
+
         llmOutput = output
     }
 
