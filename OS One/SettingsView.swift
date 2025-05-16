@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var gpt4: Bool = true
     @State private var vision: Bool = false
     @State private var allowLocation: Bool = false
+    @State private var allowSearch: Bool = false
     @State private var name: String = ""
     @Environment(\.dismiss) var dismiss
 
@@ -62,6 +63,10 @@ struct SettingsView: View {
                     Toggle("Allow location", isOn: $allowLocation)
                         .onChange(of: allowLocation) {
                             UserDefaults.standard.set($0, forKey: "allowLocation")
+                        }
+                    Toggle("Allow search", isOn: $allowSearch)
+                        .onChange(of: allowSearch) {
+                            UserDefaults.standard.set($0, forKey: "allowSearch")
                         }
                     Toggle("GPT-4.1", isOn: $gpt4)
                         .onChange(of: gpt4) {
@@ -142,6 +147,7 @@ struct SettingsView: View {
                     vision = UserDefaults.standard.bool(forKey: "vision")
                     openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
                     allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
+                    allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
                     elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                     elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
                     name = UserDefaults.standard.string(forKey: "name") ?? ""

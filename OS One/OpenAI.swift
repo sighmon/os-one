@@ -19,6 +19,18 @@ class HomeKitManagerSingleton {
     }
 }
 
+struct OpenAIAnnotation: Codable {
+    let type: String
+    let url_citation: OpenAIUrlCitation?
+}
+
+struct OpenAIUrlCitation: Codable {
+    let start_index: Int
+    let end_index: Int
+    let title: String
+    let url: String
+}
+
 struct OpenAITool: Codable {
     let type: String
     let function: OpenAIFunction
@@ -59,6 +71,8 @@ struct OpenAIMessage: Codable {
     let role: String
     let content: String?
     let tool_calls: [OpenAIToolCall]?
+    let refusal: String?
+    let annotations: [OpenAIAnnotation]?
 }
 
 struct OpenAIToolCall: Codable {
@@ -76,9 +90,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
     HomeKitManagerSingleton.initialize()
 
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4o-mini" : "gpt-4.1-nano"
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4.1-nano" : "gpt-4o-mini"
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
+    let allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
 
     let headers = [
         "Content-Type": "application/json",
@@ -246,13 +261,19 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
 
     var body: [String: Any] = [
         "model": model,
-        "messages": messages,
-        "tools": [try? JSONEncoder().encode(homeKitTool)].compactMap { $0 }.map { try? JSONSerialization.jsonObject(with: $0, options: []) }
+        "messages": messages
     ]
 
     if vision {
         body["max_tokens"] = 300
         body["model"] = "gpt-4o"
+    }
+
+    if allowSearch {
+        body["model"] = "gpt-4o-mini-search-preview"
+        body["web_search_options"] = [:]
+    } else {
+        body["tools"] = [try? JSONEncoder().encode(homeKitTool)].compactMap { $0 }.map { try? JSONSerialization.jsonObject(with: $0, options: []) }
     }
 
     guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
@@ -295,7 +316,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                     return
                 }
 
-                if let toolCalls = choice.message.tool_calls, choice.finish_reason == "tool_calls" {
+                if !allowSearch, let toolCalls = choice.message.tool_calls, choice.finish_reason == "tool_calls" {
                     var newMessages = body["messages"] as? [[String: Any]] ?? messages
                     // Append the assistant message with tool_calls
                     newMessages.append([
@@ -349,21 +370,40 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                         // Debug message sequence
                         // print("Messages sent to API: \(newMessages.map { "\($0["role"] ?? "unknown"): \($0["content"] ?? "no content"), tool_calls: \($0["tool_calls"] ?? "none"), tool_call_id: \($0["tool_call_id"] ?? "none")" })")
 
-                        let newBody: [String: Any] = [
+                        var newBody: [String: Any] = [
                             "model": model,
-                            "messages": newMessages,
-                            "tools": body["tools"] ?? []
+                            "messages": newMessages
                         ]
+                        if allowSearch {
+                            newBody["web_search_options"] = body["web_search_options"] ?? [:]
+                        } else {
+                            newBody["tools"] = body["tools"] ?? []
+                        }
                         sendRequest(body: newBody, completion: completion)
                     }
                     return
                 }
 
                 if let content = choice.message.content {
+                    var finalContent = content
+                    if let annotations = choice.message.annotations, !annotations.isEmpty {
+                        var citations: [String] = []
+                        for annotation in annotations {
+                            if annotation.type == "url_citation", let urlCitation = annotation.url_citation {
+                                citations.append("[\(citations.count + 1)] \(urlCitation.title): \(urlCitation.url)")
+                            }
+                        }
+                        if !citations.isEmpty {
+                            finalContent += "\n\nSources:\n" + citations.joined(separator: "\n")
+                        }
+                    }
                     print("ChatGPT Response: \(content)")
                     let tokens = String(responseObject.usage.total_tokens)
                     print("OpenAI \(model) Tokens: \(tokens)")
                     completion(.success(content))
+                } else if let refusal = choice.message.refusal {
+                    print("OpenAI Refusal: \(refusal)")
+                    completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: refusal])))
                 } else {
                     print("Invalid response format: no content")
                     completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))

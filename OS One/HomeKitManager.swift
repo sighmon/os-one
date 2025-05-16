@@ -129,6 +129,7 @@ class HomeKitManager: NSObject, ObservableObject, HMHomeManagerDelegate {
         } else if isInitialized && !llmOutput.isEmpty {
             print("Returning cached HomeKit data: \(llmOutput.prefix(100))...")
             completion(llmOutput)
+            llmOutput = ""
         } else {
             print("HomeKit not initialized or no data, scanning...")
             scanAccessories { _ in
