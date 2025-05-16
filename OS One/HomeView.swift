@@ -35,6 +35,11 @@ struct HomeView: View {
             UserDefaults.standard.set(visionEnabled, forKey: "vision")
         }
     }
+    @State private var searchEnabled: Bool = UserDefaults.standard.bool(forKey: "allowSearch") {
+        didSet {
+            UserDefaults.standard.set(searchEnabled, forKey: "allowSearch")
+        }
+    }
 
     @StateObject private var speechSynthesizerManager = SpeechSynthesizerManager()
     @StateObject private var audioPlayer = AudioPlayer()
@@ -97,8 +102,8 @@ struct HomeView: View {
                     Spacer()
                     HStack {
                         Image(systemName: "archivebox")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(navigate ? 0.4 : 1.0)
                             .onTapGesture {
@@ -111,8 +116,8 @@ struct HomeView: View {
                             }
 
                         Image(systemName: "gear")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(showingSettingsSheet ? 0.4 : 1.0)
                             .onTapGesture {
@@ -129,8 +134,8 @@ struct HomeView: View {
                             }
 
                         Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(saveButtonTapped ? 0.4 : 1.0)
                             .onTapGesture {
@@ -140,8 +145,8 @@ struct HomeView: View {
                             }
 
                         Image(systemName: "trash")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(deleteButtonTapped ? 0.4 : 1.0)
                             .onTapGesture {
@@ -155,8 +160,8 @@ struct HomeView: View {
 
                         if mute {
                             Image(systemName: "mic.slash")
-                                .font(.system(size: 30))
-                                .frame(width: 40)
+                                .font(.system(size: 25))
+                                .frame(width: 30)
                                 .padding(6)
                                 .opacity(0.4)
                                 .onTapGesture {
@@ -167,8 +172,8 @@ struct HomeView: View {
                                 }
                         } else {
                             Image(systemName: "mic")
-                                .font(.system(size: 30))
-                                .frame(width: 40)
+                                .font(.system(size: 25))
+                                .frame(width: 30)
                                 .padding(6)
                                 .onTapGesture {
                                     mute.toggle()
@@ -177,12 +182,20 @@ struct HomeView: View {
                                 }
                         }
                         Image(systemName: "camera")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(visionEnabled ? 1.0 : 0.4)
                             .onTapGesture {
                                 visionEnabled.toggle()
+                            }
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 25))
+                            .frame(width: 30)
+                            .padding(6)
+                            .opacity(searchEnabled ? 1.0 : 0.4)
+                            .onTapGesture {
+                                searchEnabled.toggle()
                             }
                     }
                 }
