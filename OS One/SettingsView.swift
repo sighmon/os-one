@@ -20,6 +20,9 @@ struct SettingsView: View {
     @State private var allowLocation: Bool = false
     @State private var allowSearch: Bool = false
     @State private var name: String = ""
+    @State private var overrideOpenAIModel: String = ""
+    @State private var overrideVoiceID: String = ""
+    @State private var overrideSystemPrompt: String = ""
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -46,51 +49,6 @@ struct SettingsView: View {
                             .padding(.bottom, 5)
                         Text(appVersionAndBuild())
                             .font(.system(size: 15, weight: .light))
-                            .padding(.bottom, 10)
-                        Group {
-                            SecureField("OpenAI API Key", text: $openAIApiKey)
-                                .onChange(of: openAIApiKey) {
-                                    UserDefaults.standard.set($0, forKey: "openAIApiKey")
-                                }
-                            SecureField("OpenAI Session Key (optional)", text: $openAISessionKey)
-                                .onChange(of: openAISessionKey) {
-                                    UserDefaults.standard.set($0, forKey: "openAISessionKey")
-                                }
-                            SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
-                                .onChange(of: elevenLabsApiKey) {
-                                    UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
-                                }
-                        }
-                        Toggle("Allow location", isOn: $allowLocation)
-                            .onChange(of: allowLocation) {
-                                UserDefaults.standard.set($0, forKey: "allowLocation")
-                            }
-                        Toggle("Allow search", isOn: $allowSearch)
-                            .onChange(of: allowSearch) {
-                                UserDefaults.standard.set($0, forKey: "allowSearch")
-                            }
-                        Toggle("GPT-4.1", isOn: $gpt4)
-                            .onChange(of: gpt4) {
-                                UserDefaults.standard.set($0, forKey: "gpt4")
-                            }
-                        Toggle("OpenAI voice", isOn: $openAIVoice)
-                            .onChange(of: openAIVoice) {
-                                UserDefaults.standard.set($0, forKey: "openAIVoice")
-                            }
-                        if openAISessionKey != "" {
-                            ProgressView(value: openAIUsage / 1000) {
-                                Text("$\((openAIUsage / 100), specifier: "%.2f")")
-                            }
-                            .padding(.bottom, 10)
-                        }
-                        Toggle("Eleven Labs voice", isOn: $elevenLabs)
-                            .onChange(of: elevenLabs) {
-                                UserDefaults.standard.set($0, forKey: "elevenLabs")
-                            }
-                        ProgressView(value: elevenLabsUsage) {
-                            Text("\(floatToPercent(float:elevenLabsUsage))")
-                                .opacity(elevenLabs ? 1.0 : 0.5)
-                        }
                         Picker("Name of your voice assistant", selection: $name) {
                             Group {
                                 Text("Samantha").tag("Samantha")
@@ -135,6 +93,69 @@ struct SettingsView: View {
                             .onChange(of: name) {
                                 UserDefaults.standard.set($0, forKey: "name")
                             }
+                        Text("Settings", comment: "Choose which features to use.")
+                            .bold()
+                        Group {
+                            SecureField("OpenAI API Key", text: $openAIApiKey)
+                                .onChange(of: openAIApiKey) {
+                                    UserDefaults.standard.set($0, forKey: "openAIApiKey")
+                                }
+                            SecureField("OpenAI Session Key (optional)", text: $openAISessionKey)
+                                .onChange(of: openAISessionKey) {
+                                    UserDefaults.standard.set($0, forKey: "openAISessionKey")
+                                }
+                            SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
+                                .onChange(of: elevenLabsApiKey) {
+                                    UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
+                                }
+                        }
+                        Toggle("Allow location", isOn: $allowLocation)
+                            .onChange(of: allowLocation) {
+                                UserDefaults.standard.set($0, forKey: "allowLocation")
+                            }
+                        Toggle("Allow search", isOn: $allowSearch)
+                            .onChange(of: allowSearch) {
+                                UserDefaults.standard.set($0, forKey: "allowSearch")
+                            }
+                        Toggle("GPT 4.1 nano", isOn: $gpt4)
+                            .onChange(of: gpt4) {
+                                UserDefaults.standard.set($0, forKey: "gpt4")
+                            }
+                        Toggle("OpenAI voice", isOn: $openAIVoice)
+                            .onChange(of: openAIVoice) {
+                                UserDefaults.standard.set($0, forKey: "openAIVoice")
+                            }
+                        if openAISessionKey != "" {
+                            ProgressView(value: openAIUsage / 1000) {
+                                Text("$\((openAIUsage / 100), specifier: "%.2f")")
+                            }
+                            .padding(.bottom, 10)
+                        }
+                        Toggle("Eleven Labs voice", isOn: $elevenLabs)
+                            .onChange(of: elevenLabs) {
+                                UserDefaults.standard.set($0, forKey: "elevenLabs")
+                            }
+                        ProgressView(value: elevenLabsUsage) {
+                            Text("\(floatToPercent(float:elevenLabsUsage))")
+                                .opacity(elevenLabs ? 1.0 : 0.5)
+                        }
+                            .padding(.bottom, 10)
+                        Group {
+                            Text("Custom settings", comment: "Set your own custom model, voice, and prompt.")
+                                .bold()
+                            TextField("Override OpenAI model", text: $overrideOpenAIModel)
+                                .onChange(of: overrideOpenAIModel) {
+                                    UserDefaults.standard.set($0, forKey: "overrideOpenAIModel")
+                                }
+                            TextField("Override ElevenLabs voice ID", text: $overrideVoiceID)
+                                .onChange(of: overrideVoiceID) {
+                                    UserDefaults.standard.set($0, forKey: "overrideVoiceID")
+                                }
+                            TextField("Override system prompt", text: $overrideSystemPrompt)
+                                .onChange(of: overrideSystemPrompt) {
+                                    UserDefaults.standard.set($0, forKey: "overrideSystemPrompt")
+                                }
+                        }
                     }
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
@@ -152,6 +173,9 @@ struct SettingsView: View {
                         elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                         elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
                         name = UserDefaults.standard.string(forKey: "name") ?? ""
+                        overrideOpenAIModel = UserDefaults.standard.string(forKey: "overrideOpenAIModel") ?? ""
+                        overrideVoiceID = UserDefaults.standard.string(forKey: "overrideVoiceID") ?? ""
+                        overrideSystemPrompt = UserDefaults.standard.string(forKey: "overrideSystemPrompt") ?? ""
 
                         if (elevenLabsApiKey != "" && elevenLabs) {
                             elevenLabsGetUsage { result in

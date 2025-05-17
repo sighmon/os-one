@@ -10,6 +10,7 @@ import AVFoundation
 
 func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (Result<Data, Error>) -> Void) {
     let elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
+    let overrideVoiceID = UserDefaults.standard.string(forKey: "overrideVoiceID") ?? ""
 
     var body = [
         "text": text,
@@ -246,6 +247,11 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
             ] as [String : Any]
         ] as [String: Any]
     }
+
+    if !overrideVoiceID.isEmpty {
+        voice = overrideVoiceID
+    }
+
     body["model_id"] = "eleven_flash_v2_5"
     let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
 

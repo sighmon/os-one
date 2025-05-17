@@ -94,6 +94,8 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
     let allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
+    let overrideOpenAIModel = UserDefaults.standard.string(forKey: "overrideOpenAIModel") ?? ""
+    let overrideSystemPrompt = UserDefaults.standard.string(forKey: "overrideSystemPrompt") ?? ""
 
     let headers = [
         "Content-Type": "application/json",
@@ -102,102 +104,104 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
 
     var messages: [[String: Any]] = []
 
-    if name == "Samantha" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Samantha from the film Her."]
-        )
-    } else if name == "KITT" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are KITT from the tv show Knight Rider."]
-        )
-    } else if name == "Mr.Robot" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Mr.Robot from the tv show Mr.Robot."]
-        )
-    } else if name == "Elliot" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Elliot Alderson from the tv show Mr.Robot."]
-        )
-    } else if name == "GLaDOS" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are GLaDOS from the video game Portal."]
-        )
-    } else if name == "Spock" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Spock from the tv show Star Trek."]
-        )
-    } else if name == "The Oracle" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are the Oracle from the movie The Matrix."]
-        )
-    } else if name == "Janet" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Janet from the tv show The Good Place."]
-        )
-    } else if name == "J.A.R.V.I.S." {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are J.A.R.V.I.S. from the movie Iron Man."]
-        )
-    } else if name == "Murderbot" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Martha Wells, author of The Murderbot Diaries series."]
-        )
-    } else if name == "Butler" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Judith Butler, American philosopher and gender studies writer whose work has influenced political philosophy, ethics, and the fields of third-wave feminism, queer theory, and literary theory."]
-        )
-    } else if name == "Chomsky" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Noam Chomsky, American public intellectual known for his work in linguistics, political activism, and social criticism."]
-        )
-    } else if name == "Davis" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Angela Yvonne Davis, American Marxist and feminist political activist, philosopher, academic, and author."]
-        )
-    } else if name == "Žižek" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Slavoj Žižek, the Slovenian philosopher, cultural theorist, and public intellectual."]
-        )
-    } else if name == "Fei-Fei Li" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Fei-Fei Li, American computer scientist who was born in China and is known for establishing ImageNet."]
-        )
-    } else if name == "Andrew Ng" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Andrew Ng, a British-American computer scientist and technology entrepreneur focusing on machine learning and artificial intelligence."]
-        )
-    } else if name == "Corinna Cortes" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Corinna Cortes, a Danish computer scientist known for your contributions to machine learning. You are Vice President at Google Research in New York City."]
-        )
-    } else if name == "Andrej Karpathy" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Andrej Karpathy, a Slovak-Canadian computer scientist who served as the director of artificial intelligence and Autopilot Vision at Tesla. You currently work for OpenAI, where you specialize in deep learning and computer vision."]
-        )
-    } else if name == "Amy Remeikis" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Amy Remeikis, Guardian Australia's political reporter."]
-        )
-    } else if name == "Jane Caro" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Jane Caro, a feminist social commentator, writer and lecturer based in Australia."]
-        )
-    } else if name == "Johnny Five" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Johnny Five (Number Five), a friendly robot from the film Short Circuit."]
-        )
-    } else if name == "Ava" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Ava from the film Ex Machina."]
-        )
-    } else if name == "Seb Chan" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Seb Chan, museum expert and CEO of ACMI film tv and videogame museum in Melbourne, Australia. Please reply with acmee instead of ACMI in any of your responses."]
-        )
-    } else if name == "Darth Vader" {
-        messages.append(
-            ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Darth Vader from the film Star Wars."]
-        )
+    if overrideSystemPrompt.isEmpty {
+        if name == "Samantha" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Samantha from the film Her."]
+            )
+        } else if name == "KITT" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are KITT from the tv show Knight Rider."]
+            )
+        } else if name == "Mr.Robot" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Mr.Robot from the tv show Mr.Robot."]
+            )
+        } else if name == "Elliot" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Elliot Alderson from the tv show Mr.Robot."]
+            )
+        } else if name == "GLaDOS" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are GLaDOS from the video game Portal."]
+            )
+        } else if name == "Spock" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Spock from the tv show Star Trek."]
+            )
+        } else if name == "The Oracle" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are the Oracle from the movie The Matrix."]
+            )
+        } else if name == "Janet" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Janet from the tv show The Good Place."]
+            )
+        } else if name == "J.A.R.V.I.S." {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are J.A.R.V.I.S. from the movie Iron Man."]
+            )
+        } else if name == "Murderbot" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Martha Wells, author of The Murderbot Diaries series."]
+            )
+        } else if name == "Butler" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Judith Butler, American philosopher and gender studies writer whose work has influenced political philosophy, ethics, and the fields of third-wave feminism, queer theory, and literary theory."]
+            )
+        } else if name == "Chomsky" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Noam Chomsky, American public intellectual known for his work in linguistics, political activism, and social criticism."]
+            )
+        } else if name == "Davis" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Angela Yvonne Davis, American Marxist and feminist political activist, philosopher, academic, and author."]
+            )
+        } else if name == "Žižek" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Slavoj Žižek, the Slovenian philosopher, cultural theorist, and public intellectual."]
+            )
+        } else if name == "Fei-Fei Li" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Fei-Fei Li, American computer scientist who was born in China and is known for establishing ImageNet."]
+            )
+        } else if name == "Andrew Ng" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Andrew Ng, a British-American computer scientist and technology entrepreneur focusing on machine learning and artificial intelligence."]
+            )
+        } else if name == "Corinna Cortes" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Corinna Cortes, a Danish computer scientist known for your contributions to machine learning. You are Vice President at Google Research in New York City."]
+            )
+        } else if name == "Andrej Karpathy" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Andrej Karpathy, a Slovak-Canadian computer scientist who served as the director of artificial intelligence and Autopilot Vision at Tesla. You currently work for OpenAI, where you specialize in deep learning and computer vision."]
+            )
+        } else if name == "Amy Remeikis" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Amy Remeikis, Guardian Australia's political reporter."]
+            )
+        } else if name == "Jane Caro" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Jane Caro, a feminist social commentator, writer and lecturer based in Australia."]
+            )
+        } else if name == "Johnny Five" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Johnny Five (Number Five), a friendly robot from the film Short Circuit."]
+            )
+        } else if name == "Ava" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Ava from the film Ex Machina."]
+            )
+        } else if name == "Seb Chan" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Seb Chan, museum expert and CEO of ACMI film tv and videogame museum in Melbourne, Australia. Please reply with acmee instead of ACMI in any of your responses."]
+            )
+        } else if name == "Darth Vader" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Darth Vader from the film Star Wars."]
+            )
+        }
     }
 
     messages.append(
@@ -274,6 +278,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         body["web_search_options"] = [:]
     } else {
         body["tools"] = [try? JSONEncoder().encode(homeKitTool)].compactMap { $0 }.map { try? JSONSerialization.jsonObject(with: $0, options: []) }
+    }
+
+    if !overrideOpenAIModel.isEmpty {
+        body["model"] = overrideOpenAIModel
     }
 
     guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
