@@ -407,7 +407,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                     }
                     print("ChatGPT Response: \(content)")
                     let tokens = String(responseObject.usage.total_tokens)
-                    print("OpenAI \(model) Tokens: \(tokens)")
+                    print("OpenAI \(body["model"] ?? model) Tokens: \(tokens)")
                     completion(.success(content))
                 } else if let refusal = choice.message.refusal {
                     print("OpenAI Refusal: \(refusal)")

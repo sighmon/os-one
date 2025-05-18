@@ -95,20 +95,6 @@ struct SettingsView: View {
                             }
                         Text("Settings", comment: "Choose which features to use.")
                             .bold()
-                        Group {
-                            SecureField("OpenAI API Key", text: $openAIApiKey)
-                                .onChange(of: openAIApiKey) {
-                                    UserDefaults.standard.set($0, forKey: "openAIApiKey")
-                                }
-                            SecureField("OpenAI Session Key (optional)", text: $openAISessionKey)
-                                .onChange(of: openAISessionKey) {
-                                    UserDefaults.standard.set($0, forKey: "openAISessionKey")
-                                }
-                            SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
-                                .onChange(of: elevenLabsApiKey) {
-                                    UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
-                                }
-                        }
                         Toggle("Allow location", isOn: $allowLocation)
                             .onChange(of: allowLocation) {
                                 UserDefaults.standard.set($0, forKey: "allowLocation")
@@ -139,7 +125,22 @@ struct SettingsView: View {
                             Text("\(floatToPercent(float:elevenLabsUsage))")
                                 .opacity(elevenLabs ? 1.0 : 0.5)
                         }
-                            .padding(.bottom, 10)
+                        .padding(.bottom, 10)
+                        Group {
+                            SecureField("OpenAI API Key", text: $openAIApiKey)
+                                .onChange(of: openAIApiKey) {
+                                    UserDefaults.standard.set($0, forKey: "openAIApiKey")
+                                }
+                            SecureField("OpenAI Session Key (optional)", text: $openAISessionKey)
+                                .onChange(of: openAISessionKey) {
+                                    UserDefaults.standard.set($0, forKey: "openAISessionKey")
+                                }
+                            SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
+                                .onChange(of: elevenLabsApiKey) {
+                                    UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
+                                }
+                                .padding(.bottom, 10)
+                        }
                         Group {
                             Text("Custom settings", comment: "Set your own custom model, voice, and prompt.")
                                 .bold()
