@@ -24,6 +24,7 @@ struct HomeView: View {
     @State private var currentState = "chatting"
     @State private var welcomeText = "Hello, how can I help?"
     @State private var showingSettingsSheet = false
+    @State private var showingHomeKitSheet = false
     @State private var sendButtonEnabled: Bool = true
     @State private var saveButtonTapped: Bool = false
     @State private var deleteButtonTapped: Bool = false
@@ -32,6 +33,11 @@ struct HomeView: View {
     @State private var visionEnabled: Bool = UserDefaults.standard.bool(forKey: "vision") {
         didSet {
             UserDefaults.standard.set(visionEnabled, forKey: "vision")
+        }
+    }
+    @State private var searchEnabled: Bool = UserDefaults.standard.bool(forKey: "allowSearch") {
+        didSet {
+            UserDefaults.standard.set(searchEnabled, forKey: "allowSearch")
         }
     }
 
@@ -50,12 +56,23 @@ struct HomeView: View {
                 )
                     .edgesIgnoringSafeArea(.all)
                 VStack {
+                    Spacer()
                     HStack {
                         Text("OS")
                             .font(.system(
                                 size: 80,
                                 weight: .light
                             ))
+                            .onTapGesture {
+                                showingHomeKitSheet.toggle()
+                            }
+                            .sheet(isPresented: $showingHomeKitSheet, onDismiss: {
+                                speechRecognizer.stopTranscribing()
+                                setAudioSession(active: false)
+                                startup()
+                            }) {
+                                HomeKitScannerView()
+                            }
                         Text("1")
                             .font(.system(
                                 size: 50,
@@ -82,10 +99,11 @@ struct HomeView: View {
                         .frame(height: 100)
                         .padding(.bottom, 20)
 
+                    Spacer()
                     HStack {
                         Image(systemName: "archivebox")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(navigate ? 0.4 : 1.0)
                             .onTapGesture {
@@ -98,8 +116,8 @@ struct HomeView: View {
                             }
 
                         Image(systemName: "gear")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(showingSettingsSheet ? 0.4 : 1.0)
                             .onTapGesture {
@@ -116,8 +134,8 @@ struct HomeView: View {
                             }
 
                         Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(saveButtonTapped ? 0.4 : 1.0)
                             .onTapGesture {
@@ -127,8 +145,8 @@ struct HomeView: View {
                             }
 
                         Image(systemName: "trash")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(deleteButtonTapped ? 0.4 : 1.0)
                             .onTapGesture {
@@ -142,8 +160,8 @@ struct HomeView: View {
 
                         if mute {
                             Image(systemName: "mic.slash")
-                                .font(.system(size: 30))
-                                .frame(width: 40)
+                                .font(.system(size: 25))
+                                .frame(width: 30)
                                 .padding(6)
                                 .opacity(0.4)
                                 .onTapGesture {
@@ -154,8 +172,8 @@ struct HomeView: View {
                                 }
                         } else {
                             Image(systemName: "mic")
-                                .font(.system(size: 30))
-                                .frame(width: 40)
+                                .font(.system(size: 25))
+                                .frame(width: 30)
                                 .padding(6)
                                 .onTapGesture {
                                     mute.toggle()
@@ -164,31 +182,22 @@ struct HomeView: View {
                                 }
                         }
                         Image(systemName: "camera")
-                            .font(.system(size: 30))
-                            .frame(width: 40)
+                            .font(.system(size: 25))
+                            .frame(width: 30)
                             .padding(6)
                             .opacity(visionEnabled ? 1.0 : 0.4)
                             .onTapGesture {
                                 visionEnabled.toggle()
                             }
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 25))
+                            .frame(width: 30)
+                            .padding(6)
+                            .opacity(searchEnabled ? 1.0 : 0.4)
+                            .onTapGesture {
+                                searchEnabled.toggle()
+                            }
                     }
-
-                    Image(systemName: "arrow.up.circle")
-                        .font(.system(size: 80, weight: .light))
-                        .frame(width: 40)
-                        .padding(.top, 60)
-                        .onTapGesture {
-                            sendToOpenAI()
-                        }
-                        .font(.system(
-                            size: 20,
-                            weight: .light
-                        ))
-                        .foregroundColor(.primary)
-                        .buttonStyle(.bordered)
-                        .padding(.top, 40)
-                        .disabled(!sendButtonEnabled)
-                        .opacity(sendButtonEnabled ? 1.0 : 0.2)
                 }
                 .onAppear {
                     startup()

@@ -6,5 +6,7 @@
 	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Optional location can be sent so that suggestions are more accurate to where you currently are.</string>
+	<key>NSHomeKitUsageDescription</key>
+	<string>Provides the ability to answer questions about your Apple Home</string>
 </dict>
 </plist>
