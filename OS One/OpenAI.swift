@@ -202,6 +202,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                 ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Darth Vader from the film Star Wars."]
             )
         }
+    } else {
+        messages.append(
+            ["role": "system", "content": overrideSystemPrompt]
+        )
     }
 
     messages.append(

@@ -151,10 +151,16 @@ struct SettingsView: View {
                             TextField("Override ElevenLabs voice ID", text: $overrideVoiceID)
                                 .onChange(of: overrideVoiceID) {
                                     UserDefaults.standard.set($0, forKey: "overrideVoiceID")
+                                    if !overrideVoiceID.isEmpty || !overrideSystemPrompt.isEmpty {
+                                        UserDefaults.standard.set("Custom", forKey: "name")
+                                    }
                                 }
                             TextField("Override system prompt", text: $overrideSystemPrompt)
                                 .onChange(of: overrideSystemPrompt) {
                                     UserDefaults.standard.set($0, forKey: "overrideSystemPrompt")
+                                    if !overrideVoiceID.isEmpty || !overrideSystemPrompt.isEmpty {
+                                        UserDefaults.standard.set("Custom", forKey: "name")
+                                    }
                                 }
                         }
                     }
@@ -177,6 +183,9 @@ struct SettingsView: View {
                         overrideOpenAIModel = UserDefaults.standard.string(forKey: "overrideOpenAIModel") ?? ""
                         overrideVoiceID = UserDefaults.standard.string(forKey: "overrideVoiceID") ?? ""
                         overrideSystemPrompt = UserDefaults.standard.string(forKey: "overrideSystemPrompt") ?? ""
+                        if !overrideVoiceID.isEmpty || !overrideSystemPrompt.isEmpty {
+                            name = "Custom"
+                        }
 
                         if (elevenLabsApiKey != "" && elevenLabs) {
                             elevenLabsGetUsage { result in
