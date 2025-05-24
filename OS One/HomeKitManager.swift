@@ -9,15 +9,20 @@ import SwiftUI
 import HomeKit
 
 class HomeKitManager: NSObject, ObservableObject, HMHomeManagerDelegate {
+    // MARK: – Published state for UI binding
     @Published var homes: [HMHome] = []
+    @Published var rooms: [HMRoom] = []
     @Published var accessories: [HMAccessory] = []
     @Published var characteristics: [HMCharacteristic] = []
     @Published var llmOutput: String = ""
-    @Published var errorMessage: String?
+    @Published var errorMessage: String? = nil
+
+    // MARK: – Private helpers
     private var homeManager: HMHomeManager!
     private var isInitialized = false
     private var isAuthorizing = false
 
+    // MARK: – Init / authorisation
     override init() {
         super.init()
         homeManager = HMHomeManager()
@@ -30,38 +35,44 @@ class HomeKitManager: NSObject, ObservableObject, HMHomeManagerDelegate {
             switch homeManager.authorizationStatus {
             case .authorized:
                 isAuthorizing = false
-                print("HomeKit authorized")
+                print("HomeKit authorised")
             case .restricted:
                 isAuthorizing = false
-                errorMessage = "HomeKit access denied or restricted. Please enable in Settings > Privacy > HomeKit."
+                errorMessage = "HomeKit access denied or restricted. Enable in Settings > Privacy > HomeKit."
                 print("HomeKit access denied or restricted")
             default:
-                print("Unknown HomeKit authorization status")
+                print("Unknown HomeKit authorisation status")
             }
         } else {
-            isAuthorizing = true // Assume undetermined until homes are loaded
-            print("HomeKit authorization status not available (iOS < 18.0), assuming undetermined")
+            // Prior to iOS 18 HomeKit does not expose an authorisation API, so we assume undetermined
+            isAuthorizing = true
+            print("HomeKit authorisation status unavailable (< iOS 18), assuming undetermined")
         }
     }
 
-    // MARK: - Home Manager Delegate
+    // MARK: – HMHomeManagerDelegate
     func homeManagerDidUpdateHomes(_ manager: HMHomeManager) {
         checkAuthorizationStatus()
-        if manager.homes.isEmpty {
-            errorMessage = "No HomeKit homes found. Please set up a home in the Home app."
+
+        guard !manager.homes.isEmpty else {
+            errorMessage = "No HomeKit homes found. Set up a home in the Home app first."
             print("No HomeKit homes found")
-        } else {
-            errorMessage = nil
-            self.homes = manager.homes
-            scanAccessories { success in
-                self.isInitialized = true
-                self.isAuthorizing = false
-                print("HomeKit initialization complete, homes: \(self.homes.count)")
-            }
+            return
+        }
+
+        errorMessage = nil
+        homes = manager.homes
+        rooms = manager.homes.flatMap { $0.rooms }
+
+        // Trigger a scan so the new home/room lists are reflected in the summary
+        scanAccessories { _ in
+            self.isInitialized = true
+            self.isAuthorizing = false
+            print("HomeKit initialisation complete – homes: \(self.homes.count), rooms: \(self.rooms.count)")
         }
     }
 
-    // MARK: - Accessory Scanning
+    // MARK: – Accessory / characteristic discovery
     func scanAccessories(completion: @escaping (Bool) -> Void) {
         accessories.removeAll()
         characteristics.removeAll()
@@ -77,17 +88,18 @@ class HomeKitManager: NSObject, ObservableObject, HMHomeManagerDelegate {
         completion(true)
     }
 
-    // MARK: - Characteristic Scanning
     private func scanCharacteristics(for accessory: HMAccessory) {
         for service in accessory.services {
             for characteristic in service.characteristics {
                 characteristics.append(characteristic)
+
+                // Only read values for readable characteristics; write‑only values are skipped
                 if characteristic.properties.contains(HMCharacteristicPropertyReadable) {
                     characteristic.readValue { error in
-                        if let error = error {
+                        if let error {
                             print("Error reading characteristic: \(error.localizedDescription)")
                             DispatchQueue.main.async {
-                                self.errorMessage = "Failed to read characteristic: \(error.localizedDescription)"
+                                self.errorMessage = "Failed to read characteristic value (\(error.localizedDescription))."
                             }
                         }
                     }
@@ -96,50 +108,107 @@ class HomeKitManager: NSObject, ObservableObject, HMHomeManagerDelegate {
         }
     }
 
-    // MARK: - LLM Output Generation
+    // MARK: – LLM summary generation
     private func generateLLMOutput() {
-        var output = "HomeKit Data for LLM:\n\n"
+        var lines: [String] = []
+
+        lines.append("Below is a snapshot of every detected HomeKit room including its devices and current readings. Use this to answer questions about the household setup.\n")
 
         for home in homes {
-            output += "Home: \(home.name)\n"
-            for accessory in home.accessories {
-                output += "  Accessory: \(accessory.name) (\(accessory.uniqueIdentifier))\n"
-                for service in accessory.services {
-                    output += "    Service: \(service.name) (\(service.serviceType))\n"
-                    for characteristic in service.characteristics {
-                        let value = characteristic.value ?? "Unknown"
-                        let type = characteristic.characteristicType
-                        let isReadable = characteristic.properties.contains(HMCharacteristicPropertyReadable) ? "Readable" : "Not Readable"
-                        output += "      Characteristic: \(type), Value: \(value), \(isReadable)\n"
-                    }
+            lines.append("Home: \(home.name)")
+
+            for room in home.rooms {
+                appendRoom(room, in: home, to: &lines)
+            }
+
+            let unassigned = home.accessories.filter { $0.room == nil }
+            if !unassigned.isEmpty {
+                lines.append("  Room: Unassigned")
+                for accessory in unassigned {
+                    appendAccessory(accessory, indent: 4, to: &lines)
                 }
             }
         }
 
-        // Append Powerwall note
-        output += "\nNote: Powerwall solar/load values are the solar power produced and the home load use in Watts.\n"
-
-        llmOutput = output
+        lines.append("\nNote: Powerwall solar and load values are represented in the data as `Light Levels`, but should be reported as instantaneous power in watts (W).\n")
+        llmOutput = lines.joined(separator: "\n")
     }
 
+    private func appendRoom(_ room: HMRoom, in home: HMHome, to lines: inout [String]) {
+        lines.append("  Room: \(room.name)")
+
+        let roomAccessories: [HMAccessory]
+        if #available(iOS 16.1, *) {
+            roomAccessories = room.accessories
+        } else {
+            roomAccessories = home.accessories.filter { $0.room?.uniqueIdentifier == room.uniqueIdentifier }
+        }
+
+        if roomAccessories.isEmpty {
+            lines.append("    (No accessories detected)")
+        }
+
+        for accessory in roomAccessories {
+            appendAccessory(accessory, indent: 4, to: &lines)
+        }
+    }
+
+    private func appendAccessory(_ accessory: HMAccessory, indent: Int, to lines: inout [String]) {
+        let pad = String(repeating: " ", count: indent)
+        lines.append("\(pad)Accessory: \(accessory.name)")
+
+        for service in accessory.services {
+            for characteristic in service.characteristics where characteristic.properties.contains(HMCharacteristicPropertyReadable) {
+                let label = friendlyLabel(for: characteristic, accessory: accessory, service: service)
+                let valueString = characteristic.value.map { "\($0)" } ?? "Unknown"
+                let unit = (label == "Solar" || label == "Load") ? " W" : ""
+                lines.append("\(pad)  \(label): \(valueString)\(unit)")
+            }
+        }
+    }
+
+    // Best‑effort, user‑friendly name for a characteristic.
+    private func friendlyLabel(for characteristic: HMCharacteristic, accessory: HMAccessory, service: HMService) -> String {
+        // Map HomeKit light‑level to Solar / Load when accessory or service name hints at it
+        if characteristic.characteristicType == HMCharacteristicTypeCurrentLightLevel {
+            let lowerNames = (accessory.name + " " + service.name).lowercased()
+            if lowerNames.contains("load") {
+                return "Load"
+            } else if lowerNames.contains("solar") {
+                return "Solar"
+            } else {
+                return "Light Level"
+            }
+        }
+
+        // Fallback to the system‑provided description (iOS 15+) or raw type
+        if #available(iOS 15.0, *) {
+            return characteristic.localizedDescription
+        } else {
+            return characteristic.characteristicType
+        }
+    }
+
+    // MARK: – Public helper for consumers
     func fetchHomeKitData(maxRetries: Int = 3, retryDelay: TimeInterval = 1.0, completion: @escaping (String) -> Void) {
         if isAuthorizing {
-            print("HomeKit is authorizing, retrying after delay...")
+            print("HomeKit is authorising; will retry after delay…")
             retryFetchHomeKitData(attempt: 1, maxRetries: maxRetries, retryDelay: retryDelay, completion: completion)
         } else if isInitialized && !llmOutput.isEmpty {
-            print("Returning cached HomeKit data: \(llmOutput.prefix(100))...")
+            // Return cached snapshot and clear it so subsequent calls get fresh data
+            print("Returning cached HomeKit summary (first 100 chars): \(llmOutput.prefix(100))…")
             completion(llmOutput)
             llmOutput = ""
         } else {
-            print("HomeKit not initialized or no data, scanning...")
+            // Trigger a new scan now
             scanAccessories { _ in
                 DispatchQueue.main.async {
                     self.isInitialized = true
                     if self.llmOutput.isEmpty {
-                        print("No HomeKit data after scan, retrying...")
+                        print("No data after scan; will retry…")
                         self.retryFetchHomeKitData(attempt: 1, maxRetries: maxRetries, retryDelay: retryDelay, completion: completion)
                     } else {
-                        print("HomeKit data scanned: \(self.llmOutput.prefix(100))...")
+                        print("HomeKit data ready (first 100 chars): \(self.llmOutput.prefix(100))…")
                         completion(self.llmOutput)
                     }
                 }
@@ -149,27 +218,25 @@ class HomeKitManager: NSObject, ObservableObject, HMHomeManagerDelegate {
 
     private func retryFetchHomeKitData(attempt: Int, maxRetries: Int, retryDelay: TimeInterval, completion: @escaping (String) -> Void) {
         guard attempt <= maxRetries else {
-            print("Max retries (\(maxRetries)) reached, returning fallback")
-            completion("No HomeKit data available. Please ensure a home is set up in the Home app and try again.")
+            print("Max retries (\(maxRetries)) reached; giving up")
+            completion("No HomeKit data available. Ensure a home is set up in the Home app and try again.")
             return
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + retryDelay) {
-            print("Retry attempt \(attempt) for HomeKit data")
+            print("Retry #\(attempt)…")
             if self.isAuthorizing {
                 self.retryFetchHomeKitData(attempt: attempt + 1, maxRetries: maxRetries, retryDelay: retryDelay, completion: completion)
             } else if self.isInitialized && !self.llmOutput.isEmpty {
-                print("Retry successful, returning data: \(self.llmOutput.prefix(100))...")
+                print("Retry succeeded (first 100 chars): \(self.llmOutput.prefix(100))…")
                 completion(self.llmOutput)
             } else {
                 self.scanAccessories { _ in
                     DispatchQueue.main.async {
                         self.isInitialized = true
                         if self.llmOutput.isEmpty {
-                            print("Retry \(attempt) failed, no data")
                             self.retryFetchHomeKitData(attempt: attempt + 1, maxRetries: maxRetries, retryDelay: retryDelay, completion: completion)
                         } else {
-                            print("Retry \(attempt) successful: \(self.llmOutput.prefix(100))...")
                             completion(self.llmOutput)
                         }
                     }
@@ -193,18 +260,17 @@ struct HomeKitScannerView: View {
                             .padding(.bottom)
                     }
 
-                    Text("Homes Found: \(homeKitManager.homes.count)")
-                        .font(.headline)
-
-                    Text("Accessories Found: \(homeKitManager.accessories.count)")
-                        .font(.headline)
-
-                    Text("Characteristics Found: \(homeKitManager.characteristics.count)")
-                        .font(.headline)
+                    Group {
+                        Text("Homes Found: \(homeKitManager.homes.count)")
+                        Text("Rooms Found: \(homeKitManager.rooms.count)")
+                        Text("Accessories Found: \(homeKitManager.accessories.count)")
+                        Text("Characteristics Found: \(homeKitManager.characteristics.count)")
+                    }
+                    .font(.headline)
 
                     Divider()
 
-                    Text("LLM Readable Output:")
+                    Text("LLM‑Readable Output:")
                         .font(.title2)
                         .padding(.top)
 
