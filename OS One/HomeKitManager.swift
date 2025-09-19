@@ -128,6 +128,8 @@ class HomeKitManager: NSObject, ObservableObject, HMHomeManagerDelegate {
                     appendAccessory(accessory, indent: 4, to: &lines)
                 }
             }
+
+            lines.append("\n\n=================\n\n")
         }
 
         lines.append("\nNote: Powerwall solar and load values are represented in the data as `Light Levels`, but should be reported as instantaneous power in watts (W).\n")
