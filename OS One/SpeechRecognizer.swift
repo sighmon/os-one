@@ -16,7 +16,7 @@ class SpeechRecognizer: ObservableObject {
         case notAuthorizedToRecognize
         case notPermittedToRecord
         case recognizerIsUnavailable
-        
+
         var message: String {
             switch self {
             case .nilRecognizer: return "Can't initialize speech recognizer"
@@ -26,9 +26,9 @@ class SpeechRecognizer: ObservableObject {
             }
         }
     }
-    
+
     @MainActor var transcript: String = ""
-    
+
     private var audioEngine: AVAudioEngine?
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
@@ -36,10 +36,30 @@ class SpeechRecognizer: ObservableObject {
     private var updateState: ((String) -> Void)?
     private var onTimeout: (() -> Void)?
     private var timeoutTimer: DispatchSourceTimer?
+
+    // MARK: - Voice Activity Detection
+    private var voiceActivityDetector: VoiceActivityDetector?
+    private var useVAD: Bool {
+        UserDefaults.standard.bool(forKey: "useVAD")
+    }
+    private var onDeviceRecognition: Bool {
+        UserDefaults.standard.bool(forKey: "onDeviceRecognition")
+    }
     
     init() {
-        recognizer = SFSpeechRecognizer()
-        
+        // Use on-device recognition if enabled
+        if onDeviceRecognition {
+            recognizer = SFSpeechRecognizer()
+            recognizer?.supportsOnDeviceRecognition = true
+        } else {
+            recognizer = SFSpeechRecognizer()
+        }
+
+        // Initialize VAD if enabled
+        if useVAD {
+            setupVoiceActivityDetection()
+        }
+
         Task(priority: .medium) {
             do {
                 guard recognizer != nil else {
@@ -55,6 +75,36 @@ class SpeechRecognizer: ObservableObject {
                 speakError(error)
             }
         }
+    }
+
+    // MARK: - VAD Setup
+    private func setupVoiceActivityDetection() {
+        let vadConfig = VoiceActivityDetector.Configuration(
+            energyThreshold: UserDefaults.standard.float(forKey: "vadThreshold") == 0 ? 0.02 : UserDefaults.standard.float(forKey: "vadThreshold"),
+            silenceDuration: UserDefaults.standard.double(forKey: "vadSilenceDuration") == 0 ? 1.5 : UserDefaults.standard.double(forKey: "vadSilenceDuration"),
+            speechStartDuration: 0.2,
+            adaptiveThreshold: true,
+            useMLDetection: true
+        )
+
+        voiceActivityDetector = VoiceActivityDetector(configuration: vadConfig)
+
+        voiceActivityDetector?.onSpeechStart = { [weak self] in
+            print("SpeechRecognizer: VAD detected speech start")
+        }
+
+        voiceActivityDetector?.onSpeechEnd = { [weak self] in
+            print("SpeechRecognizer: VAD detected speech end")
+            self?.onTimeout?()
+            self?.stopTranscribing()
+        }
+
+        voiceActivityDetector?.onAudioLevel = { level in
+            // Audio level feedback can be used for UI visualization
+        }
+
+        voiceActivityDetector?.startDetection()
+        print("SpeechRecognizer: Voice Activity Detection initialized")
     }
     
     deinit {
@@ -111,12 +161,23 @@ class SpeechRecognizer: ObservableObject {
         task = nil
         timeoutTimer?.cancel()
         timeoutTimer = nil
+        voiceActivityDetector?.resetDetection()
+
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
         } catch {
             print("Failed to end audio session")
         }
+    }
+
+    // MARK: - VAD Access
+    func getVoiceActivityDetector() -> VoiceActivityDetector? {
+        return voiceActivityDetector
+    }
+
+    func updateVADSensitivity(_ sensitivity: Float) {
+        voiceActivityDetector?.setSensitivity(sensitivity)
     }
     
     private static func prepareEngine() throws -> (AVAudioEngine, SFSpeechAudioBufferRecognitionRequest) {
@@ -144,8 +205,13 @@ class SpeechRecognizer: ObservableObject {
         }
 
         let recordingFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
             request.append(buffer)
+
+            // Process buffer with VAD if enabled
+            if let vad = self?.voiceActivityDetector, self?.useVAD == true {
+                vad.processAudioBuffer(buffer)
+            }
         }
         audioEngine.prepare()
         try audioEngine.start()

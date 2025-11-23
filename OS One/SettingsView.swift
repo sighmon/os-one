@@ -23,6 +23,18 @@ struct SettingsView: View {
     @State private var overrideOpenAIModel: String = ""
     @State private var overrideVoiceID: String = ""
     @State private var overrideSystemPrompt: String = ""
+
+    // MARK: - Offline Mode Settings
+    @State private var offlineMode: Bool = false
+    @State private var useVAD: Bool = false
+    @State private var vadSensitivity: Float = 0.5
+    @State private var showWaveform: Bool = true
+    @State private var onDeviceRecognition: Bool = true
+    @State private var selectedLocalModel: String = "Qwen/Qwen2.5-1.5B-Instruct"
+    @State private var ttsRate: Float = 0.5
+    @State private var ttsPitch: Float = 1.0
+    @State private var selectedVoiceId: String = ""
+
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -141,6 +153,83 @@ struct SettingsView: View {
                                 }
                                 .padding(.bottom, 10)
                         }
+
+                        // MARK: - Offline Mode Settings
+                        Group {
+                            Text("Offline mode", comment: "Fully offline voice AI settings")
+                                .bold()
+                                .padding(.top, 10)
+
+                            Toggle("Enable offline mode", isOn: $offlineMode)
+                                .onChange(of: offlineMode) {
+                                    UserDefaults.standard.set($0, forKey: "offlineMode")
+                                }
+
+                            if offlineMode {
+                                // Model selection
+                                Picker("Local Model", selection: $selectedLocalModel) {
+                                    Text("Qwen 2.5 1.5B").tag("Qwen/Qwen2.5-1.5B-Instruct")
+                                    Text("Qwen 2.5 3B").tag("Qwen/Qwen2.5-3B-Instruct")
+                                    Text("Gemma 2 2B").tag("google/gemma-2-2b-it")
+                                    Text("Llama 3.2 1B").tag("meta-llama/Llama-3.2-1B-Instruct")
+                                    Text("Llama 3.2 3B").tag("meta-llama/Llama-3.2-3B-Instruct")
+                                }
+                                .pickerStyle(.menu)
+                                .onChange(of: selectedLocalModel) {
+                                    UserDefaults.standard.set($0, forKey: "selectedLocalModel")
+                                }
+
+                                // VAD settings
+                                Toggle("Voice Activity Detection", isOn: $useVAD)
+                                    .onChange(of: useVAD) {
+                                        UserDefaults.standard.set($0, forKey: "useVAD")
+                                    }
+
+                                if useVAD {
+                                    VStack(alignment: .leading) {
+                                        Text("VAD Sensitivity: \(Int(vadSensitivity * 100))%")
+                                            .font(.caption)
+                                        Slider(value: $vadSensitivity, in: 0...1, step: 0.1)
+                                            .onChange(of: vadSensitivity) {
+                                                UserDefaults.standard.set($0, forKey: "vadSensitivity")
+                                            }
+                                    }
+                                }
+
+                                // Waveform display
+                                Toggle("Show waveform", isOn: $showWaveform)
+                                    .onChange(of: showWaveform) {
+                                        UserDefaults.standard.set($0, forKey: "showWaveform")
+                                    }
+
+                                // On-device recognition
+                                Toggle("On-device speech recognition", isOn: $onDeviceRecognition)
+                                    .onChange(of: onDeviceRecognition) {
+                                        UserDefaults.standard.set($0, forKey: "onDeviceRecognition")
+                                    }
+
+                                // TTS settings
+                                VStack(alignment: .leading) {
+                                    Text("Speech Rate: \(Int(ttsRate * 100))%")
+                                        .font(.caption)
+                                    Slider(value: $ttsRate, in: 0...1, step: 0.1)
+                                        .onChange(of: ttsRate) {
+                                            UserDefaults.standard.set($0, forKey: "ttsRate")
+                                        }
+                                }
+
+                                VStack(alignment: .leading) {
+                                    Text("Speech Pitch: \(String(format: "%.1f", ttsPitch))x")
+                                        .font(.caption)
+                                    Slider(value: $ttsPitch, in: 0.5...2.0, step: 0.1)
+                                        .onChange(of: ttsPitch) {
+                                            UserDefaults.standard.set($0, forKey: "ttsPitch")
+                                        }
+                                }
+                            }
+                        }
+                        .padding(.bottom, 10)
+
                         Group {
                             Text("Custom settings", comment: "Set your own custom model, voice, and prompt.")
                                 .bold()
@@ -186,6 +275,16 @@ struct SettingsView: View {
                         if !overrideVoiceID.isEmpty || !overrideSystemPrompt.isEmpty {
                             name = "Custom"
                         }
+
+                        // Load offline mode settings
+                        offlineMode = UserDefaults.standard.bool(forKey: "offlineMode")
+                        useVAD = UserDefaults.standard.bool(forKey: "useVAD")
+                        vadSensitivity = UserDefaults.standard.float(forKey: "vadSensitivity") == 0 ? 0.5 : UserDefaults.standard.float(forKey: "vadSensitivity")
+                        showWaveform = UserDefaults.standard.object(forKey: "showWaveform") == nil ? true : UserDefaults.standard.bool(forKey: "showWaveform")
+                        onDeviceRecognition = UserDefaults.standard.object(forKey: "onDeviceRecognition") == nil ? true : UserDefaults.standard.bool(forKey: "onDeviceRecognition")
+                        selectedLocalModel = UserDefaults.standard.string(forKey: "selectedLocalModel") ?? "Qwen/Qwen2.5-1.5B-Instruct"
+                        ttsRate = UserDefaults.standard.float(forKey: "ttsRate") == 0 ? 0.5 : UserDefaults.standard.float(forKey: "ttsRate")
+                        ttsPitch = UserDefaults.standard.float(forKey: "ttsPitch") == 0 ? 1.0 : UserDefaults.standard.float(forKey: "ttsPitch")
 
                         if (elevenLabsApiKey != "" && elevenLabs) {
                             elevenLabsGetUsage { result in

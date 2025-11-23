@@ -18,6 +18,13 @@ var openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
 
+    // MARK: - Offline Mode State
+    @State private var offlineMode: Bool = UserDefaults.standard.bool(forKey: "offlineMode")
+    @State private var useVAD: Bool = UserDefaults.standard.bool(forKey: "useVAD")
+    @State private var showWaveform: Bool = UserDefaults.standard.bool(forKey: "showWaveform")
+    @State private var audioLevel: Float = 0.0
+    @State private var vadIsSpeaking: Bool = false
+
     @State private var mute = false
     @State private var speed: Double = 300
     @State private var navigate = false
@@ -45,6 +52,11 @@ struct HomeView: View {
     @StateObject private var audioPlayer = AudioPlayer()
     @StateObject private var chatHistory = ChatHistory()
     @StateObject private var locationManager = LocationManager()
+
+    // MARK: - Offline Mode Managers
+    @StateObject private var localLLM = LocalLLMManager()
+    @StateObject private var nativeTTS = NativeTTSManager()
+    @StateObject private var modelDownloader = ModelDownloadManager()
 
     var body: some View {
         NavigationStack {
@@ -81,6 +93,14 @@ struct HomeView: View {
                             .baselineOffset(25.0)
                     }
                         .padding(.bottom, 1)
+
+                    // MARK: - Waveform Display
+                    if showWaveform && !mute {
+                        AudioWaveformView(audioLevel: $audioLevel, isSpeaking: $vadIsSpeaking)
+                            .frame(height: 80)
+                            .padding(.bottom, 10)
+                    }
+
                     ScrollView {
                         Text(currentState)
                             .font(.system(
@@ -197,10 +217,19 @@ struct HomeView: View {
                             .onTapGesture {
                                 searchEnabled.toggle()
                             }
+                        Image(systemName: offlineMode ? "wifi.slash" : "wifi")
+                            .font(.system(size: 25))
+                            .frame(width: 30)
+                            .padding(6)
+                            .opacity(offlineMode ? 1.0 : 0.4)
+                            .onTapGesture {
+                                toggleOfflineMode()
+                            }
                     }
                 }
                 .onAppear {
                     startup()
+                    setupOfflineManagers()
                     UIApplication.shared.isIdleTimerDisabled = true
                     saveButtonTapped = false
                     deleteButtonTapped = false
@@ -302,7 +331,11 @@ struct HomeView: View {
                 }
                 speechRecognizer.setOnTimeoutHandler {
                     print("Silence detected...")
-                    sendToOpenAI()
+                    if offlineMode {
+                        sendToLocalLLM()
+                    } else {
+                        sendToOpenAI()
+                    }
                 }
             }
         }
@@ -522,6 +555,175 @@ struct HomeView: View {
             image.draw(in: CGRect(origin: .zero, size: targetSize))
         }
         return newImage
+    }
+
+    // MARK: - Offline Mode Management
+    func setupOfflineManagers() {
+        // Setup VAD audio level updates
+        if let vad = speechRecognizer.getVoiceActivityDetector() {
+            vad.onAudioLevel = { [weak self] level in
+                DispatchQueue.main.async {
+                    self?.audioLevel = level
+                }
+            }
+
+            vad.onSpeechStart = { [weak self] in
+                DispatchQueue.main.async {
+                    self?.vadIsSpeaking = true
+                }
+            }
+
+            vad.onSpeechEnd = { [weak self] in
+                DispatchQueue.main.async {
+                    self?.vadIsSpeaking = false
+                }
+            }
+        }
+
+        // Setup TTS callbacks
+        nativeTTS.onSpeechComplete = { [weak self] in
+            DispatchQueue.main.async {
+                self?.currentState = "listening"
+                if !self!.mute {
+                    speechRecognizer.reset()
+                    speechRecognizer.transcribe()
+                }
+            }
+        }
+
+        // Setup local LLM callbacks
+        localLLM.onTokenGenerated = { [weak self] token in
+            // Stream tokens to UI (optional)
+        }
+
+        localLLM.onGenerationComplete = { [weak self] response in
+            DispatchQueue.main.async {
+                self?.handleOfflineLLMResponse(response)
+            }
+        }
+
+        // Load saved TTS settings
+        nativeTTS.loadSettings()
+
+        // Select voice for current persona
+        nativeTTS.selectVoiceForPersona(name)
+
+        print("HomeView: Offline managers initialized")
+    }
+
+    func toggleOfflineMode() {
+        offlineMode.toggle()
+        UserDefaults.standard.set(offlineMode, forKey: "offlineMode")
+
+        if offlineMode {
+            currentState = "offline mode enabled"
+            // Load local model if not already loaded
+            if !localLLM.isModelLoaded {
+                loadLocalModel()
+            }
+        } else {
+            currentState = "online mode enabled"
+        }
+    }
+
+    func loadLocalModel() {
+        guard let modelType = getSelectedLocalModel() else {
+            currentState = "no model selected"
+            return
+        }
+
+        currentState = "loading model..."
+
+        Task {
+            do {
+                try await localLLM.loadModel(modelType)
+                DispatchQueue.main.async {
+                    self.currentState = "model loaded"
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.currentState = "model load failed"
+                    print("Error loading model: \(error)")
+                }
+            }
+        }
+    }
+
+    func getSelectedLocalModel() -> LocalModelType? {
+        guard let modelName = UserDefaults.standard.string(forKey: "selectedLocalModel") else {
+            return .qwen25_1_5B  // Default model
+        }
+        return LocalModelType.allCases.first { $0.rawValue == modelName }
+    }
+
+    func sendToLocalLLM() {
+        guard localLLM.isModelLoaded else {
+            currentState = "model not loaded"
+            return
+        }
+
+        speechRecognizer.stopTranscribing()
+        currentState = "thinking"
+
+        print("Message: \(speechRecognizer.transcript)")
+
+        // Add user message to history
+        chatHistory.addMessage(
+            speechRecognizer.transcript,
+            from: ChatMessage.Sender.user,
+            with: ""
+        )
+
+        // Get system prompt for current persona
+        let systemPrompt = getSystemPromptForPersona(name)
+
+        Task {
+            do {
+                let response = try await localLLM.generateWithHistory(
+                    messages: chatHistory.messages,
+                    systemPrompt: systemPrompt
+                )
+
+                DispatchQueue.main.async {
+                    self.handleOfflineLLMResponse(response)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.currentState = "error: \(error.localizedDescription)"
+                    print("Local LLM error: \(error)")
+                }
+            }
+        }
+    }
+
+    func handleOfflineLLMResponse(_ response: String) {
+        // Add assistant response to history
+        chatHistory.addMessage(
+            response,
+            from: ChatMessage.Sender.openAI,
+            with: ""
+        )
+
+        currentState = "vocalising"
+
+        // Use native TTS
+        nativeTTS.speak(response)
+
+        print("Local LLM response: \(response)")
+    }
+
+    func getSystemPromptForPersona(_ personaName: String) -> String {
+        // Return appropriate system prompt based on persona
+        switch personaName {
+        case "Samantha":
+            return "You are Samantha from the film Her. Be warm, empathetic, and curious."
+        case "KITT":
+            return "You are KITT from Knight Rider. Be precise, helpful, and slightly formal."
+        case "GLaDOS":
+            return "You are GLaDOS from Portal. Be sardonic and darkly humorous."
+        default:
+            return "You are a helpful AI assistant."
+        }
     }
 }
 
