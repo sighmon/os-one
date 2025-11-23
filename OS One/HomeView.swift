@@ -100,7 +100,7 @@ struct HomeView: View {
 
                         // Phase 4: Model Indicator
                         Spacer().frame(width: 8)
-                        Text(anthropicClient.useHaiku ? "⚡" : "🔒")
+                        Text(getModelIndicator())
                             .font(.system(size: 20))
                             .baselineOffset(25.0)
                             .opacity(0.7)
@@ -550,6 +550,21 @@ struct HomeView: View {
             return .mint
         default:
             return .pink
+        }
+    }
+
+    private func getModelIndicator() -> String {
+        let providerString = UserDefaults.standard.string(forKey: "modelProvider") ?? "local"
+
+        switch providerString {
+        case "haiku":
+            return "⚡"
+        #if os(macOS)
+        case "ollama":
+            return "🦙"
+        #endif
+        default:
+            return "🔒"
         }
     }
 

@@ -36,10 +36,25 @@ struct SettingsView: View {
     @State private var selectedVoiceId: String = ""
 
     // MARK: - Phase 4: Model Provider
-    @State private var useHaiku: Bool = false
+    enum ModelProvider: String, CaseIterable {
+        case local = "local"
+        case haiku = "haiku"
+        #if os(macOS)
+        case ollama = "ollama"
+        #endif
+    }
+
+    @State private var modelProvider: ModelProvider = .local
     @State private var haikuAPIKey: String = ""
     @State private var showingAPIKeyTest: Bool = false
     @State private var apiKeyTestResult: String?
+
+    // MARK: - Ollama Settings (macOS only)
+    #if os(macOS)
+    @State private var ollamaBaseURL: String = "http://localhost:11434"
+    @State private var ollamaSelectedModel: String = "qwen2.5:3b"
+    @State private var ollamaConnected: Bool = false
+    #endif
 
     // MARK: - Phase 4: Custom Instructions
     @State private var customInstructions: String = ""
@@ -163,16 +178,23 @@ struct SettingsView: View {
                                 .bold()
                                 .padding(.top, 10)
 
-                            Picker("AI Model", selection: $useHaiku) {
-                                Text("🔒 Local (Private)").tag(false)
-                                Text("⚡ Haiku 4.5 (Fast)").tag(true)
+                            Picker("AI Model", selection: $modelProvider) {
+                                Text("🔒 Local (MLX)").tag(ModelProvider.local)
+                                Text("⚡ Haiku 4.5").tag(ModelProvider.haiku)
+                                #if os(macOS)
+                                Text("🦙 Ollama").tag(ModelProvider.ollama)
+                                #endif
                             }
+                            #if os(macOS)
+                            .pickerStyle(.menu)
+                            #else
                             .pickerStyle(.segmented)
-                            .onChange(of: useHaiku) {
-                                UserDefaults.standard.set($0, forKey: "useHaiku")
+                            #endif
+                            .onChange(of: modelProvider) { newValue in
+                                UserDefaults.standard.set(newValue.rawValue, forKey: "modelProvider")
                             }
 
-                            if useHaiku {
+                            if modelProvider == .haiku {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("anthropic api key")
                                         .font(.caption)
@@ -210,6 +232,55 @@ struct SettingsView: View {
                                 }
                                 .padding(.vertical, 8)
                             }
+
+                            // MARK: - Ollama Settings (macOS only)
+                            #if os(macOS)
+                            if modelProvider == .ollama {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("ollama endpoint")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+
+                                    TextField("http://localhost:11434", text: $ollamaBaseURL)
+                                        .font(.system(.body, design: .monospaced))
+                                        .autocapitalization(.none)
+                                        .onChange(of: ollamaBaseURL) { newValue in
+                                            UserDefaults.standard.set(newValue, forKey: "ollamaBaseURL")
+                                        }
+
+                                    HStack {
+                                        Image(systemName: ollamaConnected ? "circle.fill" : "circle")
+                                            .foregroundColor(ollamaConnected ? .green : .red)
+                                            .font(.caption)
+                                        Text(ollamaConnected ? "connected" : "not running")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+
+                                    Text("start ollama with 'ollama serve'")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+
+                                    Divider()
+
+                                    Text("selected model")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+
+                                    TextField("qwen2.5:3b", text: $ollamaSelectedModel)
+                                        .font(.system(.body, design: .monospaced))
+                                        .autocapitalization(.none)
+                                        .onChange(of: ollamaSelectedModel) { newValue in
+                                            UserDefaults.standard.set(newValue, forKey: "ollamaSelectedModel")
+                                        }
+
+                                    Text("popular: qwen2.5:3b, llama3.2:3b, mistral:7b")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            #endif
                         }
                         .padding(.bottom, 10)
 
@@ -435,11 +506,26 @@ struct SettingsView: View {
                         ttsPitch = UserDefaults.standard.float(forKey: "ttsPitch") == 0 ? 1.0 : UserDefaults.standard.float(forKey: "ttsPitch")
 
                         // Load Phase 4 settings
-                        useHaiku = UserDefaults.standard.bool(forKey: "useHaiku")
+                        let providerString = UserDefaults.standard.string(forKey: "modelProvider") ?? "local"
+                        modelProvider = ModelProvider(rawValue: providerString) ?? .local
                         haikuAPIKey = UserDefaults.standard.string(forKey: "haikuAPIKey") ?? ""
                         customInstructions = UserDefaults.standard.string(forKey: "customInstructions") ?? ""
                         userName = UserDefaults.standard.string(forKey: "customInstructionsName") ?? ""
                         userRole = UserDefaults.standard.string(forKey: "customInstructionsRole") ?? ""
+
+                        // Load Ollama settings (macOS only)
+                        #if os(macOS)
+                        ollamaBaseURL = UserDefaults.standard.string(forKey: "ollamaBaseURL") ?? "http://localhost:11434"
+                        ollamaSelectedModel = UserDefaults.standard.string(forKey: "ollamaSelectedModel") ?? "qwen2.5:3b"
+
+                        // Check Ollama connection if selected
+                        if modelProvider == .ollama {
+                            Task {
+                                let client = OllamaClient()
+                                ollamaConnected = await client.checkConnection()
+                            }
+                        }
+                        #endif
 
                         if (elevenLabsApiKey != "" && elevenLabs) {
                             elevenLabsGetUsage { result in
