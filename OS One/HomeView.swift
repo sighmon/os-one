@@ -58,6 +58,12 @@ struct HomeView: View {
     @StateObject private var nativeTTS = NativeTTSManager()
     @StateObject private var modelDownloader = ModelDownloadManager()
 
+    // MARK: - Phase 4 Managers
+    @StateObject private var anthropicClient = AnthropicClient()
+    @StateObject private var customInstructions = CustomInstructionsManager()
+    @StateObject private var memoryManager = MemoryManager()
+    @StateObject private var onboardingManager = OnboardingManager()
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -91,6 +97,13 @@ struct HomeView: View {
                                 weight: .regular
                             ))
                             .baselineOffset(25.0)
+
+                        // Phase 4: Model Indicator
+                        Spacer().frame(width: 8)
+                        Text(anthropicClient.useHaiku ? "⚡" : "🔒")
+                            .font(.system(size: 20))
+                            .baselineOffset(25.0)
+                            .opacity(0.7)
                     }
                         .padding(.bottom, 1)
 
@@ -257,6 +270,15 @@ struct HomeView: View {
                         self.currentImage = selectedImage
                         self.continueSendingToOpenAI()
                     })
+                }
+                // Phase 4: Onboarding
+                .fullScreenCover(isPresented: $onboardingManager.shouldShowOnboarding) {
+                    OnboardingView(
+                        onboardingManager: onboardingManager,
+                        anthropicClient: anthropicClient,
+                        customInstructions: customInstructions,
+                        memoryManager: memoryManager
+                    )
                 }
             }
             // Force light mode only for the home view
