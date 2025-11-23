@@ -30,10 +30,28 @@ struct SettingsView: View {
     @State private var vadSensitivity: Float = 0.5
     @State private var showWaveform: Bool = true
     @State private var onDeviceRecognition: Bool = true
-    @State private var selectedLocalModel: String = "Qwen/Qwen2.5-1.5B-Instruct"
+    @State private var selectedLocalModel: String = "Qwen/Qwen2.5-3B-Instruct"
     @State private var ttsRate: Float = 0.5
     @State private var ttsPitch: Float = 1.0
     @State private var selectedVoiceId: String = ""
+
+    // MARK: - Phase 4: Model Provider
+    @State private var useHaiku: Bool = false
+    @State private var haikuAPIKey: String = ""
+    @State private var showingAPIKeyTest: Bool = false
+    @State private var apiKeyTestResult: String?
+
+    // MARK: - Phase 4: Custom Instructions
+    @State private var customInstructions: String = ""
+    @State private var userName: String = ""
+    @State private var userRole: String = ""
+
+    // MARK: - Phase 4: Memory
+    @State private var showingMemoryView: Bool = false
+    @State private var memoryCount: Int = 0
+
+    // MARK: - Phase 4: Claude Import
+    @State private var showingClaudeImport: Bool = false
 
     @Environment(\.dismiss) var dismiss
 
@@ -138,6 +156,135 @@ struct SettingsView: View {
                                 .opacity(elevenLabs ? 1.0 : 0.5)
                         }
                         .padding(.bottom, 10)
+
+                        // MARK: - Phase 4: Model Provider Selection
+                        Group {
+                            Text("model provider", comment: "Choose AI model")
+                                .bold()
+                                .padding(.top, 10)
+
+                            Picker("AI Model", selection: $useHaiku) {
+                                Text("🔒 Local (Private)").tag(false)
+                                Text("⚡ Haiku 4.5 (Fast)").tag(true)
+                            }
+                            .pickerStyle(.segmented)
+                            .onChange(of: useHaiku) {
+                                UserDefaults.standard.set($0, forKey: "useHaiku")
+                            }
+
+                            if useHaiku {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("anthropic api key")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+
+                                    SecureField("sk-ant-api03-...", text: $haikuAPIKey)
+                                        .font(.system(.body, design: .monospaced))
+                                        .autocapitalization(.none)
+                                        .onChange(of: haikuAPIKey) {
+                                            UserDefaults.standard.set($0, forKey: "haikuAPIKey")
+                                        }
+
+                                    if let result = apiKeyTestResult {
+                                        Text(result)
+                                            .font(.caption)
+                                            .foregroundColor(result.contains("✅") ? .green : .red)
+                                    }
+
+                                    Button(action: testHaikuAPIKey) {
+                                        HStack {
+                                            if showingAPIKeyTest {
+                                                ProgressView()
+                                                    .progressViewStyle(CircularProgressViewStyle())
+                                                    .scaleEffect(0.8)
+                                            }
+                                            Text(showingAPIKeyTest ? "testing..." : "test key")
+                                                .font(.caption)
+                                        }
+                                    }
+                                    .disabled(haikuAPIKey.isEmpty || showingAPIKeyTest)
+
+                                    Text("get key at console.anthropic.com")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        .padding(.bottom, 10)
+
+                        // MARK: - Phase 4: Custom Instructions
+                        Group {
+                            Text("custom instructions", comment: "Tell AI about yourself")
+                                .bold()
+                                .padding(.top, 10)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("who are you?")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+
+                                TextField("name", text: $userName)
+                                    .onChange(of: userName) {
+                                        UserDefaults.standard.set($0, forKey: "customInstructionsName")
+                                    }
+
+                                TextField("role (e.g., iOS dev, student)", text: $userRole)
+                                    .onChange(of: userRole) {
+                                        UserDefaults.standard.set($0, forKey: "customInstructionsRole")
+                                    }
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("custom instructions (500 char max)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+
+                                TextEditor(text: $customInstructions)
+                                    .frame(height: 100)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    )
+                                    .onChange(of: customInstructions) { newValue in
+                                        let truncated = String(newValue.prefix(500))
+                                        customInstructions = truncated
+                                        UserDefaults.standard.set(truncated, forKey: "customInstructions")
+                                    }
+
+                                Text("\(customInstructions.count)/500")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(.bottom, 10)
+
+                        // MARK: - Phase 4: Memory & Claude Import
+                        Group {
+                            Text("memory & context", comment: "What AI remembers")
+                                .bold()
+                                .padding(.top, 10)
+
+                            Button(action: { showingMemoryView = true }) {
+                                HStack {
+                                    Text("🧠 memories (\(memoryCount))")
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                }
+                            }
+
+                            Button(action: { showingClaudeImport = true }) {
+                                HStack {
+                                    Text("📥 import claude chats")
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                }
+                            }
+                        }
+                        .padding(.bottom, 10)
+
                         Group {
                             SecureField("OpenAI API Key", text: $openAIApiKey)
                                 .onChange(of: openAIApiKey) {
@@ -168,11 +315,12 @@ struct SettingsView: View {
                             if offlineMode {
                                 // Model selection
                                 Picker("Local Model", selection: $selectedLocalModel) {
+                                    Text("Qwen 3 4B (default)").tag("Qwen/Qwen3-4B-Instruct")
+                                    Text("Qwen 2.5 3B (speed)").tag("Qwen/Qwen2.5-3B-Instruct")
                                     Text("Qwen 2.5 1.5B").tag("Qwen/Qwen2.5-1.5B-Instruct")
-                                    Text("Qwen 2.5 3B").tag("Qwen/Qwen2.5-3B-Instruct")
                                     Text("Gemma 2 2B").tag("google/gemma-2-2b-it")
-                                    Text("Llama 3.2 1B").tag("meta-llama/Llama-3.2-1B-Instruct")
                                     Text("Llama 3.2 3B").tag("meta-llama/Llama-3.2-3B-Instruct")
+                                    Text("Llama 3.2 1B").tag("meta-llama/Llama-3.2-1B-Instruct")
                                 }
                                 .pickerStyle(.menu)
                                 .onChange(of: selectedLocalModel) {
@@ -282,9 +430,16 @@ struct SettingsView: View {
                         vadSensitivity = UserDefaults.standard.float(forKey: "vadSensitivity") == 0 ? 0.5 : UserDefaults.standard.float(forKey: "vadSensitivity")
                         showWaveform = UserDefaults.standard.object(forKey: "showWaveform") == nil ? true : UserDefaults.standard.bool(forKey: "showWaveform")
                         onDeviceRecognition = UserDefaults.standard.object(forKey: "onDeviceRecognition") == nil ? true : UserDefaults.standard.bool(forKey: "onDeviceRecognition")
-                        selectedLocalModel = UserDefaults.standard.string(forKey: "selectedLocalModel") ?? "Qwen/Qwen2.5-1.5B-Instruct"
+                        selectedLocalModel = UserDefaults.standard.string(forKey: "selectedLocalModel") ?? "Qwen/Qwen2.5-3B-Instruct"
                         ttsRate = UserDefaults.standard.float(forKey: "ttsRate") == 0 ? 0.5 : UserDefaults.standard.float(forKey: "ttsRate")
                         ttsPitch = UserDefaults.standard.float(forKey: "ttsPitch") == 0 ? 1.0 : UserDefaults.standard.float(forKey: "ttsPitch")
+
+                        // Load Phase 4 settings
+                        useHaiku = UserDefaults.standard.bool(forKey: "useHaiku")
+                        haikuAPIKey = UserDefaults.standard.string(forKey: "haikuAPIKey") ?? ""
+                        customInstructions = UserDefaults.standard.string(forKey: "customInstructions") ?? ""
+                        userName = UserDefaults.standard.string(forKey: "customInstructionsName") ?? ""
+                        userRole = UserDefaults.standard.string(forKey: "customInstructionsRole") ?? ""
 
                         if (elevenLabsApiKey != "" && elevenLabs) {
                             elevenLabsGetUsage { result in
@@ -329,6 +484,24 @@ struct SettingsView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .percent
         return formatter.string(from: float as NSNumber) ?? "0%"
+    }
+
+    // MARK: - Phase 4: API Key Testing
+    func testHaikuAPIKey() {
+        showingAPIKeyTest = true
+        apiKeyTestResult = nil
+
+        Task {
+            let client = AnthropicClient()
+            client.saveAPIKey(haikuAPIKey)
+
+            let success = await client.testConnection()
+
+            await MainActor.run {
+                showingAPIKeyTest = false
+                apiKeyTestResult = success ? "✅ nice! you're set up" : "❌ key doesn't work - check it?"
+            }
+        }
     }
 }
 
