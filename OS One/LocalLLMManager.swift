@@ -15,14 +15,21 @@ import Tokenizers
 
 // MARK: - Model Configuration
 enum LocalModelType: String, CaseIterable {
+    // Qwen 3 series (latest, optimized for mobile)
+    case qwen3_4B = "Qwen/Qwen3-4B-Instruct"
+
+    // Qwen 2.5 series (proven performance)
     case qwen25_1_5B = "Qwen/Qwen2.5-1.5B-Instruct"
     case qwen25_3B = "Qwen/Qwen2.5-3B-Instruct"
+
+    // Alternative models
     case gemma2_2B = "google/gemma-2-2b-it"
     case llama32_1B = "meta-llama/Llama-3.2-1B-Instruct"
     case llama32_3B = "meta-llama/Llama-3.2-3B-Instruct"
 
     var displayName: String {
         switch self {
+        case .qwen3_4B: return "Qwen 3 4B"
         case .qwen25_1_5B: return "Qwen 2.5 1.5B"
         case .qwen25_3B: return "Qwen 2.5 3B"
         case .gemma2_2B: return "Gemma 2 2B"
@@ -33,17 +40,39 @@ enum LocalModelType: String, CaseIterable {
 
     var modelSize: String {
         switch self {
-        case .qwen25_1_5B: return "~1.1 GB"
-        case .qwen25_3B: return "~2.0 GB"
-        case .gemma2_2B: return "~1.5 GB"
-        case .llama32_1B: return "~0.9 GB"
-        case .llama32_3B: return "~2.1 GB"
+        case .qwen3_4B: return "~2.5 GB (4-bit)"
+        case .qwen25_1_5B: return "~1.1 GB (4-bit)"
+        case .qwen25_3B: return "~2.0 GB (4-bit)"
+        case .gemma2_2B: return "~1.5 GB (4-bit)"
+        case .llama32_1B: return "~0.9 GB (4-bit)"
+        case .llama32_3B: return "~2.1 GB (4-bit)"
         }
+    }
+
+    var performanceDescription: String {
+        switch self {
+        case .qwen3_4B:
+            return "Default - Best quality, <300ms latency, 15-20 tok/s on iPhone 15 Pro"
+        case .qwen25_3B:
+            return "Speed Mode - Fast responses, <250ms latency, 18-25 tok/s, recommended for iPhone 12 Pro Max"
+        case .qwen25_1_5B:
+            return "Efficient - Battery saver, <200ms latency, 20-25 tok/s"
+        case .gemma2_2B:
+            return "Google - Balanced performance, good for general use"
+        case .llama32_3B:
+            return "Meta - High quality, slightly slower"
+        case .llama32_1B:
+            return "Tiny - Ultra fast, basic conversations only"
+        }
+    }
+
+    var isRecommended: Bool {
+        self == .qwen3_4B || self == .qwen25_3B
     }
 
     var systemPromptTemplate: String {
         switch self {
-        case .qwen25_1_5B, .qwen25_3B:
+        case .qwen3_4B, .qwen25_1_5B, .qwen25_3B:
             return "<|im_start|>system\n{system}<|im_end|>\n"
         case .gemma2_2B:
             return "<start_of_turn>user\n{system}<end_of_turn>\n"
@@ -54,7 +83,7 @@ enum LocalModelType: String, CaseIterable {
 
     var userPromptTemplate: String {
         switch self {
-        case .qwen25_1_5B, .qwen25_3B:
+        case .qwen3_4B, .qwen25_1_5B, .qwen25_3B:
             return "<|im_start|>user\n{message}<|im_end|>\n<|im_start|>assistant\n"
         case .gemma2_2B:
             return "<start_of_turn>user\n{message}<end_of_turn>\n<start_of_turn>model\n"
@@ -327,6 +356,7 @@ class LocalLLMManager: ObservableObject {
         // EOS token IDs vary by model
         // Qwen: 151643, Gemma: 1, Llama: 128009
         let eosTokens: [LocalModelType: Int] = [
+            .qwen3_4B: 151643,
             .qwen25_1_5B: 151643,
             .qwen25_3B: 151643,
             .gemma2_2B: 1,
@@ -339,7 +369,7 @@ class LocalLLMManager: ObservableObject {
 
     private func getModelEndToken(for model: LocalModelType) -> String {
         switch model {
-        case .qwen25_1_5B, .qwen25_3B:
+        case .qwen3_4B, .qwen25_1_5B, .qwen25_3B:
             return "<|im_end|>\n"
         case .gemma2_2B:
             return "<end_of_turn>\n"
