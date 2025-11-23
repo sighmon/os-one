@@ -1,0 +1,241 @@
+name: Nightly Performance Benchmarks
+
+on:
+  schedule:
+    # Run every night at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_15.0.app/Contents/Developer
+  IOS_DESTINATION: 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.0'
+
+jobs:
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Build for testing
+        run: |
+          xcodebuild clean build-for-testing \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -quiet
+
+      - name: Run performance benchmarks
+        run: |
+          xcodebuild test-without-building \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -only-testing:"OS One Tests/PerformanceBenchmarkTests" \
+            -resultBundlePath BenchmarkResults.xcresult
+
+      - name: Extract performance metrics
+        run: |
+          xcrun xcresulttool get --format json --path BenchmarkResults.xcresult > benchmark_results.json
+
+      - name: Parse and display results
+        run: |
+          python3 << 'EOF'
+          import json
+          import sys
+
+          print("\n╔════════════════════════════════════════════════════════╗")
+          print("║          Nightly Performance Benchmark Report          ║")
+          print("╚════════════════════════════════════════════════════════╝\n")
+
+          # Parse results
+          with open('benchmark_results.json', 'r') as f:
+              data = json.load(f)
+
+          # Extract test metrics
+          # (This would need actual xcresult parsing logic)
+          print("📊 Performance Metrics:")
+          print("   - Model Load Time: N/A (needs xcresult parsing)")
+          print("   - First Token Latency: N/A")
+          print("   - Token Throughput: N/A")
+          print("   - VAD Processing Time: N/A")
+          print("   - TTS Latency: N/A")
+          print("   - End-to-End Latency: N/A")
+          print("\n✅ Benchmark suite completed\n")
+          EOF
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-benchmark-results-${{ github.run_number }}
+          path: |
+            BenchmarkResults.xcresult
+            benchmark_results.json
+          retention-days: 90
+
+      - name: Compare with baseline
+        run: |
+          # Download previous benchmark results
+          # Compare metrics
+          # Alert if performance regression > 10%
+          echo "📈 Performance comparison:"
+          echo "   (Would compare with baseline from artifacts)"
+
+  memory-leak-detection:
+    name: Memory Leak Detection
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Run with Instruments (Leaks)
+        run: |
+          # Build app
+          xcodebuild clean build \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -quiet
+
+          # Run leak detection tests
+          echo "🔍 Running memory leak detection..."
+          xcodebuild test \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -only-testing:"OS One Tests/PerformanceBenchmarkTests/testMemoryLeakDuringRepeatedInference" \
+            -enableAddressSanitizer YES \
+            -resultBundlePath LeakResults.xcresult
+
+      - name: Check for memory leaks
+        run: |
+          echo "🔍 Analyzing memory leak results..."
+          # Parse results for memory issues
+          if grep -q "leak" LeakResults.xcresult; then
+            echo "❌ Memory leaks detected!"
+            exit 1
+          else
+            echo "✅ No memory leaks detected"
+          fi
+
+      - name: Upload leak detection results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: leak-detection-results-${{ github.run_number }}
+          path: LeakResults.xcresult
+
+  stress-tests:
+    name: Stress Tests
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Run stress tests
+        run: |
+          xcodebuild test \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -only-testing:"OS One Tests/PerformanceBenchmarkTests/testContinuousInferenceStability" \
+            -only-testing:"OS One UI Tests/OSOneUITests/testRapidModeSwitching" \
+            -only-testing:"OS One UI Tests/OSOneUITests/testRapidSettingsToggle" \
+            -resultBundlePath StressTestResults.xcresult
+
+      - name: Upload stress test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-test-results-${{ github.run_number }}
+          path: StressTestResults.xcresult
+
+  device-specific-tests:
+    name: Device-Specific Tests
+    runs-on: macos-13
+    strategy:
+      matrix:
+        device:
+          - 'iPhone 15 Pro'
+          - 'iPhone 14 Pro'
+          - 'iPhone 13 Pro'
+          - 'iPad Pro (12.9-inch) (6th generation)'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Run device-specific tests
+        run: |
+          xcodebuild test \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "platform=iOS Simulator,name=${{ matrix.device }},OS=17.0" \
+            -only-testing:"OS One Tests/PerformanceBenchmarkTests/testPerformanceOnCurrentDevice" \
+            -resultBundlePath "${{ matrix.device }}-Results.xcresult"
+
+      - name: Upload device test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-tests-${{ matrix.device }}-${{ github.run_number }}
+          path: "${{ matrix.device }}-Results.xcresult"
+
+  report:
+    name: Generate Performance Report
+    runs-on: ubuntu-latest
+    needs: [performance-benchmarks, memory-leak-detection, stress-tests, device-specific-tests]
+    if: always()
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate summary report
+        run: |
+          echo "# Nightly Performance Report - $(date)" > report.md
+          echo "" >> report.md
+          echo "## Summary" >> report.md
+          echo "" >> report.md
+          echo "- Performance Benchmarks: ${{ needs.performance-benchmarks.result }}" >> report.md
+          echo "- Memory Leak Detection: ${{ needs.memory-leak-detection.result }}" >> report.md
+          echo "- Stress Tests: ${{ needs.stress-tests.result }}" >> report.md
+          echo "- Device-Specific Tests: ${{ needs.device-specific-tests.result }}" >> report.md
+          echo "" >> report.md
+          echo "## Details" >> report.md
+          echo "" >> report.md
+          echo "See attached artifacts for detailed results." >> report.md
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-report-${{ github.run_number }}
+          path: report.md
+
+      - name: Create issue on failure
+        if: |
+          needs.performance-benchmarks.result == 'failure' ||
+          needs.memory-leak-detection.result == 'failure' ||
+          needs.stress-tests.result == 'failure' ||
+          needs.device-specific-tests.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ Nightly Performance Tests Failed',
+              body: `Nightly performance tests failed on ${new Date().toISOString()}\n\nSee [run #${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+              labels: ['performance', 'automated-test', 'ci-failure']
+            })

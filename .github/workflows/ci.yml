@@ -1,0 +1,273 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop, 'claude/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_15.0.app/Contents/Developer
+  IOS_DESTINATION: 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.0'
+  MACOS_DESTINATION: 'platform=macOS'
+
+jobs:
+  lint:
+    name: SwiftLint
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Run SwiftLint
+        run: swiftlint lint --strict
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Show available simulators
+        run: xcrun simctl list devices available
+
+      - name: Build for testing
+        run: |
+          xcodebuild clean build-for-testing \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -quiet
+
+      - name: Run unit tests
+        run: |
+          xcodebuild test-without-building \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -only-testing:"OS One Tests/LocalLLMManagerTests" \
+            -only-testing:"OS One Tests/VoiceActivityDetectorTests" \
+            -only-testing:"OS One Tests/DeviceCapabilityDetectorTests" \
+            -only-testing:"OS One Tests/UIModeManagerTests" \
+            -resultBundlePath TestResults.xcresult
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: TestResults.xcresult
+
+  ui-tests:
+    name: UI Tests
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Build for testing
+        run: |
+          xcodebuild clean build-for-testing \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -quiet
+
+      - name: Run UI tests
+        run: |
+          xcodebuild test-without-building \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -only-testing:"OS One UI Tests" \
+            -resultBundlePath UITestResults.xcresult
+
+      - name: Upload UI test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: UITestResults.xcresult
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: |
+            ~/Library/Developer/Xcode/DerivedData/**/Logs/Test/Attachments/**/*.png
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Build for testing
+        run: |
+          xcodebuild clean build-for-testing \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -quiet
+
+      - name: Run integration tests
+        run: |
+          xcodebuild test-without-building \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -only-testing:"OS One Tests/VoicePipelineIntegrationTests" \
+            -resultBundlePath IntegrationTestResults.xcresult
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: IntegrationTestResults.xcresult
+
+  code-coverage:
+    name: Code Coverage
+    runs-on: macos-13
+    needs: [unit-tests, integration-tests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Run tests with coverage
+        run: |
+          xcodebuild test \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -enableCodeCoverage YES \
+            -resultBundlePath CoverageResults.xcresult
+
+      - name: Extract coverage data
+        run: |
+          xcrun xccov view --report --json CoverageResults.xcresult > coverage.json
+
+      - name: Check coverage threshold
+        run: |
+          # Extract overall coverage percentage
+          COVERAGE=$(python3 -c "import json; data=json.load(open('coverage.json')); print(data['lineCoverage']*100)")
+          echo "Code Coverage: ${COVERAGE}%"
+
+          # Fail if below 80%
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ Coverage ($COVERAGE%) is below 80% threshold"
+            exit 1
+          else
+            echo "✅ Coverage ($COVERAGE%) meets 80% threshold"
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.json
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-13
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Build iOS app
+        run: |
+          xcodebuild clean build \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -configuration ${{ matrix.configuration }} \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -quiet
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-13
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Build macOS app
+        run: |
+          xcodebuild clean build \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -configuration ${{ matrix.configuration }} \
+            -destination "${{ env.MACOS_DESTINATION }}" \
+            -quiet
+
+  analyze:
+    name: Static Analysis
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Run static analyzer
+        run: |
+          xcodebuild analyze \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "${{ env.IOS_DESTINATION }}" \
+            -quiet
+
+  success:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests, ui-tests, integration-tests, code-coverage, build-ios, build-macos, analyze]
+    if: always()
+    steps:
+      - name: Check all jobs
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" || \
+                "${{ needs.unit-tests.result }}" != "success" || \
+                "${{ needs.ui-tests.result }}" != "success" || \
+                "${{ needs.integration-tests.result }}" != "success" || \
+                "${{ needs.code-coverage.result }}" != "success" || \
+                "${{ needs.build-ios.result }}" != "success" || \
+                "${{ needs.build-macos.result }}" != "success" || \
+                "${{ needs.analyze.result }}" != "success" ]]; then
+            echo "❌ Some checks failed"
+            exit 1
+          else
+            echo "✅ All checks passed"
+          fi

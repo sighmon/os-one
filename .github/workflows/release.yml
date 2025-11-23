@@ -1,0 +1,297 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - testflight
+          - app-store
+          - both
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_15.0.app/Contents/Developer
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: macos-13
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate version
+        run: |
+          # Extract version from tag
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "Release version: $VERSION"
+
+          # Validate version format (semver)
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z (e.g., 1.0.0)"
+            exit 1
+          fi
+
+          # Check if version matches Info.plist
+          PLIST_VERSION=$(plutil -extract CFBundleShortVersionString raw "OS One/Info.plist")
+          if [[ "$VERSION" != "$PLIST_VERSION" ]]; then
+            echo "⚠️  Warning: Tag version ($VERSION) doesn't match Info.plist ($PLIST_VERSION)"
+          fi
+
+      - name: Check changelog
+        run: |
+          if [[ ! -f "CHANGELOG.md" ]]; then
+            echo "⚠️  Warning: CHANGELOG.md not found"
+          else
+            echo "✅ CHANGELOG.md exists"
+          fi
+
+  run-tests:
+    name: Full Test Suite
+    runs-on: macos-13
+    needs: validate
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Run all tests
+        run: |
+          xcodebuild test \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.0" \
+            -enableCodeCoverage YES \
+            -resultBundlePath ReleaseTestResults.xcresult
+
+      - name: Check test results
+        run: |
+          # Fail if any tests failed
+          if xcrun xcresulttool get --path ReleaseTestResults.xcresult | grep -q "Failed"; then
+            echo "❌ Tests failed - cannot release"
+            exit 1
+          else
+            echo "✅ All tests passed"
+          fi
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-test-results
+          path: ReleaseTestResults.xcresult
+
+  build-testflight:
+    name: Build for TestFlight
+    runs-on: macos-13
+    needs: run-tests
+    if: |
+      github.event.inputs.release_type == 'testflight' ||
+      github.event.inputs.release_type == 'both' ||
+      github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Install Apple Certificate
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Install provisioning profile
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
+      - name: Build archive
+        run: |
+          xcodebuild clean archive \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/OSOne.xcarchive" \
+            -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="OS One Distribution"
+
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/OSOne.xcarchive" \
+            -exportPath "$RUNNER_TEMP/Export" \
+            -exportOptionsPlist "ExportOptions.plist"
+
+      - name: Upload to TestFlight
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$RUNNER_TEMP/Export/OS One.ipa" \
+            --username "$APPLE_ID" \
+            --password "$APP_PASSWORD" \
+            --team-id "$TEAM_ID"
+
+          echo "✅ Uploaded to TestFlight"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OSOne-TestFlight.ipa
+          path: ${{ runner.temp }}/Export/OS One.ipa
+
+  build-app-store:
+    name: Build for App Store
+    runs-on: macos-13
+    needs: run-tests
+    if: |
+      github.event.inputs.release_type == 'app-store' ||
+      github.event.inputs.release_type == 'both'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+      - name: Build and submit to App Store
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+        run: |
+          echo "📱 Building for App Store submission..."
+
+          # Build archive
+          xcodebuild clean archive \
+            -project "OS One.xcodeproj" \
+            -scheme "OS One" \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/OSOne-AppStore.xcarchive" \
+            -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates
+
+          # Export for App Store
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/OSOne-AppStore.xcarchive" \
+            -exportPath "$RUNNER_TEMP/AppStore" \
+            -exportOptionsPlist "ExportOptions-AppStore.plist"
+
+          # Submit to App Store
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$RUNNER_TEMP/AppStore/OS One.ipa" \
+            --username "$APPLE_ID" \
+            --password "$APP_PASSWORD"
+
+          echo "✅ Submitted to App Store"
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-testflight]
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog
+        id: changelog
+        run: |
+          if [[ -f "CHANGELOG.md" ]]; then
+            # Extract section for this version
+            CHANGELOG=$(awk '/^## \['"${{ steps.version.outputs.version }}"'\]/,/^## \[/{if(/^## \['"${{ steps.version.outputs.version }}"'\]/)p=1;else if(/^## \[/)p=0;if(p)print}' CHANGELOG.md)
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGELOG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changelog=No changelog available" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: OSOne-TestFlight.ipa
+
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: OS One v${{ steps.version.outputs.version }}
+          body: |
+            # OS One v${{ steps.version.outputs.version }}
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Installation
+
+            This build is available on TestFlight. The IPA is attached for archival purposes.
+
+            ## Checksums
+
+            See attached checksums.txt for SHA256 hashes.
+          draft: false
+          prerelease: false
+
+      - name: Upload IPA to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./OS One.ipa
+          asset_name: OSOne-v${{ steps.version.outputs.version }}.ipa
+          asset_content_type: application/octet-stream
+
+  notify:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: [build-testflight, build-app-store, create-release]
+    if: always()
+    steps:
+      - name: Send notification
+        run: |
+          echo "📢 Release workflow completed"
+          echo "TestFlight: ${{ needs.build-testflight.result }}"
+          echo "App Store: ${{ needs.build-app-store.result }}"
+          echo "GitHub Release: ${{ needs.create-release.result }}"
+
+          # You can add Slack/Discord/Email notifications here
