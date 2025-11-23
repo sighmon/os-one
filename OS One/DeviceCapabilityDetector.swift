@@ -287,12 +287,13 @@ class DeviceCapabilityDetector {
     ) -> LocalModelType {
         switch tier {
         case .ultra:
-            // 8GB+ RAM: Can handle Qwen3-4B at 4-bit
+            // 8GB+ RAM: Can handle Qwen3-4B at 4-bit with plenty of headroom
             return .qwen3_4B
 
         case .high:
-            // 6GB RAM (iPhone 12 Pro Max baseline): Qwen2.5-3B at 4-bit
-            return .qwen25_3B
+            // 6GB RAM (iPhone 12 Pro Max baseline): Qwen3-4B at 4-bit!
+            // 256K context window is the killer feature
+            return .qwen3_4B
 
         case .medium:
             // 4GB RAM: Qwen2.5-1.5B at 4-bit

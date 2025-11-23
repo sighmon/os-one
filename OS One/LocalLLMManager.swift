@@ -49,25 +49,58 @@ enum LocalModelType: String, CaseIterable {
         }
     }
 
+    var contextWindow: Int {
+        switch self {
+        case .qwen3_4B: return 256_000      // 256K tokens - HUGE context!
+        case .qwen25_1_5B: return 32_768    // 32K tokens
+        case .qwen25_3B: return 32_768      // 32K tokens
+        case .gemma2_2B: return 8_192       // 8K tokens
+        case .llama32_1B: return 128_000    // 128K tokens
+        case .llama32_3B: return 128_000    // 128K tokens
+        }
+    }
+
+    var parameterCount: Int64 {
+        switch self {
+        case .qwen3_4B: return 4_000_000_000
+        case .qwen25_1_5B: return 1_500_000_000
+        case .qwen25_3B: return 3_000_000_000
+        case .gemma2_2B: return 2_000_000_000
+        case .llama32_1B: return 1_000_000_000
+        case .llama32_3B: return 3_000_000_000
+        }
+    }
+
+    var requiredRAMInGB: Double {
+        switch self {
+        case .qwen3_4B: return 5.5          // 2.5GB model + 3GB buffer
+        case .qwen25_1_5B: return 3.5       // 1.1GB model + 2.4GB buffer
+        case .qwen25_3B: return 4.5         // 2GB model + 2.5GB buffer
+        case .gemma2_2B: return 4.0         // 1.5GB model + 2.5GB buffer
+        case .llama32_1B: return 3.0        // 0.9GB model + 2.1GB buffer
+        case .llama32_3B: return 4.5        // 2.1GB model + 2.4GB buffer
+        }
+    }
+
     var performanceDescription: String {
         switch self {
         case .qwen3_4B:
-            return "Default - Best quality, <300ms latency, 15-20 tok/s on iPhone 15 Pro"
+            return "Recommended - 256K context window for really long conversations. Fast & smart. ~15-20 tok/s on iPhone 12 Pro Max. Best balance."
         case .qwen25_3B:
-            return "Speed Mode - Fast responses, <250ms latency, 18-25 tok/s, recommended for iPhone 12 Pro Max"
+            return "Speed Mode - Fast responses, <250ms latency, 18-25 tok/s. 32K context."
         case .qwen25_1_5B:
-            return "Efficient - Battery saver, <200ms latency, 20-25 tok/s"
+            return "Efficient - Battery saver, <200ms latency, 20-25 tok/s. 32K context."
         case .gemma2_2B:
-            return "Google - Balanced performance, good for general use"
+            return "Google - Balanced performance, good for general use. 8K context."
         case .llama32_3B:
-            return "Meta - High quality, slightly slower"
+            return "Meta - High quality, 128K context, slightly slower"
         case .llama32_1B:
-            return "Tiny - Ultra fast, basic conversations only"
+            return "Tiny - Ultra fast, 128K context, basic conversations only"
         }
     }
 
     var isRecommended: Bool {
-        self == .qwen3_4B || self == .qwen25_3B
+        self == .qwen3_4B
     }
 
     var systemPromptTemplate: String {
