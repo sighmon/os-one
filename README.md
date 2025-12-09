@@ -81,6 +81,18 @@ Available on the App Store: https://apps.apple.com/app/os-one/id6447306476
 - Native TTS (no internet required)
 - Waveform visualization
 
+### macOS-Exclusive Features
+- **🦜 Parakeet STT**: NVIDIA Parakeet CTC 0.6 speech recognition (v2/v3)
+  - Higher accuracy than iOS Speech Recognition
+  - Fully offline capable
+  - ~600MB models optimized for real-time
+- **⌨️ Global Dictation**: System-wide voice input
+  - Press Fn key to dictate in ANY app
+  - Works in Chrome, Slack, VS Code, Notes, etc.
+  - Similar to Whisper Flow / Super Whisper
+  - Requires Accessibility permissions
+- See [PARAKEET_GUIDE.md](PARAKEET_GUIDE.md) for full documentation
+
 ### Personalization (Phase 4)
 - Custom instructions
 - Conversation memory

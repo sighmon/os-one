@@ -57,6 +57,61 @@ macOS:   macOS 13.0+ (Ventura and later)
 - No MLX required - uses Ollama runtime
 - Compatible with hundreds of models
 
+### 7. **Parakeet STT** 🦜
+- NVIDIA Parakeet CTC 0.6 speech recognition
+- Better accuracy than iOS Speech Recognition
+- Fully offline (local inference)
+- Models: v2 (stable) and v3 (latest)
+
+### 8. **Global Dictation** ⌨️
+- System-wide voice input (works in ANY app)
+- Fn key activation (like Whisper Flow)
+- Insert text at cursor in Chrome, Slack, VS Code, etc.
+- Requires Accessibility permissions
+
+## 🦜 Parakeet STT & ⌨️ Global Dictation
+
+**For full documentation, see [PARAKEET_GUIDE.md](PARAKEET_GUIDE.md)**
+
+### Quick Overview
+
+**Parakeet STT:**
+- Alternative to iOS Speech Recognition
+- ~600MB models (v2 or v3)
+- Runs locally via inference server
+- Endpoint: http://localhost:8000
+
+**Global Dictation:**
+- Press and hold Fn key to record
+- Release to transcribe and insert text
+- Works system-wide (any macOS app)
+- Needs Accessibility permissions
+
+**Combined Power:**
+- Parakeet + Global Dictation = Offline system-wide voice input
+- Similar to Whisper Flow / Super Whisper
+- But integrated with full voice AI assistant
+
+### Setup Summary
+
+1. **Enable in Settings** (⌘,)
+   - Parakeet STT: Toggle ON, select model, set endpoint
+   - Global Dictation: Toggle ON, choose Fn key mode
+
+2. **Grant Permissions**
+   - Microphone (for recording)
+   - Accessibility (for global hotkey + text insertion)
+
+3. **Start Parakeet Server** (optional, for offline)
+   ```bash
+   python inference_server.py --port 8000
+   ```
+
+4. **Use Anywhere**
+   - Place cursor in any app
+   - Hold Fn → Speak → Release
+   - Text appears!
+
 ## 🦙 Ollama Integration (macOS Only)
 
 ### Why Ollama?
@@ -448,7 +503,7 @@ print("Context: \(localLLM.currentModel?.contextWindow ?? 0)K tokens")
 
 ---
 
-**macOS Support Version:** 1.1 (Ollama Integration)
+**macOS Support Version:** 1.2 (Parakeet STT + Global Dictation)
 **Last Updated:** 2025-12-09
 **Minimum macOS:** 13.0 (Ventura)
 **Optimized For:** Apple Silicon (M1+)

@@ -68,6 +68,21 @@ struct SettingsView: View {
     // MARK: - Phase 4: Claude Import
     @State private var showingClaudeImport: Bool = false
 
+    // MARK: - Parakeet STT Settings (macOS only)
+    #if os(macOS)
+    @State private var useParakeetSTT: Bool = false
+    @State private var parakeetModel: String = "parakeet-ctc-0.6-v3"
+    @State private var parakeetEndpoint: String = "http://localhost:8000"
+    @State private var parakeetConnected: Bool = false
+    #endif
+
+    // MARK: - Global Hotkey Settings (macOS only)
+    #if os(macOS)
+    @State private var globalHotkeyEnabled: Bool = false
+    @State private var selectedHotkey: String = "left_fn"
+    @State private var hasAccessibilityPermissions: Bool = false
+    #endif
+
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -449,6 +464,133 @@ struct SettingsView: View {
                         }
                         .padding(.bottom, 10)
 
+                        // MARK: - Parakeet STT Settings (macOS only)
+                        #if os(macOS)
+                        Group {
+                            Text("parakeet speech-to-text (macOS)", comment: "NVIDIA Parakeet CTC ASR")
+                                .bold()
+                                .padding(.top, 10)
+
+                            Toggle("Use Parakeet STT", isOn: $useParakeetSTT)
+                                .onChange(of: useParakeetSTT) { newValue in
+                                    UserDefaults.standard.set(newValue, forKey: "useParakeetSTT")
+                                }
+
+                            if useParakeetSTT {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("parakeet model")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+
+                                    Picker("Model", selection: $parakeetModel) {
+                                        Text("CTC 0.6 v3 (Latest)").tag("parakeet-ctc-0.6-v3")
+                                        Text("CTC 0.6 v2 (Stable)").tag("parakeet-ctc-0.6-v2")
+                                    }
+                                    .pickerStyle(.menu)
+                                    .onChange(of: parakeetModel) { newValue in
+                                        UserDefaults.standard.set(newValue, forKey: "parakeetModel")
+                                    }
+
+                                    Divider()
+
+                                    Text("parakeet endpoint")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+
+                                    TextField("http://localhost:8000", text: $parakeetEndpoint)
+                                        .font(.system(.body, design: .monospaced))
+                                        .autocapitalization(.none)
+                                        .onChange(of: parakeetEndpoint) { newValue in
+                                            UserDefaults.standard.set(newValue, forKey: "parakeetEndpoint")
+                                        }
+
+                                    HStack {
+                                        Image(systemName: parakeetConnected ? "circle.fill" : "circle")
+                                            .foregroundColor(parakeetConnected ? .green : .red)
+                                        Text(parakeetConnected ? "connected" : "not running")
+                                            .font(.caption)
+                                    }
+
+                                    Text("start inference server on localhost:8000")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+
+                                    Text("download models from huggingface.co/nvidia/parakeet-ctc-0.6")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        .padding(.bottom, 10)
+                        #endif
+
+                        // MARK: - Global Hotkey Settings (macOS only)
+                        #if os(macOS)
+                        Group {
+                            Text("global dictation (macOS)", comment: "System-wide voice input")
+                                .bold()
+                                .padding(.top, 10)
+
+                            Toggle("Enable global dictation", isOn: $globalHotkeyEnabled)
+                                .onChange(of: globalHotkeyEnabled) { newValue in
+                                    UserDefaults.standard.set(newValue, forKey: "globalHotkeyEnabled")
+                                }
+
+                            if globalHotkeyEnabled {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    if !hasAccessibilityPermissions {
+                                        HStack {
+                                            Image(systemName: "exclamationmark.triangle.fill")
+                                                .foregroundColor(.orange)
+                                            Text("accessibility permissions required")
+                                                .font(.caption)
+                                                .foregroundColor(.orange)
+                                        }
+
+                                        Button("grant permissions") {
+                                            requestAccessibilityPermissions()
+                                        }
+                                        .font(.caption)
+                                    } else {
+                                        HStack {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundColor(.green)
+                                            Text("permissions granted")
+                                                .font(.caption)
+                                        }
+                                    }
+
+                                    Divider()
+
+                                    Text("activation hotkey")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+
+                                    Picker("Hotkey", selection: $selectedHotkey) {
+                                        Text("Left Fn Key (Hold)").tag("left_fn")
+                                        Text("Right Fn Key (Hold)").tag("right_fn")
+                                        Text("Double Fn Tap (Toggle)").tag("double_fn")
+                                    }
+                                    .pickerStyle(.menu)
+                                    .onChange(of: selectedHotkey) { newValue in
+                                        UserDefaults.standard.set(newValue, forKey: "selectedHotkey")
+                                    }
+
+                                    Text("press hotkey to start recording, release to transcribe & insert text")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+
+                                    Text("works in any app: chrome, notes, slack, vscode, etc.")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        .padding(.bottom, 10)
+                        #endif
+
                         Group {
                             Text("Custom settings", comment: "Set your own custom model, voice, and prompt.")
                                 .bold()
@@ -525,6 +667,16 @@ struct SettingsView: View {
                                 ollamaConnected = await client.checkConnection()
                             }
                         }
+
+                        // Load Parakeet STT settings
+                        useParakeetSTT = UserDefaults.standard.bool(forKey: "useParakeetSTT")
+                        parakeetModel = UserDefaults.standard.string(forKey: "parakeetModel") ?? "parakeet-ctc-0.6-v3"
+                        parakeetEndpoint = UserDefaults.standard.string(forKey: "parakeetEndpoint") ?? "http://localhost:8000"
+
+                        // Load Global Hotkey settings
+                        globalHotkeyEnabled = UserDefaults.standard.bool(forKey: "globalHotkeyEnabled")
+                        selectedHotkey = UserDefaults.standard.string(forKey: "selectedHotkey") ?? "left_fn"
+                        checkAccessibilityPermissions()
                         #endif
 
                         if (elevenLabsApiKey != "" && elevenLabs) {
@@ -589,6 +741,23 @@ struct SettingsView: View {
             }
         }
     }
+
+    // MARK: - Global Hotkey Helpers (macOS only)
+    #if os(macOS)
+    func requestAccessibilityPermissions() {
+        let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+        let _ = AXIsProcessTrustedWithOptions(options)
+
+        // Check permissions after a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            hasAccessibilityPermissions = AXIsProcessTrusted()
+        }
+    }
+
+    func checkAccessibilityPermissions() {
+        hasAccessibilityPermissions = AXIsProcessTrusted()
+    }
+    #endif
 }
 
 struct SettingsView_Previews: PreviewProvider {
