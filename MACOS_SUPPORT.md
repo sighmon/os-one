@@ -51,6 +51,154 @@ macOS:   macOS 13.0+ (Ventura and later)
 - Standard mode (600-900px)
 - Larger fonts for readability
 
+### 6. **Ollama Integration** 🦙
+- Third model provider option (macOS exclusive)
+- Easy local model management
+- No MLX required - uses Ollama runtime
+- Compatible with hundreds of models
+
+## 🦙 Ollama Integration (macOS Only)
+
+### Why Ollama?
+Ollama provides an easy-to-use local LLM runtime that complements OS One's built-in MLX support:
+
+**Benefits:**
+- ✅ Simple installation via Homebrew
+- ✅ Huge model library (100+ models)
+- ✅ Easy model switching
+- ✅ Better for experimentation
+- ✅ Lower barrier to entry than MLX
+
+**Use Cases:**
+- Testing different models quickly
+- Running models not available in MLX format
+- Sharing models across applications
+- Development and prototyping
+
+### Quick Start
+
+1. **Install Ollama**
+   ```bash
+   brew install ollama
+   ```
+
+2. **Start Ollama Server**
+   ```bash
+   ollama serve
+   ```
+   (Runs on localhost:11434)
+
+3. **Pull a Model**
+   ```bash
+   ollama pull qwen2.5:3b
+   # or
+   ollama pull llama3.2:3b
+   ```
+
+4. **Configure OS One**
+   - Open Settings (⌘,)
+   - Select "🦙 Ollama" as Model Provider
+   - Verify connection status (green = connected)
+   - Choose your downloaded model
+
+### Popular Models for OS One
+
+| Model | Size | RAM | Context | Speed | Best For |
+|-------|------|-----|---------|-------|----------|
+| **qwen2.5:3b** | 2.0GB | 4GB | 32K | Fast | Balanced |
+| **llama3.2:3b** | 2.1GB | 4GB | 128K | Fast | Long context |
+| **mistral:7b** | 4.1GB | 8GB | 32K | Medium | Quality |
+| **gemma2:2b** | 1.6GB | 3GB | 8K | Very Fast | Speed |
+| **qwen2.5:7b** | 4.7GB | 8GB | 32K | Medium | Best quality |
+
+### Configuration
+
+**Settings UI (macOS):**
+```
+Model Provider: 🦙 Ollama
+
+Ollama Endpoint: http://localhost:11434
+Status: ● connected
+
+Model: qwen2.5:3b
+```
+
+**UserDefaults Keys:**
+```swift
+modelProvider: "ollama"
+ollamaBaseURL: "http://localhost:11434"
+ollamaSelectedModel: "qwen2.5:3b"
+```
+
+### Model Management
+
+**List downloaded models:**
+```bash
+ollama list
+```
+
+**Remove a model:**
+```bash
+ollama rm qwen2.5:3b
+```
+
+**Update a model:**
+```bash
+ollama pull qwen2.5:3b  # Re-downloads latest version
+```
+
+**Check model info:**
+```bash
+ollama show qwen2.5:3b
+```
+
+### Troubleshooting
+
+**Connection Failed:**
+```
+Status: ○ not running
+Message: "ollama not running - start it with 'ollama serve'"
+```
+
+**Solution:**
+1. Open Terminal
+2. Run `ollama serve`
+3. Keep Terminal window open (or run as background service)
+4. Refresh OS One settings
+
+**Model Not Found:**
+```
+Error: model 'qwen2.5:3b' not found
+```
+
+**Solution:**
+```bash
+ollama pull qwen2.5:3b
+```
+
+**Slow Performance:**
+- Check Activity Monitor for CPU/RAM usage
+- Use smaller model (2B-3B instead of 7B)
+- Close other applications
+- Restart Ollama: `killall ollama && ollama serve`
+
+### MLX vs Ollama Comparison
+
+| Feature | MLX (Built-in) | Ollama |
+|---------|----------------|--------|
+| **Installation** | Included | Requires Homebrew |
+| **Model Format** | MLX-optimized | GGUF/Safetensors |
+| **Performance** | Faster (Apple Silicon) | Good |
+| **Models Available** | 6 curated | 100+ |
+| **Setup Complexity** | Lower | Medium |
+| **Model Switching** | App restart | Instant |
+| **RAM Usage** | Optimized | Standard |
+| **Best For** | Production use | Experimentation |
+
+**Recommendation:**
+- Use **MLX** for daily use (better performance)
+- Use **Ollama** for testing new models or specific workflows
+
 ## 📊 Model Recommendations (macOS)
 
 macOS devices typically have more RAM, so we can be more generous:
@@ -284,9 +432,11 @@ print("Context: \(localLLM.currentModel?.contextWindow ?? 0)K tokens")
    - Microphone access required
    - System Settings > Privacy & Security > Microphone
 
-3. **Choose Model**
+3. **Choose Model Provider**
    - Settings (⌘,) → Model Provider
-   - Recommended: Qwen 3 4B (256K context)
+   - **🔒 Local (MLX)**: Qwen 3 4B (256K context) - Recommended
+   - **⚡ Haiku 4.5**: Claude API (requires API key)
+   - **🦙 Ollama**: Local models via Ollama (requires `ollama serve`)
 
 4. **Start Using**
    - ⌘R to start recording
@@ -298,7 +448,7 @@ print("Context: \(localLLM.currentModel?.contextWindow ?? 0)K tokens")
 
 ---
 
-**macOS Support Version:** 1.0
-**Last Updated:** 2025-11-23
+**macOS Support Version:** 1.1 (Ollama Integration)
+**Last Updated:** 2025-12-09
 **Minimum macOS:** 13.0 (Ventura)
 **Optimized For:** Apple Silicon (M1+)
