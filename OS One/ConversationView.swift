@@ -24,102 +24,140 @@ struct ConversationView: View {
 
     var body: some View {
         ScrollView {
-            VStack {
-                Text(conversation.name ?? "Conversation")
-                    .font(.system(size: 30, weight: .medium))
-                    .padding(.bottom, 1)
-                    .padding(.top, 10)
-                Text("\(conversation.timestamp ?? Date(), formatter: dateFormatter)")
-                    .font(.system(size: 20, weight: .light))
-                    .padding(.bottom, 20)
-                    .textSelection(.enabled)
-                ForEach(messages) { message in
-                    SpeechBubble(
-                        text: message.message,
-                        human: message.sender == ChatMessage.Sender.user
-                    )
-                        .padding(.horizontal)
-                        .padding(
-                            EdgeInsets(
-                                top: 0, leading: 0, bottom: 10, trailing: 0
-                            )
-                        )
-                        .opacity(message.message == speechBubbleTapped ? 0.5 : 1.0)
-                        .onTapGesture {
-                            if message.sender != ChatMessage.Sender.user {
-                                speechBubbleTapped = message.message
-                                elevenLabsGetAudioId(text: message.message) { result in
-                                    switch result {
-                                    case .success(let audioId):
-                                        print("Audio ID found: \(audioId)")
-                                        elevenLabsGetHistoricAudio(audioId: audioId) { result in
-                                            switch result {
-                                            case .success(let data):
-                                                speechBubbleTapped = ""
-                                                setAudioSession(active: true)
-                                                audioPlayer.playAudioFromData(data: data)
-                                            case .failure(let error):
-                                                speechBubbleTapped = ""
-                                                print("Eleven Labs API error: \(error.localizedDescription)")
-                                            }
-                                        }
-                                    case .failure(let error):
-                                        speechBubbleTapped = ""
-                                        print("ElevenLabs API error: \(error.localizedDescription)")
-                                    }
-                                }
-                            }
-                        }
+            VStack(spacing: 0) {
+                // Header Section
+                VStack(spacing: 8) {
+                    Text(conversation.name ?? "Conversation")
+                        .font(.system(size: 28, weight: .semibold))
 
+                    Text("\(conversation.timestamp ?? Date(), formatter: dateFormatter)")
+                        .font(.system(size: 16, weight: .light))
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
                 }
-                Image(systemName: addButtonTapped ? "checkmark.circle.fill" : "plus.circle.fill")
-                    .font(.system(size: 45, weight: .light))
-                    .frame(width: 40)
-                    .padding(.top, 20)
-                    .onTapGesture {
-                        addButtonTapped = true
-                        chatHistory.messages = messages
+                .padding(.top, 16)
+                .padding(.bottom, 24)
+
+                // Messages Section
+                LazyVStack(spacing: 12) {
+                    ForEach(messages) { message in
+                        MessageBubble(
+                            text: message.message,
+                            isUser: message.sender == ChatMessage.Sender.user,
+                            isLoading: message.message == speechBubbleTapped
+                        )
+                        .onTapGesture {
+                            handleMessageTap(message: message)
+                        }
                     }
-                    .font(.system(
-                        size: 20,
-                        weight: .light
-                    ))
-                    .foregroundColor(.blue)
-                    .opacity(addButtonTapped ? 0.3 : 0.7)
+                }
+                .padding(.horizontal, 16)
+
+                // Add to Current Chat Button
+                Button(action: {
+                    addButtonTapped = true
+                    chatHistory.messages = messages
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: addButtonTapped ? "checkmark.circle.fill" : "plus.circle.fill")
+                            .font(.system(size: 20))
+                        Text(addButtonTapped ? "Added" : "Add to Current Chat")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .foregroundColor(addButtonTapped ? .green : .blue)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(addButtonTapped ? Color.green.opacity(0.1) : Color.blue.opacity(0.1))
+                    )
+                }
+                .disabled(addButtonTapped)
+                .padding(.top, 32)
+                .padding(.bottom, 24)
             }
-            .onDisappear() {
-                setAudioSession(active: false)
+        }
+        .onDisappear {
+            setAudioSession(active: false)
+        }
+    }
+
+    private func handleMessageTap(message: ChatMessage) {
+        guard message.sender != ChatMessage.Sender.user else { return }
+
+        speechBubbleTapped = message.message
+        elevenLabsGetAudioId(text: message.message) { result in
+            switch result {
+            case .success(let audioId):
+                print("Audio ID found: \(audioId)")
+                elevenLabsGetHistoricAudio(audioId: audioId) { result in
+                    switch result {
+                    case .success(let data):
+                        speechBubbleTapped = ""
+                        setAudioSession(active: true)
+                        audioPlayer.playAudioFromData(data: data)
+                    case .failure(let error):
+                        speechBubbleTapped = ""
+                        print("Eleven Labs API error: \(error.localizedDescription)")
+                    }
+                }
+            case .failure(let error):
+                speechBubbleTapped = ""
+                print("ElevenLabs API error: \(error.localizedDescription)")
             }
         }
     }
 }
 
+// MARK: - Message Bubble Component
+struct MessageBubble: View {
+    let text: String
+    let isUser: Bool
+    var isLoading: Bool = false
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            if isUser {
+                Spacer(minLength: 60)
+            }
+
+            VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
+                Text(text)
+                    .font(.system(size: 16))
+                    .foregroundColor(isUser ? .white : Color(UIColor.darkText))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(isUser ? Color.blue : Color(UIColor.systemGray5))
+                    )
+                    .textSelection(.enabled)
+
+                if isLoading {
+                    HStack(spacing: 4) {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                        Text("Loading audio...")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
+            if !isUser {
+                Spacer(minLength: 60)
+            }
+        }
+    }
+}
+
+// Legacy SpeechBubble for backward compatibility
 struct SpeechBubble: View {
     let text: String
     let human: Bool
 
     var body: some View {
-        HStack {
-            if human {
-                Spacer()
-            }
-            Text(text)
-                .foregroundColor(human ? .white : Color(red: 0.1, green: 0.1, blue: 0.1))
-                .padding(10)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .foregroundColor(human ? .blue : Color(red: 0.9, green: 0.9, blue: 0.9))
-                        .opacity(0.7)
-
-                )
-                .textSelection(.enabled)
-            if !human {
-                Spacer()
-                Spacer()
-                Spacer()
-                Spacer()
-            }
-        }
+        MessageBubble(text: text, isUser: human)
     }
 }
 

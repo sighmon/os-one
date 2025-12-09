@@ -100,7 +100,7 @@ struct HomeView: View {
 
                         // Phase 4: Model Indicator
                         Spacer().frame(width: 8)
-                        Text(getModelIndicator())
+                        Text(anthropicClient.useHaiku ? "⚡" : "🔒")
                             .font(.system(size: 20))
                             .baselineOffset(25.0)
                             .opacity(0.7)
@@ -133,112 +133,123 @@ struct HomeView: View {
                         .padding(.bottom, 20)
 
                     Spacer()
-                    HStack {
-                        Image(systemName: "archivebox")
-                            .font(.system(size: 25))
-                            .frame(width: 30)
-                            .padding(6)
-                            .opacity(navigate ? 0.4 : 1.0)
-                            .onTapGesture {
-                                navigate.toggle()
-                                speechRecognizer.stopTranscribing()
-                                setAudioSession(active: false)
-                            }
-                            .navigationDestination(isPresented: $navigate) {
-                                ContentView().environmentObject(chatHistory)
+
+                    // MARK: - Bottom Toolbar
+                    VStack(spacing: 12) {
+                        // Primary Row: Navigation + Mic + Features
+                        HStack {
+                            // Left: Navigation
+                            HStack(spacing: 4) {
+                                ToolbarButton(
+                                    icon: "archivebox",
+                                    isActive: !navigate,
+                                    action: {
+                                        navigate.toggle()
+                                        speechRecognizer.stopTranscribing()
+                                        setAudioSession(active: false)
+                                    }
+                                )
+                                .navigationDestination(isPresented: $navigate) {
+                                    ContentView().environmentObject(chatHistory)
+                                }
+
+                                ToolbarButton(
+                                    icon: "gear",
+                                    isActive: !showingSettingsSheet,
+                                    action: {
+                                        showingSettingsSheet.toggle()
+                                        speechRecognizer.stopTranscribing()
+                                        setAudioSession(active: false)
+                                    }
+                                )
+                                .sheet(isPresented: $showingSettingsSheet, onDismiss: {
+                                    speechRecognizer.stopTranscribing()
+                                    setAudioSession(active: false)
+                                    startup()
+                                }) {
+                                    SettingsView()
+                                }
                             }
 
-                        Image(systemName: "gear")
-                            .font(.system(size: 25))
-                            .frame(width: 30)
-                            .padding(6)
-                            .opacity(showingSettingsSheet ? 0.4 : 1.0)
-                            .onTapGesture {
-                                showingSettingsSheet.toggle()
-                                speechRecognizer.stopTranscribing()
-                                setAudioSession(active: false)
-                            }
-                            .sheet(isPresented: $showingSettingsSheet, onDismiss: {
-                                speechRecognizer.stopTranscribing()
-                                setAudioSession(active: false)
-                                startup()
+                            Spacer()
+
+                            // Center: Mic (Prominent)
+                            Button(action: {
+                                mute.toggle()
+                                if mute {
+                                    currentState = "sleeping"
+                                    speechRecognizer.stopTranscribing()
+                                } else {
+                                    currentState = "listening"
+                                    speechRecognizer.reset()
+                                    speechRecognizer.transcribe()
+                                }
                             }) {
-                                SettingsView()
+                                Image(systemName: mute ? "mic.slash.fill" : "mic.fill")
+                                    .font(.system(size: 24, weight: .medium))
+                                    .foregroundColor(mute ? .white.opacity(0.5) : .white)
+                                    .frame(width: 56, height: 56)
+                                    .background(
+                                        Circle()
+                                            .fill(mute ? Color.white.opacity(0.15) : Color.white.opacity(0.25))
+                                    )
                             }
+                            .buttonStyle(ScaleButtonStyle())
 
-                        Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 25))
-                            .frame(width: 30)
-                            .padding(6)
-                            .opacity(saveButtonTapped ? 0.4 : 1.0)
-                            .onTapGesture {
+                            Spacer()
+
+                            // Right: Feature toggles
+                            HStack(spacing: 4) {
+                                ToolbarButton(
+                                    icon: "camera",
+                                    isActive: visionEnabled,
+                                    action: { visionEnabled.toggle() }
+                                )
+
+                                ToolbarButton(
+                                    icon: "magnifyingglass",
+                                    isActive: searchEnabled,
+                                    action: { searchEnabled.toggle() }
+                                )
+
+                                ToolbarButton(
+                                    icon: offlineMode ? "wifi.slash" : "wifi",
+                                    isActive: offlineMode,
+                                    action: { toggleOfflineMode() }
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 16)
+
+                        // Secondary Row: Conversation Actions
+                        HStack(spacing: 24) {
+                            Button(action: {
                                 addConversation()
                                 saveButtonTapped = true
                                 currentState = "conversation saved"
+                            }) {
+                                Label("Save", systemImage: "square.and.arrow.down")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.white.opacity(saveButtonTapped ? 0.4 : 0.8))
                             }
+                            .disabled(saveButtonTapped)
 
-                        Image(systemName: "trash")
-                            .font(.system(size: 25))
-                            .frame(width: 30)
-                            .padding(6)
-                            .opacity(deleteButtonTapped ? 0.4 : 1.0)
-                            .onTapGesture {
+                            Button(action: {
                                 deleteButtonTapped = true
                                 currentState = "conversation deleted"
                                 chatHistory.messages = []
                                 speechSynthesizerManager.speechSynthesizer.stopSpeaking(at: .immediate)
                                 audioPlayer.audioPlayer?.stop()
                                 setAudioSession(active: false)
+                            }) {
+                                Label("Clear", systemImage: "trash")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.white.opacity(deleteButtonTapped ? 0.4 : 0.8))
                             }
-
-                        if mute {
-                            Image(systemName: "mic.slash")
-                                .font(.system(size: 25))
-                                .frame(width: 30)
-                                .padding(6)
-                                .opacity(0.4)
-                                .onTapGesture {
-                                    mute.toggle()
-                                    currentState = "listening"
-                                    speechRecognizer.reset()
-                                    speechRecognizer.transcribe()
-                                }
-                        } else {
-                            Image(systemName: "mic")
-                                .font(.system(size: 25))
-                                .frame(width: 30)
-                                .padding(6)
-                                .onTapGesture {
-                                    mute.toggle()
-                                    currentState = "sleeping"
-                                    speechRecognizer.stopTranscribing()
-                                }
+                            .disabled(deleteButtonTapped)
                         }
-                        Image(systemName: "camera")
-                            .font(.system(size: 25))
-                            .frame(width: 30)
-                            .padding(6)
-                            .opacity(visionEnabled ? 1.0 : 0.4)
-                            .onTapGesture {
-                                visionEnabled.toggle()
-                            }
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 25))
-                            .frame(width: 30)
-                            .padding(6)
-                            .opacity(searchEnabled ? 1.0 : 0.4)
-                            .onTapGesture {
-                                searchEnabled.toggle()
-                            }
-                        Image(systemName: offlineMode ? "wifi.slash" : "wifi")
-                            .font(.system(size: 25))
-                            .frame(width: 30)
-                            .padding(6)
-                            .opacity(offlineMode ? 1.0 : 0.4)
-                            .onTapGesture {
-                                toggleOfflineMode()
-                            }
                     }
+                    .padding(.bottom, 16)
                 }
                 .onAppear {
                     startup()
@@ -553,21 +564,6 @@ struct HomeView: View {
         }
     }
 
-    private func getModelIndicator() -> String {
-        let providerString = UserDefaults.standard.string(forKey: "modelProvider") ?? "local"
-
-        switch providerString {
-        case "haiku":
-            return "⚡"
-        #if os(macOS)
-        case "ollama":
-            return "🦙"
-        #endif
-        default:
-            return "🔒"
-        }
-    }
-
     func encodeToBase64(image: UIImage) -> String {
         guard let scaledImage = scaledImage(image, width: 1920),
               let imageData = scaledImage.jpegData(compressionQuality: 0.8) else {
@@ -767,6 +763,43 @@ struct HomeView: View {
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
+    }
+}
+
+// MARK: - Toolbar Button Component
+struct ToolbarButton: View {
+    let icon: String
+    var isActive: Bool = true
+    var size: CGFloat = 22
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: size, weight: .medium))
+                .frame(width: 44, height: 44) // iOS HIG minimum touch target
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(ToolbarButtonStyle(isActive: isActive))
+    }
+}
+
+struct ToolbarButtonStyle: ButtonStyle {
+    var isActive: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(isActive ? (configuration.isPressed ? 0.6 : 1.0) : 0.4)
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.9 : 1.0)
+            .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
