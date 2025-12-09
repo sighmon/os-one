@@ -14,5 +14,11 @@
 	<string>Share realtime photos with your assistant</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Share photos from your library with your assistant</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>OS One needs microphone access for voice input, dictation, and conversations with your AI assistant.</string>
+	<key>NSAccessibilityUsageDescription</key>
+	<string>OS One needs accessibility access to enable global dictation hotkeys (Fn key) for system-wide voice input.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>OS One uses speech recognition to convert your voice into text for AI conversations.</string>
 </dict>
 </plist>
