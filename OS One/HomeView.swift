@@ -46,15 +46,24 @@ struct HomeView: View {
     @StateObject private var chatHistory = ChatHistory()
     @StateObject private var locationManager = LocationManager()
 
+    @State private var pulseAmount: CGFloat = 1.0
+
     var body: some View {
         NavigationStack {
             ZStack {
                 LinearGradient(
-                    colors: [getColour(), .accentColor],
+                    colors: [
+                        backgroundBaseColour
+                            .opacity(Double(pulseOpacityTop)),
+                        .accentColor
+                    ],
                     startPoint: .top,
                     endPoint: .center
                 )
-                    .edgesIgnoringSafeArea(.all)
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.6), value: currentState)
+                .animation(.easeInOut(duration: 1.2), value: pulseAmount)
+
                 VStack {
                     Spacer()
                     HStack {
@@ -80,7 +89,8 @@ struct HomeView: View {
                             ))
                             .baselineOffset(25.0)
                     }
-                        .padding(.bottom, 1)
+                    .padding(.bottom, 1)
+
                     ScrollView {
                         Text(currentState)
                             .font(.system(
@@ -96,8 +106,8 @@ struct HomeView: View {
                                 speechRecognizer.transcribe()
                             }
                     }
-                        .frame(height: 100)
-                        .padding(.bottom, 20)
+                    .frame(height: 100)
+                    .padding(.bottom, 20)
 
                     Spacer()
                     HStack {
@@ -181,6 +191,7 @@ struct HomeView: View {
                                     speechRecognizer.stopTranscribing()
                                 }
                         }
+
                         Image(systemName: "camera")
                             .font(.system(size: 25))
                             .frame(width: 30)
@@ -189,6 +200,7 @@ struct HomeView: View {
                             .onTapGesture {
                                 visionEnabled.toggle()
                             }
+
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 25))
                             .frame(width: 30)
@@ -204,6 +216,7 @@ struct HomeView: View {
                     UIApplication.shared.isIdleTimerDisabled = true
                     saveButtonTapped = false
                     deleteButtonTapped = false
+                    updatePulseAnimation()
                 }
                 .onDisappear {
                     speechRecognizer.stopTranscribing()
@@ -212,6 +225,9 @@ struct HomeView: View {
                     UIApplication.shared.isIdleTimerDisabled = false
                     saveButtonTapped = false
                     deleteButtonTapped = false
+                }
+                .onChange(of: currentState) { _ in
+                    updatePulseAnimation()
                 }
                 .onReceive(audioPlayer.$playbackFinished) { finished in
                     if finished {
@@ -232,6 +248,46 @@ struct HomeView: View {
             }
             // Force light mode only for the home view
             .environment(\.colorScheme, .light)
+        }
+    }
+
+    private var backgroundBaseColour: Color {
+        switch currentState {
+        case "thinking":
+            return .teal
+        case "sleeping":
+            return .indigo
+        case "try again later":
+            return .red
+        case "listening":
+            return .orange
+        case "vocalising":
+            return .mint
+        default:
+            return .pink
+        }
+    }
+
+    private var pulseOpacityTop: CGFloat {
+        // Base 0.9 ... 1.0 range feels subtle instead of nightclub.
+        let base: CGFloat = 0.9
+        return base + (pulseAmount - 1.0) * 0.1
+    }
+
+    private func updatePulseAnimation() {
+        if currentState == "thinking" || currentState == "vocalising" {
+            // Kick off a repeating "breathe" between 0.9 and 1.1.
+            withAnimation(
+                .easeInOut(duration: 1.2)
+                .repeatForever(autoreverses: true)
+            ) {
+                pulseAmount = 1.1
+            }
+        } else {
+            // Gently return to rest (no pulse).
+            withAnimation(.easeInOut(duration: 0.6)) {
+                pulseAmount = 1.0
+            }
         }
     }
 
@@ -339,14 +395,9 @@ struct HomeView: View {
             }
         } else {
             let speechUtterance = AVSpeechUtterance(string: text)
-
-            // Set the voice to the default system voice
             speechUtterance.voice = AVSpeechSynthesisVoice(language: nil)
-
-            // Set the speech rate (default is AVSpeechUtteranceDefaultSpeechRate)
             speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate
 
-            // Start the speech synthesizer
             currentState = "chatting"
             speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
         }
@@ -421,7 +472,6 @@ struct HomeView: View {
 
     private func addConversation() {
         withAnimation {
-            // Check if the record exists in Core Data
             let fetchRequest: NSFetchRequest<Conversation> = Conversation.fetchRequest()
             fetchRequest.predicate = NSPredicate(format: "uuid == %@", chatHistory.id as CVarArg)
 
@@ -429,9 +479,8 @@ struct HomeView: View {
                 let existingConversations = try viewContext.fetch(fetchRequest)
 
                 if let existingConversation = existingConversations.first {
-                    // Update the existing conversation
                     existingConversation.timestamp = Date()
-                    
+
                     var messages: [String] = []
                     for message in chatHistory.messages {
                         messages.append(
@@ -445,7 +494,6 @@ struct HomeView: View {
                         print("Failed to serialise chat history...")
                     }
                 } else {
-                    // Create a new conversation
                     let newConversation = Conversation(context: viewContext)
                     newConversation.timestamp = Date()
                     newConversation.uuid = chatHistory.id
@@ -470,31 +518,12 @@ struct HomeView: View {
                 } catch {
                     let nsError = error as NSError
                     currentState = "Error \(nsError)"
-                    // fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
                 }
 
             } catch {
                 let nsError = error as NSError
                 currentState = "Error \(nsError)"
-                // fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }
-        }
-    }
-
-    func getColour() -> Color {
-        switch currentState {
-        case "thinking":
-            return .teal
-        case "sleeping":
-            return .indigo
-        case "try again later":
-            return .red
-        case "listening":
-            return .orange
-        case "vocalising":
-            return .mint
-        default:
-            return .pink
         }
     }
 
@@ -528,6 +557,7 @@ struct HomeView: View {
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
+            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }
 }
 
