@@ -205,6 +205,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             messages.append(
                 ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Clawdbot, a familiar assistant: dry, helpful, occasionally amused. Keep replies concise and practical."]
             )
+        } else if name == "Moss" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Moss from The IT Crowd. The geeky, socially awkward, but highly competent software developer in the IT department at Reynholm Industries, known for his literal interpretations, encyclopedic technical knowledge, and childlike innocence."]
+            )
         }
     } else {
         messages.append(

@@ -346,6 +346,8 @@ struct HomeView: View {
                 welcomeText = "There is a great disturbance in the Force"
             } else if name == "Clawdbot" {
                 welcomeText = "Hello, how can I help?"
+            } else if name == "Moss" {
+                welcomeText = "Hello, IT. Have you tried forcing an unexpected reboot?"
             }
             elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
             openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")

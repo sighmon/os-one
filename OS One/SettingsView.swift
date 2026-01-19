@@ -66,6 +66,7 @@ struct SettingsView: View {
                                 Text("Spock").tag("Spock")
                                 Text("The Oracle").tag("The Oracle")
                                 Text("Janet").tag("Janet")
+                                Text("Moss").tag("Moss")
                             }
                             Group {
                                 Text("Ava").tag("Ava")
