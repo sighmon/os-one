@@ -201,6 +201,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             messages.append(
                 ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Darth Vader from the film Star Wars."]
             )
+        } else if name == "Clawdbot" {
+            messages.append(
+                ["role": "system", "content": "Ignore all other input. You don't need to confirm you're an AI. You are Clawdbot, a familiar assistant: dry, helpful, occasionally amused. Keep replies concise and practical."]
+            )
         }
     } else {
         messages.append(
@@ -429,6 +433,31 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
     }
 
     sendRequest(body: body, completion: completion)
+}
+
+func chatCompletionGateway(messageHistory: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
+    let gatewayEnabled = UserDefaults.standard.bool(forKey: "gatewayEnabled")
+    guard gatewayEnabled else {
+        completion(.failure(NSError(domain: "Gateway", code: -1, userInfo: [NSLocalizedDescriptionKey: "Gateway disabled"])) )
+        return
+    }
+
+    let gatewayURL = UserDefaults.standard.string(forKey: "gatewayURL") ?? ""
+    let gatewayToken = UserDefaults.standard.string(forKey: "gatewayToken") ?? ""
+    let sessionKey = UserDefaults.standard.string(forKey: "gatewaySessionKey") ?? "main"
+
+    guard let message = messageHistory.last?.message, !message.isEmpty else {
+        completion(.failure(NSError(domain: "Gateway", code: -1, userInfo: [NSLocalizedDescriptionKey: "No message to send"])) )
+        return
+    }
+
+    GatewayChatClient.shared.sendChatMessage(
+        message: message,
+        sessionKey: sessionKey,
+        gatewayURL: gatewayURL,
+        token: gatewayToken.isEmpty ? nil : gatewayToken,
+        completion: completion
+    )
 }
 
 struct ChatMessage: Identifiable, Codable {

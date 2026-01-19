@@ -344,6 +344,8 @@ struct HomeView: View {
                 welcomeText = "Welcome to acmee"
             } else if name == "Darth Vader" {
                 welcomeText = "There is a great disturbance in the Force"
+            } else if name == "Clawdbot" {
+                welcomeText = "Hello, how can I help?"
             }
             elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
             openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
@@ -435,7 +437,8 @@ struct HomeView: View {
                 with: base64String
             )
         }
-        chatCompletionAPI(name: name, messageHistory: chatHistory.messages, lastLocation: locationManager.lastLocation) { result in
+        let useGateway = UserDefaults.standard.bool(forKey: "gatewayEnabled")
+        let completionHandler: (Result<String, Error>) -> Void = { result in
             switch result {
             case .success(let content):
                 var messageInChatHistory = false
@@ -461,12 +464,18 @@ struct HomeView: View {
             case .failure(let error):
                 currentState = "try again later"
                 currentImage = nil
-                print("OpenAI API error: \(error.localizedDescription)")
+                print("Assistant API error: \(error.localizedDescription)")
                 if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
                     audioPlayer.playAudioFromFile(url: fileURL)
                 }
                 sendButtonEnabled = true
             }
+        }
+
+        if useGateway {
+            chatCompletionGateway(messageHistory: chatHistory.messages, completion: completionHandler)
+        } else {
+            chatCompletionAPI(name: name, messageHistory: chatHistory.messages, lastLocation: locationManager.lastLocation, completion: completionHandler)
         }
     }
 
