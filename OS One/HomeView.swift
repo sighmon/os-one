@@ -30,6 +30,7 @@ struct HomeView: View {
     @State private var deleteButtonTapped: Bool = false
     @State private var showingImagePicker = false
     @State private var currentImage: UIImage?
+    @State private var pendingTranscript: String = ""
     @State private var visionEnabled: Bool = UserDefaults.standard.bool(forKey: "vision") {
         didSet {
             UserDefaults.standard.set(visionEnabled, forKey: "vision")
@@ -242,7 +243,7 @@ struct HomeView: View {
                 .sheet(isPresented: $showingImagePicker) {
                     ImagePicker(image: self.$currentImage, onImagePicked: { selectedImage in
                         self.currentImage = selectedImage
-                        self.continueSendingToOpenAI()
+                        self.continueSendingToOpenAI(transcript: self.pendingTranscript)
                     })
                 }
             }
@@ -413,20 +414,23 @@ struct HomeView: View {
         sendButtonEnabled = false
         currentState = "thinking"
         speed = 20
-        print("Message: \(speechRecognizer.transcript)")
+        let transcriptSnapshot = speechRecognizer.transcript
+        pendingTranscript = transcriptSnapshot
+        print("Message: \(transcriptSnapshot)")
 
         if UserDefaults.standard.bool(forKey: "vision") {
             self.showingImagePicker = true
             return
         }
 
-        continueSendingToOpenAI()
+        continueSendingToOpenAI(transcript: transcriptSnapshot)
     }
 
-    func continueSendingToOpenAI() {
+    func continueSendingToOpenAI(transcript: String? = nil) {
+        let messageText = transcript ?? speechRecognizer.transcript
         var messageInChatHistory = false
         for message in chatHistory.messages {
-            if message.message == speechRecognizer.transcript {
+            if message.message == messageText {
                 messageInChatHistory = true
                 break
             }
@@ -434,7 +438,7 @@ struct HomeView: View {
         let base64String = currentImage.map { encodeToBase64(image: $0) } ?? ""
         if !messageInChatHistory {
             chatHistory.addMessage(
-                speechRecognizer.transcript,
+                messageText,
                 from: ChatMessage.Sender.user,
                 with: base64String
             )
@@ -454,10 +458,11 @@ struct HomeView: View {
                     chatHistory.addMessage(
                         content,
                         from: ChatMessage.Sender.openAI,
-                        with: base64String
+                        with: ""
                     )
                 }
                 currentImage = nil
+                pendingTranscript = ""
                 currentState = "vocalising"
                 sayText(text: content)
                 speed = 300
@@ -466,6 +471,7 @@ struct HomeView: View {
             case .failure(let error):
                 currentState = "try again later"
                 currentImage = nil
+                pendingTranscript = ""
                 print("Assistant API error: \(error.localizedDescription)")
                 if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
                     audioPlayer.playAudioFromFile(url: fileURL)

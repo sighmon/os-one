@@ -86,20 +86,85 @@ struct OpenAIToolCallFunction: Codable {
     let arguments: String
 }
 
+func shouldUseResponsesAPI(grokEnabled: Bool, allowSearch: Bool, model: String) -> Bool {
+    if grokEnabled || !allowSearch {
+        return false
+    }
+    return model.lowercased().hasPrefix("gpt-5")
+}
+
+func shouldSendWebSearchOptions(grokEnabled: Bool, allowSearch: Bool, model: String) -> Bool {
+    if grokEnabled || !allowSearch {
+        return false
+    }
+    // Chat Completions only supports web search options on select non-GPT-5 models.
+    return !model.lowercased().hasPrefix("gpt-5")
+}
+
+func buildResponsesInput(from messages: [[String: Any]]) -> [[String: Any]] {
+    var inputItems: [[String: Any]] = []
+
+    for message in messages {
+        guard let role = message["role"] as? String else { continue }
+        let expectsOutputText = role == "assistant"
+        var contentItems: [[String: Any]] = []
+
+        if let contentArray = message["content"] as? [[String: Any]] {
+            for part in contentArray {
+                guard let type = part["type"] as? String else { continue }
+                if type == "text", let text = part["text"] as? String {
+                    contentItems.append([
+                        "type": expectsOutputText ? "output_text" : "input_text",
+                        "text": text
+                    ])
+                } else if type == "image_url",
+                          let imageURL = part["image_url"] as? [String: Any],
+                          let url = imageURL["url"] as? String,
+                          !expectsOutputText {
+                    contentItems.append([
+                        "type": "input_image",
+                        "image_url": url
+                    ])
+                }
+            }
+        } else if let contentString = message["content"] as? String {
+            contentItems.append([
+                "type": expectsOutputText ? "output_text" : "input_text",
+                "text": contentString
+            ])
+        } else {
+            continue
+        }
+
+        inputItems.append([
+            "role": role,
+            "content": contentItems
+        ])
+    }
+
+    return inputItems
+}
+
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
     HomeKitManagerSingleton.initialize()
 
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-4.1-nano" : "gpt-4o-mini"
+    let grokEnabled = UserDefaults.standard.bool(forKey: "grokEnabled")
+    let grokApiKey = UserDefaults.standard.string(forKey: "grokApiKey") ?? ""
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-5.2-2025-12-11" : "gpt-5-nano-2025-08-07"
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
     let allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
     let overrideOpenAIModel = UserDefaults.standard.string(forKey: "overrideOpenAIModel") ?? ""
     let overrideSystemPrompt = UserDefaults.standard.string(forKey: "overrideSystemPrompt") ?? ""
+    let grokOverrideModel = UserDefaults.standard.string(forKey: "grokOverrideModel") ?? ""
+
+    let apiKey = grokEnabled ? grokApiKey : openAIApiKey
+    let baseURL = grokEnabled ? "https://api.x.ai" : "https://api.openai.com"
 
     let headers = [
         "Content-Type": "application/json",
-        "Authorization": "Bearer \(openAIApiKey)"
+        "Authorization": "Bearer \(apiKey)"
     ]
 
     var messages: [[String: Any]] = []
@@ -238,7 +303,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                         "text": content as Any
                     ]
                 ]
-                if let image = item.image {
+                if item.sender == .user, let image = item.image, !image.isEmpty {
                     messageContent.append(
                         [
                             "type": "image_url",
@@ -275,34 +340,56 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         )
     )
 
+    let selectedModel = grokEnabled ? (grokOverrideModel.isEmpty ? "grok-4-1-fast" : grokOverrideModel) : model
+    let effectiveOpenAIModel = overrideOpenAIModel.isEmpty ? selectedModel : overrideOpenAIModel
+    let useResponsesAPI = shouldUseResponsesAPI(
+        grokEnabled: grokEnabled,
+        allowSearch: allowSearch,
+        model: effectiveOpenAIModel
+    )
+    let useWebSearchOptions = shouldSendWebSearchOptions(
+        grokEnabled: grokEnabled,
+        allowSearch: allowSearch,
+        model: effectiveOpenAIModel
+    )
+
     var body: [String: Any] = [
-        "model": model,
+        "model": selectedModel,
         "messages": messages
     ]
 
-    if vision {
-        body["max_tokens"] = 300
-        body["model"] = "gpt-4o"
-    }
+    let tools = [try? JSONEncoder().encode(homeKitTool)]
+        .compactMap { $0 }
+        .map { try? JSONSerialization.jsonObject(with: $0, options: []) }
+        .compactMap { $0 as? [String: Any] }
 
-    if allowSearch {
-        body["model"] = "gpt-4o-mini-search-preview"
-        body["web_search_options"] = [:]
+    if !grokEnabled {
+        body["tools"] = tools
+
+        if useWebSearchOptions {
+            body["web_search_options"] = [:]
+        } else if allowSearch {
+            print("OpenAI search requested but unsupported for model=\(effectiveOpenAIModel) on /v1/chat/completions; skipping search.")
+        }
+
+        if !overrideOpenAIModel.isEmpty {
+            body["model"] = overrideOpenAIModel
+        }
     } else {
-        body["tools"] = [try? JSONEncoder().encode(homeKitTool)].compactMap { $0 }.map { try? JSONSerialization.jsonObject(with: $0, options: []) }
+        body["tools"] = tools
     }
 
-    if !overrideOpenAIModel.isEmpty {
-        body["model"] = overrideOpenAIModel
+    guard let chatURL = URL(string: "\(baseURL)/v1/chat/completions") else {
+        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+        return
     }
-
-    guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
+    guard let responsesURL = URL(string: "\(baseURL)/v1/responses") else {
         completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
         return
     }
 
     func sendRequest(body: [String: Any], completion: @escaping (Result<String, Error>) -> Void) {
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: chatURL)
         request.httpMethod = "POST"
         request.allHTTPHeaderFields = headers
         guard let httpBody = try? JSONSerialization.data(withJSONObject: body, options: []) else {
@@ -314,6 +401,13 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
 //        if let httpBodyString = String(data: httpBody, encoding: .utf8) {
 //            print("Request payload: \(httpBodyString.prefix(500))...")
 //        }
+
+        let searchMode: String = {
+            if useWebSearchOptions { return "web_search_options" }
+            if allowSearch { return "unsupported" }
+            return "none"
+        }()
+        print("OpenAI request model=\(body["model"] ?? model) search=\(searchMode)")
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -434,6 +528,162 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             }
         }
         task.resume()
+    }
+
+    func sendResponsesRequest(inputItems: [[String: Any]], completion: @escaping (Result<String, Error>) -> Void) {
+        var request = URLRequest(url: responsesURL)
+        request.httpMethod = "POST"
+        request.allHTTPHeaderFields = headers
+
+        let responseTools: [[String: Any]] = [
+            [
+                "type": "function",
+                "name": homeKitTool.function.name,
+                "description": homeKitTool.function.description,
+                "parameters": [
+                    "type": homeKitTool.function.parameters.type,
+                    "properties": [:],
+                    "required": homeKitTool.function.parameters.required
+                ]
+            ],
+            ["type": "web_search"]
+        ]
+
+        var responseBody: [String: Any] = [
+            "model": effectiveOpenAIModel,
+            "input": inputItems,
+            "tools": responseTools
+        ]
+        if allowSearch {
+            responseBody["include"] = ["web_search_call.action.sources"]
+        }
+
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: responseBody, options: []) else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize request body"])))
+            return
+        }
+        request.httpBody = httpBody
+
+        print("OpenAI responses request model=\(effectiveOpenAIModel) search=web_search")
+
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("API request failed: \(error.localizedDescription)")
+                completion(.failure(error))
+                return
+            }
+
+            guard let data = data else {
+                print("No data received from API")
+                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+                return
+            }
+
+            guard let responseObject = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: Any] else {
+                print("OpenAI Error: \(String(decoding: data, as: UTF8.self))")
+                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])))
+                return
+            }
+
+            if let errorObj = responseObject["error"] as? [String: Any],
+               let message = errorObj["message"] as? String {
+                print("OpenAI Error: \(String(decoding: data, as: UTF8.self))")
+                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: message])))
+                return
+            }
+
+            let outputItems = responseObject["output"] as? [[String: Any]] ?? []
+            var textParts: [String] = []
+            var citations: [String] = []
+            var functionCalls: [(name: String, arguments: String, callId: String)] = []
+
+            for item in outputItems {
+                if let type = item["type"] as? String, type == "message" {
+                    if let content = item["content"] as? [[String: Any]] {
+                        for contentItem in content {
+                            if let contentType = contentItem["type"] as? String, contentType == "output_text" {
+                                if let text = contentItem["text"] as? String {
+                                    textParts.append(text)
+                                }
+                                if let annotations = contentItem["annotations"] as? [[String: Any]] {
+                                    for annotation in annotations {
+                                        if let annType = annotation["type"] as? String, annType == "url_citation",
+                                           let urlCitation = annotation["url_citation"] as? [String: Any],
+                                           let title = urlCitation["title"] as? String,
+                                           let url = urlCitation["url"] as? String {
+                                            citations.append("[\(citations.count + 1)] \(title): \(url)")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if let type = item["type"] as? String, type == "function_call" {
+                    let name = item["name"] as? String ?? ""
+                    let arguments = item["arguments"] as? String ?? ""
+                    let callId = item["call_id"] as? String ?? item["id"] as? String ?? ""
+                    if !name.isEmpty, !callId.isEmpty {
+                        functionCalls.append((name: name, arguments: arguments, callId: callId))
+                    }
+                }
+            }
+
+            if !functionCalls.isEmpty {
+                let dispatchGroup = DispatchGroup()
+                var toolOutputs: [[String: Any]] = []
+
+                for call in functionCalls {
+                    dispatchGroup.enter()
+                    if call.name == "getHomeKitData" {
+                        HomeKitManagerSingleton.shared.fetchHomeKitData { homeKitData in
+                            print("Tool call: getHomeKitData, id: \(call.callId), returned: \(homeKitData.prefix(100))...")
+                            toolOutputs.append([
+                                "type": "function_call_output",
+                                "call_id": call.callId,
+                                "output": homeKitData
+                            ])
+                            dispatchGroup.leave()
+                        }
+                    } else {
+                        print("Unsupported tool call: \(call.name), id: \(call.callId)")
+                        toolOutputs.append([
+                            "type": "function_call_output",
+                            "call_id": call.callId,
+                            "output": "{\"error\": \"Unsupported tool: \(call.name)\"}"
+                        ])
+                        dispatchGroup.leave()
+                    }
+                }
+
+                dispatchGroup.notify(queue: .main) {
+                    var nextInput = inputItems
+                    nextInput.append(contentsOf: outputItems)
+                    nextInput.append(contentsOf: toolOutputs)
+                    sendResponsesRequest(inputItems: nextInput, completion: completion)
+                }
+                return
+            }
+
+            var finalContent = textParts.joined()
+            if !citations.isEmpty {
+                finalContent += "\n\nSources:\n" + citations.joined(separator: "\n")
+            }
+            if let usage = responseObject["usage"] as? [String: Any],
+               let totalTokens = usage["total_tokens"] {
+                print("OpenAI \(effectiveOpenAIModel) Tokens: \(totalTokens)")
+            }
+            print("ChatGPT Response: \(finalContent)")
+            completion(.success(finalContent))
+        }
+        task.resume()
+    }
+
+    if useResponsesAPI {
+        let inputItems = buildResponsesInput(from: messages)
+        sendResponsesRequest(inputItems: inputItems, completion: completion)
+        return
     }
 
     sendRequest(body: body, completion: completion)

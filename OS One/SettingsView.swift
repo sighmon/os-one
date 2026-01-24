@@ -17,6 +17,9 @@ struct SettingsView: View {
     @State private var openAIUsage: Float = 0
     @State private var gpt4: Bool = true
     @State private var vision: Bool = false
+    @State private var grokEnabled: Bool = false
+    @State private var grokApiKey: String = ""
+    @State private var grokOverrideModel: String = ""
     @State private var allowLocation: Bool = false
     @State private var allowSearch: Bool = false
     @State private var name: String = ""
@@ -112,13 +115,17 @@ struct SettingsView: View {
                             .onChange(of: allowSearch) {
                                 UserDefaults.standard.set($0, forKey: "allowSearch")
                             }
-                        Toggle("GPT 4.1 nano", isOn: $gpt4)
+                        Toggle("GPT 5.2", isOn: $gpt4)
                             .onChange(of: gpt4) {
                                 UserDefaults.standard.set($0, forKey: "gpt4")
                             }
                         Toggle("OpenAI voice", isOn: $openAIVoice)
                             .onChange(of: openAIVoice) {
                                 UserDefaults.standard.set($0, forKey: "openAIVoice")
+                            }
+                        Toggle("Grok", isOn: $grokEnabled)
+                            .onChange(of: grokEnabled) {
+                                UserDefaults.standard.set($0, forKey: "grokEnabled")
                             }
                         if openAISessionKey != "" {
                             ProgressView(value: openAIUsage / 1000) {
@@ -144,6 +151,10 @@ struct SettingsView: View {
                                 .onChange(of: openAISessionKey) {
                                     UserDefaults.standard.set($0, forKey: "openAISessionKey")
                                 }
+                            SecureField("Grok API Key", text: $grokApiKey)
+                                .onChange(of: grokApiKey) {
+                                    UserDefaults.standard.set($0, forKey: "grokApiKey")
+                                }
                             SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
                                 .onChange(of: elevenLabsApiKey) {
                                     UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
@@ -156,6 +167,10 @@ struct SettingsView: View {
                             TextField("Override OpenAI model", text: $overrideOpenAIModel)
                                 .onChange(of: overrideOpenAIModel) {
                                     UserDefaults.standard.set($0, forKey: "overrideOpenAIModel")
+                                }
+                            TextField("Override Grok model", text: $grokOverrideModel)
+                                .onChange(of: grokOverrideModel) {
+                                    UserDefaults.standard.set($0, forKey: "grokOverrideModel")
                                 }
                             TextField("Override ElevenLabs voice ID", text: $overrideVoiceID)
                                 .onChange(of: overrideVoiceID) {
@@ -217,6 +232,9 @@ struct SettingsView: View {
                         openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
                         allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
                         allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
+                        grokEnabled = UserDefaults.standard.bool(forKey: "grokEnabled")
+                        grokApiKey = UserDefaults.standard.string(forKey: "grokApiKey") ?? ""
+                        grokOverrideModel = UserDefaults.standard.string(forKey: "grokOverrideModel") ?? ""
                         elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                         elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
                         name = UserDefaults.standard.string(forKey: "name") ?? ""

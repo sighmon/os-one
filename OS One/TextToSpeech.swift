@@ -254,7 +254,6 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "stability": 0.50,
                 "similarity_boost": 0.75,
                 "style": 0.30,
-                "speed": 0.80,
                 "use_speaker_boost": true
             ] as [String : Any]
         ] as [String: Any]

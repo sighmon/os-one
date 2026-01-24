@@ -26,6 +26,40 @@ final class OS_One_Tests: XCTestCase {
         // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
     }
 
+    func testResponsesAPIEnabledForGpt5WhenSearchAllowed() throws {
+        XCTAssertTrue(shouldUseResponsesAPI(grokEnabled: false, allowSearch: true, model: "gpt-5-nano-2025-08-07"))
+    }
+
+    func testResponsesAPIDisabledWhenSearchNotAllowed() throws {
+        XCTAssertFalse(shouldUseResponsesAPI(grokEnabled: false, allowSearch: false, model: "gpt-5.2-2025-12-11"))
+    }
+
+    func testWebSearchOptionsDisabledForGpt5WhenSearchAllowed() throws {
+        XCTAssertFalse(shouldSendWebSearchOptions(grokEnabled: false, allowSearch: true, model: "gpt-5-nano-2025-08-07"))
+    }
+
+    func testWebSearchOptionsEnabledForNonGpt5Models() throws {
+        XCTAssertTrue(shouldSendWebSearchOptions(grokEnabled: false, allowSearch: true, model: "gpt-4o-mini"))
+    }
+
+    func testBuildResponsesInputUsesInputTextForUser() throws {
+        let messages: [[String: Any]] = [
+            ["role": "user", "content": "Hello"]
+        ]
+        let input = buildResponsesInput(from: messages)
+        let content = input.first?["content"] as? [[String: Any]]
+        XCTAssertEqual(content?.first?["type"] as? String, "input_text")
+    }
+
+    func testBuildResponsesInputUsesOutputTextForAssistant() throws {
+        let messages: [[String: Any]] = [
+            ["role": "assistant", "content": "Hi"]
+        ]
+        let input = buildResponsesInput(from: messages)
+        let content = input.first?["content"] as? [[String: Any]]
+        XCTAssertEqual(content?.first?["type"] as? String, "output_text")
+    }
+
     func testPerformanceExample() throws {
         // This is an example of a performance test case.
         self.measure {
