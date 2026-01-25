@@ -17,12 +17,22 @@ struct SettingsView: View {
     @State private var openAIUsage: Float = 0
     @State private var gpt4: Bool = true
     @State private var vision: Bool = false
+    @State private var grokEnabled: Bool = false
+    @State private var grokApiKey: String = ""
+    @State private var grokOverrideModel: String = ""
     @State private var allowLocation: Bool = false
     @State private var allowSearch: Bool = false
     @State private var name: String = ""
     @State private var overrideOpenAIModel: String = ""
     @State private var overrideVoiceID: String = ""
     @State private var overrideSystemPrompt: String = ""
+    @State private var gatewayEnabled: Bool = false
+    @State private var gatewayURL: String = ""
+    @State private var gatewayToken: String = ""
+    @State private var gatewaySessionKey: String = "main"
+    @State private var gatewayTestInProgress: Bool = false
+    @State private var gatewayTestMessage: String = ""
+    @State private var showGatewayTestAlert: Bool = false
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -59,12 +69,14 @@ struct SettingsView: View {
                                 Text("Spock").tag("Spock")
                                 Text("The Oracle").tag("The Oracle")
                                 Text("Janet").tag("Janet")
+                                Text("Moss").tag("Moss")
                             }
                             Group {
                                 Text("Ava").tag("Ava")
                                 Text("Darth Vader").tag("Darth Vader")
                                 Text("Johnny Five").tag("Johnny Five")
                                 Text("J.A.R.V.I.S.").tag("J.A.R.V.I.S.")
+                                Text("Clawdbot").tag("Clawdbot")
                             }
                             Group {
                                 Text("Amy Remeikis").tag("Amy Remeikis")
@@ -103,13 +115,17 @@ struct SettingsView: View {
                             .onChange(of: allowSearch) {
                                 UserDefaults.standard.set($0, forKey: "allowSearch")
                             }
-                        Toggle("GPT 4.1 nano", isOn: $gpt4)
+                        Toggle("GPT 5.2", isOn: $gpt4)
                             .onChange(of: gpt4) {
                                 UserDefaults.standard.set($0, forKey: "gpt4")
                             }
                         Toggle("OpenAI voice", isOn: $openAIVoice)
                             .onChange(of: openAIVoice) {
                                 UserDefaults.standard.set($0, forKey: "openAIVoice")
+                            }
+                        Toggle("Grok", isOn: $grokEnabled)
+                            .onChange(of: grokEnabled) {
+                                UserDefaults.standard.set($0, forKey: "grokEnabled")
                             }
                         if openAISessionKey != "" {
                             ProgressView(value: openAIUsage / 1000) {
@@ -135,6 +151,10 @@ struct SettingsView: View {
                                 .onChange(of: openAISessionKey) {
                                     UserDefaults.standard.set($0, forKey: "openAISessionKey")
                                 }
+                            SecureField("Grok API Key", text: $grokApiKey)
+                                .onChange(of: grokApiKey) {
+                                    UserDefaults.standard.set($0, forKey: "grokApiKey")
+                                }
                             SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
                                 .onChange(of: elevenLabsApiKey) {
                                     UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
@@ -147,6 +167,10 @@ struct SettingsView: View {
                             TextField("Override OpenAI model", text: $overrideOpenAIModel)
                                 .onChange(of: overrideOpenAIModel) {
                                     UserDefaults.standard.set($0, forKey: "overrideOpenAIModel")
+                                }
+                            TextField("Override Grok model", text: $grokOverrideModel)
+                                .onChange(of: grokOverrideModel) {
+                                    UserDefaults.standard.set($0, forKey: "grokOverrideModel")
                                 }
                             TextField("Override ElevenLabs voice ID", text: $overrideVoiceID)
                                 .onChange(of: overrideVoiceID) {
@@ -163,6 +187,37 @@ struct SettingsView: View {
                                     }
                                 }
                         }
+                        Group {
+                            Text("Clawdbot gateway")
+                                .bold()
+                            Toggle("Use Clawdbot Gateway", isOn: $gatewayEnabled)
+                                .onChange(of: gatewayEnabled) {
+                                    UserDefaults.standard.set($0, forKey: "gatewayEnabled")
+                                }
+                            TextField("Gateway URL (ws://host:18789)", text: $gatewayURL)
+                                .onChange(of: gatewayURL) {
+                                    UserDefaults.standard.set($0, forKey: "gatewayURL")
+                                }
+                            SecureField("Gateway token (optional)", text: $gatewayToken)
+                                .onChange(of: gatewayToken) {
+                                    UserDefaults.standard.set($0, forKey: "gatewayToken")
+                                }
+                            TextField("Gateway session key", text: $gatewaySessionKey)
+                                .onChange(of: gatewaySessionKey) {
+                                    UserDefaults.standard.set($0, forKey: "gatewaySessionKey")
+                                }
+                            Button(action: testGatewayConnection) {
+                                if gatewayTestInProgress {
+                                    HStack {
+                                        ProgressView()
+                                        Text("Testing...")
+                                    }
+                                } else {
+                                    Text("Test Gateway Connection")
+                                }
+                            }
+                            .disabled(gatewayTestInProgress || gatewayURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        }
                     }
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
@@ -177,12 +232,19 @@ struct SettingsView: View {
                         openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
                         allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
                         allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
+                        grokEnabled = UserDefaults.standard.bool(forKey: "grokEnabled")
+                        grokApiKey = UserDefaults.standard.string(forKey: "grokApiKey") ?? ""
+                        grokOverrideModel = UserDefaults.standard.string(forKey: "grokOverrideModel") ?? ""
                         elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
                         elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
                         name = UserDefaults.standard.string(forKey: "name") ?? ""
                         overrideOpenAIModel = UserDefaults.standard.string(forKey: "overrideOpenAIModel") ?? ""
                         overrideVoiceID = UserDefaults.standard.string(forKey: "overrideVoiceID") ?? ""
                         overrideSystemPrompt = UserDefaults.standard.string(forKey: "overrideSystemPrompt") ?? ""
+                        gatewayEnabled = UserDefaults.standard.bool(forKey: "gatewayEnabled")
+                        gatewayURL = UserDefaults.standard.string(forKey: "gatewayURL") ?? ""
+                        gatewayToken = UserDefaults.standard.string(forKey: "gatewayToken") ?? ""
+                        gatewaySessionKey = UserDefaults.standard.string(forKey: "gatewaySessionKey") ?? "main"
                         if !overrideVoiceID.isEmpty || !overrideSystemPrompt.isEmpty {
                             name = "Custom"
                         }
@@ -215,6 +277,34 @@ struct SettingsView: View {
                 Button("Done") {
                     dismiss()
                 }
+            }
+            .alert("Gateway Test", isPresented: $showGatewayTestAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(gatewayTestMessage)
+            }
+        }
+    }
+
+    func testGatewayConnection() {
+        gatewayTestInProgress = true
+        let token = gatewayToken.isEmpty ? nil : gatewayToken
+        let sessionKey = gatewaySessionKey.isEmpty ? "main" : gatewaySessionKey
+        GatewayChatClient.shared.sendChatMessage(
+            message: "ping",
+            sessionKey: sessionKey,
+            gatewayURL: gatewayURL,
+            token: token
+        ) { result in
+            DispatchQueue.main.async {
+                gatewayTestInProgress = false
+                switch result {
+                case .success(let content):
+                    gatewayTestMessage = content.isEmpty ? "Gateway replied, but the message was empty." : content
+                case .failure(let error):
+                    gatewayTestMessage = "Gateway error: \(error.localizedDescription)"
+                }
+                showGatewayTestAlert = true
             }
         }
     }

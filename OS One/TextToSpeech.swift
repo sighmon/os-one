@@ -246,6 +246,17 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
                 "use_speaker_boost": false
             ] as [String : Any]
         ] as [String: Any]
+    } else if name == "Moss" {
+        voice = "ueXkvFUg2AcBoMIBr9sa"  // Moss from The IT Crowd
+        body = [
+            "text": text,
+            "voice_settings": [
+                "stability": 0.50,
+                "similarity_boost": 0.75,
+                "style": 0.30,
+                "use_speaker_boost": true
+            ] as [String : Any]
+        ] as [String: Any]
     }
 
     if !overrideVoiceID.isEmpty {

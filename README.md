@@ -14,6 +14,7 @@ Other assistants include:
 * Janet from the tv show [The Good Place](https://www.imdb.com/title/tt4955642/)
 * J.A.R.V.I.S. from the movie [Iron Man](https://www.imdb.com/title/tt0371746/)
 * Johnny 5 from the movie [Short Circuit](https://www.imdb.com/title/tt0091949/)
+* Clawdbot [clawd.bot](https://clawd.bot)
 
 Authors:
 
