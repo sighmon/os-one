@@ -51,21 +51,25 @@ struct ConversationView: View {
                                 elevenLabsGetAudioId(text: message.message) { result in
                                     switch result {
                                     case .success(let audioId):
+                                        guard !audioId.isEmpty else {
+                                            playElevenLabsFallback(text: message.message, reason: "No matching history item")
+                                            return
+                                        }
                                         print("Audio ID found: \(audioId)")
                                         elevenLabsGetHistoricAudio(audioId: audioId) { result in
                                             switch result {
                                             case .success(let data):
-                                                speechBubbleTapped = ""
-                                                setAudioSession(active: true)
-                                                audioPlayer.playAudioFromData(data: data)
+                                                guard !data.isEmpty else {
+                                                    playElevenLabsFallback(text: message.message, reason: "Empty history audio")
+                                                    return
+                                                }
+                                                playAudio(data: data)
                                             case .failure(let error):
-                                                speechBubbleTapped = ""
-                                                print("Eleven Labs API error: \(error.localizedDescription)")
+                                                playElevenLabsFallback(text: message.message, reason: error.localizedDescription)
                                             }
                                         }
                                     case .failure(let error):
-                                        speechBubbleTapped = ""
-                                        print("ElevenLabs API error: \(error.localizedDescription)")
+                                        playElevenLabsFallback(text: message.message, reason: error.localizedDescription)
                                     }
                                 }
                             }
@@ -89,6 +93,31 @@ struct ConversationView: View {
             }
             .onDisappear() {
                 setAudioSession(active: false)
+            }
+        }
+    }
+}
+
+private extension ConversationView {
+    func playAudio(data: Data) {
+        DispatchQueue.main.async {
+            speechBubbleTapped = ""
+            setAudioSession(active: true)
+            audioPlayer.playAudioFromData(data: data)
+        }
+    }
+
+    func playElevenLabsFallback(text: String, reason: String) {
+        print("ElevenLabs API error: \(reason)")
+        elevenLabsTextToSpeech(name: name, text: text) { result in
+            switch result {
+            case .success(let response):
+                playAudio(data: response.audio)
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    speechBubbleTapped = ""
+                }
+                print("ElevenLabs fallback error: \(error.localizedDescription)")
             }
         }
     }
