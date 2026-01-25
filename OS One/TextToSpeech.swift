@@ -405,7 +405,7 @@ func elevenLabsGetAudioId(text: String, completion: @escaping (Result<String, Er
             var matchedItemId = ""
             let responseObject = try JSONDecoder().decode(ElevenLabsHistoryResponse.self, from: data)
             for item in responseObject.history {
-                if item.text == text {
+                if let itemText = item.text, itemText == text {
                     matchedItemId = item.history_item_id
                 }
             }
@@ -423,7 +423,7 @@ struct ElevenLabsHistoryResponse: Codable {
 
 struct ElevenLabsHistoryItem: Codable {
     let history_item_id: String
-    let text: String
+    let text: String?
 }
 
 func elevenLabsGetHistoricAudio(audioId: String, completion: @escaping (Result<Data, Error>) -> Void) {
