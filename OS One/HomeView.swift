@@ -101,33 +101,30 @@ struct HomeView: View {
                     }
                     .padding(.bottom, 1)
 
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            Text(statusLabel)
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.primary.opacity(0.3))
-                                .padding(.bottom, 4)
+                    VStack(spacing: 24) {
+                        Text(statusLabel)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.primary.opacity(0.3))
+                            .padding(.bottom, 4)
 
-                            TranscriptCardView(
-                                title: activeTranscriptTitle,
-                                text: activeTranscriptText,
-                                highlightedWordIndex: activeTranscriptHighlightIndex,
-                                timings: activeTranscriptTimings,
-                                currentTime: activeTranscriptTime
-                            )
-                            .frame(maxWidth: UIScreen.main.bounds.width * 0.8)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.horizontal, 28)
-                        .textSelection(.enabled)
-                        .onTapGesture {
-                            currentState = "listening"
-                            speechRecognizer.stopTranscribing()
-                            speechRecognizer.reset()
-                            speechRecognizer.transcribe()
-                        }
+                        TranscriptCardView(
+                            title: activeTranscriptTitle,
+                            text: activeTranscriptText,
+                            highlightedWordIndex: activeTranscriptHighlightIndex,
+                            timings: activeTranscriptTimings,
+                            currentTime: activeTranscriptTime
+                        )
+                        .frame(maxWidth: UIScreen.main.bounds.width * 0.8, maxHeight: .infinity)
                     }
-                    .frame(maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal, 28)
+                    .textSelection(.enabled)
+                    .onTapGesture {
+                        currentState = "listening"
+                        speechRecognizer.stopTranscribing()
+                        speechRecognizer.reset()
+                        speechRecognizer.transcribe()
+                    }
                     .padding(.bottom, 20)
 
                     Spacer()
@@ -738,66 +735,144 @@ struct TranscriptBlockView: View {
     var currentTime: Double = 0
 
     var body: some View {
-        VStack(spacing: 8) {
-            Text(attributedTranscript)
-                .font(.system(size: 30, weight: .semibold))
-                .multilineTextAlignment(.center)
-                .lineSpacing(6)
-        }
-        .frame(maxWidth: .infinity)
+        let payload = attributedTextPayload
+        ScrollingAttributedTextView(
+            attributedText: payload.text,
+            scrollRange: scrollRange(in: payload.wordRanges)
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 6)
     }
 
-    private var attributedTranscript: AttributedString {
+    private var attributedTextPayload: (text: NSAttributedString, wordRanges: [NSRange]) {
         let words = text.split(whereSeparator: { $0.isWhitespace })
-        guard !words.isEmpty else { return AttributedString(text) }
+        guard !words.isEmpty else { return (NSAttributedString(string: text), []) }
 
-        var attributed = AttributedString()
+        let attributed = NSMutableAttributedString()
+        var ranges: [NSRange] = []
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .center
+        paragraphStyle.lineSpacing = 6
+
         for (index, word) in words.enumerated() {
-            var part = AttributedString(String(word))
-            if let style = styleForWord(at: index) {
-                part.foregroundColor = style.color
-                part.font = style.font
-            } else if index == highlightedWordIndex {
-                part.foregroundColor = .white
-                part.font = .system(size: 30, weight: .semibold)
-            } else {
-                part.foregroundColor = .white.opacity(0.35)
-                part.font = .system(size: 30, weight: .semibold)
-            }
-            attributed += part
+            let start = attributed.length
+            let wordString = String(word)
+            let wordAttributes = attributesForWord(at: index)
+            let part = NSAttributedString(string: wordString, attributes: wordAttributes)
+            attributed.append(part)
+            ranges.append(NSRange(location: start, length: part.length))
             if index < words.count - 1 {
-                attributed += AttributedString(" ")
+                attributed.append(NSAttributedString(string: " "))
             }
         }
 
-        return attributed
+        attributed.addAttribute(
+            .paragraphStyle,
+            value: paragraphStyle,
+            range: NSRange(location: 0, length: attributed.length)
+        )
+
+        return (attributed, ranges)
     }
 
-    private func styleForWord(at index: Int) -> (color: Color, font: Font)? {
-        guard !timings.isEmpty, index < timings.count else { return nil }
+    private func attributesForWord(at index: Int) -> [NSAttributedString.Key: Any] {
+        let font = UIFont.systemFont(ofSize: 30, weight: .semibold)
+
+        if !timings.isEmpty, index < timings.count {
+            return attributesForTimedWord(at: index, font: font)
+        }
+
+        let color: UIColor = (index == highlightedWordIndex)
+            ? UIColor.white
+            : UIColor.white.withAlphaComponent(0.35)
+        return [.font: font, .foregroundColor: color]
+    }
+
+    private func attributesForTimedWord(at index: Int, font: UIFont) -> [NSAttributedString.Key: Any] {
         let timing = timings[index]
         let start = timing.start
         let end = max(timing.end, start + 0.01)
 
         if currentTime < start {
-            return (.white.opacity(0.25), .system(size: 30, weight: .semibold))
+            return [.font: font, .foregroundColor: UIColor.white.withAlphaComponent(0.25)]
         }
 
         if currentTime > end {
-            return (.white.opacity(0.6), .system(size: 30, weight: .semibold))
+            return [.font: font, .foregroundColor: UIColor.white.withAlphaComponent(0.6)]
         }
 
         let progress = (currentTime - start) / (end - start)
         let eased = smoothstep(progress)
         let opacity = 0.6 + 0.4 * eased
+        return [.font: font, .foregroundColor: UIColor.white.withAlphaComponent(opacity)]
+    }
 
-        return (.white.opacity(opacity), .system(size: 30, weight: .semibold))
+    private func scrollRange(in ranges: [NSRange]) -> NSRange? {
+        guard !ranges.isEmpty else { return nil }
+        if !timings.isEmpty {
+            let index = activeTimedWordIndex()
+            guard index >= 0, index < ranges.count else { return nil }
+            return ranges[index]
+        }
+        guard highlightedWordIndex >= 0, highlightedWordIndex < ranges.count else { return nil }
+        return ranges[highlightedWordIndex]
+    }
+
+    private func activeTimedWordIndex() -> Int {
+        guard !timings.isEmpty else { return highlightedWordIndex }
+        if let index = timings.lastIndex(where: { currentTime >= $0.start }) {
+            return index
+        }
+        return 0
     }
 
     private func smoothstep(_ value: Double) -> Double {
         let clamped = min(max(value, 0), 1)
         return clamped * clamped * (3 - 2 * clamped)
+    }
+}
+
+struct ScrollingAttributedTextView: UIViewRepresentable {
+    let attributedText: NSAttributedString
+    let scrollRange: NSRange?
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.backgroundColor = .clear
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.isScrollEnabled = true
+        textView.textContainerInset = .zero
+        textView.textContainer.lineFragmentPadding = 0
+        textView.showsVerticalScrollIndicator = false
+        textView.textContainer.widthTracksTextView = true
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        uiView.attributedText = attributedText
+        guard let range = scrollRange else { return }
+        guard range.location != NSNotFound else { return }
+        guard range.location + range.length <= uiView.attributedText.length else { return }
+        context.coordinator.scrollIfNeeded(to: range, in: uiView)
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    final class Coordinator {
+        private var lastRange: NSRange?
+        private var lastTextLength: Int = 0
+
+        func scrollIfNeeded(to range: NSRange, in textView: UITextView) {
+            guard lastRange != range || lastTextLength != textView.attributedText.length else { return }
+            lastRange = range
+            lastTextLength = textView.attributedText.length
+            DispatchQueue.main.async {
+                textView.scrollRangeToVisible(range)
+            }
+        }
     }
 }
 
