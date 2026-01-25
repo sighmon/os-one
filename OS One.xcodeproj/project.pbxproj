@@ -25,6 +25,7 @@
 		057BD3CF2A3D526800D37193 /* hello.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 057BD3CD2A3D526800D37193 /* hello.mp3 */; };
 		057BD3D02A3D526800D37193 /* sorry.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 057BD3CE2A3D526800D37193 /* sorry.mp3 */; };
 		0597AE5829D98B9B00C5CCF4 /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0597AE5729D98B9B00C5CCF4 /* SpeechRecognizer.swift */; };
+		05B8BB272F25AB8A00C88F84 /* WordTiming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B8BB262F25AB8A00C88F84 /* WordTiming.swift */; };
 		05C3FFF829E8C8AB00B33D0F /* DoubleHelixView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C3FFF729E8C8AB00B33D0F /* DoubleHelixView.swift */; };
 		05F0AE3D29DEE1DD00E68AC6 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05F0AE3C29DEE1DD00E68AC6 /* ConversationView.swift */; };
 		06A1B2C3D4E5F67890123457 /* GatewayChat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A1B2C3D4E5F67890123456 /* GatewayChat.swift */; };
@@ -72,6 +73,7 @@
 		057BD3CD2A3D526800D37193 /* hello.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = hello.mp3; sourceTree = "<group>"; };
 		057BD3CE2A3D526800D37193 /* sorry.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = sorry.mp3; sourceTree = "<group>"; };
 		0597AE5729D98B9B00C5CCF4 /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
+		05B8BB262F25AB8A00C88F84 /* WordTiming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordTiming.swift; sourceTree = "<group>"; };
 		05C3FFF729E8C8AB00B33D0F /* DoubleHelixView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleHelixView.swift; sourceTree = "<group>"; };
 		05F0AE3C29DEE1DD00E68AC6 /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 		06A1B2C3D4E5F67890123456 /* GatewayChat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayChat.swift; sourceTree = "<group>"; };
@@ -132,6 +134,7 @@
 				05496C5F29D956D20080C503 /* ContentView.swift */,
 				05F0AE3C29DEE1DD00E68AC6 /* ConversationView.swift */,
 				05496C8D29D958550080C503 /* HomeView.swift */,
+				05B8BB262F25AB8A00C88F84 /* WordTiming.swift */,
 				056929F42DD3650D004FD9DD /* HomeKitManager.swift */,
 				0570528F2AA7494500B05FD6 /* LocationController.swift */,
 				05C3FFF729E8C8AB00B33D0F /* DoubleHelixView.swift */,
@@ -318,6 +321,7 @@
 				05C3FFF829E8C8AB00B33D0F /* DoubleHelixView.swift in Sources */,
 				05496C6729D956D40080C503 /* Persistence.swift in Sources */,
 				05744E7E29DAEED90013FB54 /* SettingsView.swift in Sources */,
+				05B8BB272F25AB8A00C88F84 /* WordTiming.swift in Sources */,
 				05496C6029D956D20080C503 /* ContentView.swift in Sources */,
 				057052902AA7494500B05FD6 /* LocationController.swift in Sources */,
 				05744E8029DAF2B60013FB54 /* OpenAI.swift in Sources */,
@@ -490,7 +494,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "OS One/OS One.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEVELOPMENT_ASSET_PATHS = "\"OS One/Preview Content\"";
 				DEVELOPMENT_TEAM = 4P8S9W2NYL;
 				ENABLE_PREVIEWS = YES;
@@ -507,7 +511,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.8;
+				MARKETING_VERSION = 2.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sighmon.OS-One";
 				PRODUCT_NAME = "OS One";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -523,7 +527,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "OS One/OS One.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 83;
+				CURRENT_PROJECT_VERSION = 84;
 				DEVELOPMENT_ASSET_PATHS = "\"OS One/Preview Content\"";
 				DEVELOPMENT_TEAM = 4P8S9W2NYL;
 				ENABLE_PREVIEWS = YES;
@@ -540,7 +544,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.8;
+				MARKETING_VERSION = 2.9;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sighmon.OS-One";
 				PRODUCT_NAME = "OS One";
 				SWIFT_EMIT_LOC_STRINGS = YES;

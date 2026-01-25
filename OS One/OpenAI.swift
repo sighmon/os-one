@@ -850,6 +850,79 @@ func openAItextToSpeechAPI(name: String, text: String, completion: @escaping (Re
     task.resume()
 }
 
+func openAITranscribeAudioForWordTimings(data: Data, completion: @escaping (Result<[WordTiming], Error>) -> Void) {
+    let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
+    let urlString = "https://api.openai.com/v1/audio/transcriptions"
+
+    guard let url = URL(string: urlString) else {
+        completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])))
+        return
+    }
+
+    let boundary = "Boundary-\(UUID().uuidString)"
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("Bearer \(openAIApiKey)", forHTTPHeaderField: "Authorization")
+    request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+    var body = Data()
+    body.append(multipartField(name: "model", value: "whisper-1", boundary: boundary))
+    body.append(multipartField(name: "response_format", value: "verbose_json", boundary: boundary))
+    body.append(multipartField(name: "timestamp_granularities[]", value: "word", boundary: boundary))
+    body.append(multipartFileField(name: "file", filename: "speech.mp3", contentType: "audio/mpeg", fileData: data, boundary: boundary))
+    body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+    let task = URLSession.shared.uploadTask(with: request, from: body) { data, response, error in
+        if let error = error {
+            completion(.failure(error))
+            return
+        }
+
+        guard let data = data else {
+            completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
+            return
+        }
+
+        do {
+            let responseObject = try JSONDecoder().decode(OpenAITranscriptionResponse.self, from: data)
+            let timings = (responseObject.words ?? []).enumerated().map { index, word in
+                WordTiming(id: index, word: word.word.trimmingCharacters(in: .whitespacesAndNewlines), start: word.start, end: word.end)
+            }
+            completion(.success(timings))
+        } catch {
+            completion(.failure(error))
+        }
+    }
+    task.resume()
+}
+
+private func multipartField(name: String, value: String, boundary: String) -> Data {
+    var field = "--\(boundary)\r\n"
+    field += "Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n"
+    field += "\(value)\r\n"
+    return field.data(using: .utf8) ?? Data()
+}
+
+private func multipartFileField(name: String, filename: String, contentType: String, fileData: Data, boundary: String) -> Data {
+    var field = "--\(boundary)\r\n"
+    field += "Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\n"
+    field += "Content-Type: \(contentType)\r\n\r\n"
+    var data = field.data(using: .utf8) ?? Data()
+    data.append(fileData)
+    data.append("\r\n".data(using: .utf8)!)
+    return data
+}
+
+struct OpenAITranscriptionResponse: Codable {
+    let words: [OpenAITranscriptionWord]?
+}
+
+struct OpenAITranscriptionWord: Codable {
+    let word: String
+    let start: Double
+    let end: Double
+}
+
 func firstDayOfCurrentMonth() -> String {
     let now = Date()
     let dateFormatter = DateFormatter()

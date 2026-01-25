@@ -8,7 +8,7 @@
 import Foundation
 import AVFoundation
 
-func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (Result<Data, Error>) -> Void) {
+func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (Result<(audio: Data, timings: [WordTiming]), Error>) -> Void) {
     let elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
     let overrideVoiceID = UserDefaults.standard.string(forKey: "overrideVoiceID") ?? ""
 
@@ -264,10 +264,10 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
     }
 
     body["model_id"] = "eleven_flash_v2_5"
-    let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/stream"
+    let elevenLabsApi = "https://api.elevenlabs.io/v1/text-to-speech/\(voice)/with-timestamps"
 
     let headers = [
-        "accept": "audio/mpeg",
+        "accept": "application/json",
         "xi-api-key": elevenLabsApiKey,
         "Content-Type": "application/json"
     ]
@@ -293,9 +293,39 @@ func elevenLabsTextToSpeech(name: String, text: String, completion: @escaping (R
             return
         }
 
-        completion(.success(data))
+        do {
+            let responseObject = try JSONDecoder().decode(ElevenLabsTimestampResponse.self, from: data)
+            guard let audioData = Data(base64Encoded: responseObject.audio_base64) else {
+                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to decode ElevenLabs audio"])))
+                return
+            }
+            let alignment = responseObject.normalized_alignment ?? responseObject.alignment
+            let timings = alignment.map {
+                wordTimingsFromCharacterAlignment(
+                    text: text,
+                    characters: $0.characters,
+                    starts: $0.character_start_times_seconds,
+                    ends: $0.character_end_times_seconds
+                )
+            } ?? []
+            completion(.success((audio: audioData, timings: timings)))
+        } catch {
+            completion(.failure(error))
+        }
     }
     task.resume()
+}
+
+struct ElevenLabsTimestampResponse: Codable {
+    let audio_base64: String
+    let alignment: ElevenLabsAlignment?
+    let normalized_alignment: ElevenLabsAlignment?
+}
+
+struct ElevenLabsAlignment: Codable {
+    let characters: [String]
+    let character_start_times_seconds: [Double]
+    let character_end_times_seconds: [Double]
 }
 
 func elevenLabsGetUsage(completion: @escaping (Result<Float, Error>) -> Void) {
