@@ -39,6 +39,10 @@ struct HomeView: View {
     @State private var responseWordTimings: [WordTiming] = []
     @State private var responsePlaybackTime: Double = 0
     @State private var useSystemSpeechHighlighting = false
+    @State private var lastResponseAudioData: Data?
+    @State private var lastResponseTimings: [WordTiming] = []
+    @State private var lastResponseText: String = ""
+    @State private var previousState: String = ""
     @State private var visionEnabled: Bool = UserDefaults.standard.bool(forKey: "vision") {
         didSet {
             UserDefaults.standard.set(visionEnabled, forKey: "vision")
@@ -115,11 +119,17 @@ struct HomeView: View {
                             currentTime: activeTranscriptTime
                         )
                         .frame(maxWidth: UIScreen.main.bounds.width * 0.8, maxHeight: .infinity)
+                        .onTapGesture {
+                            if isShowingResponse {
+                                replayLastResponse()
+                            }
+                        }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.horizontal, 28)
                     .textSelection(.enabled)
                     .onTapGesture {
+                        guard !isShowingResponse else { return }
                         currentState = "listening"
                         speechRecognizer.stopTranscribing()
                         speechRecognizer.reset()
@@ -187,6 +197,9 @@ struct HomeView: View {
                                 responseWordIndex = 0
                                 responseWordTimings = []
                                 responsePlaybackTime = 0
+                                lastResponseAudioData = nil
+                                lastResponseTimings = []
+                                lastResponseText = ""
                                 speechSynthesizerManager.speechSynthesizer.stopSpeaking(at: .immediate)
                                 audioPlayer.audioPlayer?.stop()
                                 setAudioSession(active: false)
@@ -250,8 +263,13 @@ struct HomeView: View {
                     saveButtonTapped = false
                     deleteButtonTapped = false
                 }
-                .onChange(of: currentState) { _ in
+                .onChange(of: currentState) { newState in
                     updatePulseAnimation()
+                    if newState == "listening", previousState != "listening" {
+                        liveTranscript = ""
+                        liveWordIndex = 0
+                    }
+                    previousState = newState
                 }
                 .onReceive(audioPlayer.$playbackFinished) { finished in
                     if finished {
@@ -351,6 +369,15 @@ struct HomeView: View {
             return responseText.isEmpty ? "" : responseText
         default:
             return liveTranscript.isEmpty ? "" : liveTranscript
+        }
+    }
+
+    private var isShowingResponse: Bool {
+        switch currentState {
+        case "vocalising", "chatting", "sleeping", "conversation saved", "conversation deleted":
+            return true
+        default:
+            return false
         }
     }
 
@@ -486,6 +513,11 @@ struct HomeView: View {
                     DispatchQueue.main.async {
                         responseWordTimings = response.timings
                         responsePlaybackTime = 0
+                        if text == responseText {
+                            lastResponseAudioData = response.audio
+                            lastResponseTimings = response.timings
+                            lastResponseText = text
+                        }
                     }
                     audioPlayer.playAudioFromData(data: response.audio)
                 case .failure(let error):
@@ -504,6 +536,11 @@ struct HomeView: View {
                     DispatchQueue.main.async {
                         responseWordTimings = []
                         responsePlaybackTime = 0
+                        if text == responseText {
+                            lastResponseAudioData = data
+                            lastResponseTimings = []
+                            lastResponseText = text
+                        }
                     }
                     audioPlayer.playAudioFromData(data: data)
                     openAITranscribeAudioForWordTimings(data: data) { timingResult in
@@ -511,6 +548,9 @@ struct HomeView: View {
                         case .success(let timings):
                             DispatchQueue.main.async {
                                 responseWordTimings = timings
+                                if text == responseText {
+                                    lastResponseTimings = timings
+                                }
                             }
                         case .failure(let error):
                             print("OpenAI transcription timing error: \(error.localizedDescription)")
@@ -528,6 +568,11 @@ struct HomeView: View {
             useSystemSpeechHighlighting = true
             responseWordTimings = []
             responsePlaybackTime = 0
+            if text == responseText {
+                lastResponseAudioData = nil
+                lastResponseTimings = []
+                lastResponseText = text
+            }
             speechSynthesizerManager.currentSpeechText = text
             let speechUtterance = AVSpeechUtterance(string: text)
             speechUtterance.voice = AVSpeechSynthesisVoice(language: nil)
@@ -536,6 +581,31 @@ struct HomeView: View {
             speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
         }
         setAudioSession(active: true)
+    }
+
+    private func replayLastResponse() {
+        guard !lastResponseText.isEmpty else { return }
+        responseText = lastResponseText
+        responseWords = lastResponseText.split(whereSeparator: { $0.isWhitespace })
+        responseWordIndex = 0
+        responsePlaybackTime = 0
+        currentState = "vocalising"
+
+        if let audioData = lastResponseAudioData {
+            useSystemSpeechHighlighting = false
+            responseWordTimings = lastResponseTimings
+            audioPlayer.playAudioFromData(data: audioData)
+            setAudioSession(active: true)
+        } else {
+            useSystemSpeechHighlighting = true
+            responseWordTimings = []
+            speechSynthesizerManager.currentSpeechText = lastResponseText
+            let speechUtterance = AVSpeechUtterance(string: lastResponseText)
+            speechUtterance.voice = AVSpeechSynthesisVoice(language: nil)
+            speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate
+            speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
+            setAudioSession(active: true)
+        }
     }
 
     func sendToOpenAI() {
@@ -579,6 +649,7 @@ struct HomeView: View {
             switch result {
             case .success(let content):
                 responseText = content
+                lastResponseText = content
                 responseWords = content.split(whereSeparator: { $0.isWhitespace })
                 responseWordIndex = 0
                 responseWordTimings = []
