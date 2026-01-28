@@ -38,7 +38,8 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.5, green: 0.5, blue: 0.5).edgesIgnoringSafeArea(.all).opacity(0.1)
+                Color(.secondarySystemBackground)
+                    .ignoresSafeArea()
                 ScrollView {
                     VStack {
                         HStack {
@@ -220,6 +221,7 @@ struct SettingsView: View {
                         }
                     }
                     .textFieldStyle(.roundedBorder)
+                    .foregroundStyle(.primary)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
                     .padding([.leading, .trailing], 40)
