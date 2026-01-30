@@ -187,11 +187,12 @@ struct SettingsView: View {
                                         UserDefaults.standard.set("Custom", forKey: "name")
                                     }
                                 }
+                                .padding(.bottom, 10)
                         }
                         Group {
-                            Text("Clawdbot gateway")
+                            Text("Openclaw gateway")
                                 .bold()
-                            Toggle("Use Clawdbot Gateway", isOn: $gatewayEnabled)
+                            Toggle("Use Openclaw Gateway", isOn: $gatewayEnabled)
                                 .onChange(of: gatewayEnabled) {
                                     UserDefaults.standard.set($0, forKey: "gatewayEnabled")
                                 }
@@ -215,6 +216,7 @@ struct SettingsView: View {
                                     }
                                 } else {
                                     Text("Test Gateway Connection")
+                                        .padding(.bottom, 10)
                                 }
                             }
                             .disabled(gatewayTestInProgress || gatewayURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
