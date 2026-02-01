@@ -31,6 +31,18 @@ struct HomeView: View {
     @State private var showingImagePicker = false
     @State private var currentImage: UIImage?
     @State private var pendingTranscript: String = ""
+    @State private var liveTranscript: String = ""
+    @State private var liveWordIndex: Int = 0
+    @State private var responseText: String = ""
+    @State private var responseWordIndex: Int = 0
+    @State private var responseWords: [Substring] = []
+    @State private var responseWordTimings: [WordTiming] = []
+    @State private var responsePlaybackTime: Double = 0
+    @State private var useSystemSpeechHighlighting = false
+    @State private var lastResponseAudioData: Data?
+    @State private var lastResponseTimings: [WordTiming] = []
+    @State private var lastResponseText: String = ""
+    @State private var previousState: String = ""
     @State private var visionEnabled: Bool = UserDefaults.standard.bool(forKey: "vision") {
         didSet {
             UserDefaults.standard.set(visionEnabled, forKey: "vision")
@@ -73,6 +85,7 @@ struct HomeView: View {
                                 size: 80,
                                 weight: .light
                             ))
+                            .padding(.top, 20)
                             .onTapGesture {
                                 showingHomeKitSheet.toggle()
                             }
@@ -92,22 +105,36 @@ struct HomeView: View {
                     }
                     .padding(.bottom, 1)
 
-                    ScrollView {
-                        Text(currentState)
-                            .font(.system(
-                                size: 20,
-                                weight: .light
-                            ))
-                            .padding([.leading, .trailing], 60)
-                            .textSelection(.enabled)
-                            .onTapGesture {
-                                currentState = "listening"
-                                speechRecognizer.stopTranscribing()
-                                speechRecognizer.reset()
-                                speechRecognizer.transcribe()
+                    VStack(spacing: 24) {
+                        Text(statusLabel)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.primary.opacity(0.3))
+                            .padding(.bottom, 4)
+
+                        TranscriptCardView(
+                            title: activeTranscriptTitle,
+                            text: activeTranscriptText,
+                            highlightedWordIndex: activeTranscriptHighlightIndex,
+                            timings: activeTranscriptTimings,
+                            currentTime: activeTranscriptTime
+                        )
+                        .frame(maxWidth: UIScreen.main.bounds.width * 0.8, maxHeight: .infinity)
+                        .onTapGesture {
+                            if isShowingResponse {
+                                replayLastResponse()
                             }
+                        }
                     }
-                    .frame(height: 100)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal, 28)
+                    .textSelection(.enabled)
+                    .onTapGesture {
+                        guard !isShowingResponse else { return }
+                        currentState = "listening"
+                        speechRecognizer.stopTranscribing()
+                        speechRecognizer.reset()
+                        speechRecognizer.transcribe()
+                    }
                     .padding(.bottom, 20)
 
                     Spacer()
@@ -164,6 +191,15 @@ struct HomeView: View {
                                 deleteButtonTapped = true
                                 currentState = "conversation deleted"
                                 chatHistory.messages = []
+                                liveTranscript = ""
+                                responseText = ""
+                                responseWords = []
+                                responseWordIndex = 0
+                                responseWordTimings = []
+                                responsePlaybackTime = 0
+                                lastResponseAudioData = nil
+                                lastResponseTimings = []
+                                lastResponseText = ""
                                 speechSynthesizerManager.speechSynthesizer.stopSpeaking(at: .immediate)
                                 audioPlayer.audioPlayer?.stop()
                                 setAudioSession(active: false)
@@ -227,8 +263,13 @@ struct HomeView: View {
                     saveButtonTapped = false
                     deleteButtonTapped = false
                 }
-                .onChange(of: currentState) { _ in
+                .onChange(of: currentState) { newState in
                     updatePulseAnimation()
+                    if newState == "listening", previousState != "listening" {
+                        liveTranscript = ""
+                        liveWordIndex = 0
+                    }
+                    previousState = newState
                 }
                 .onReceive(audioPlayer.$playbackFinished) { finished in
                     if finished {
@@ -239,6 +280,25 @@ struct HomeView: View {
                             setAudioSession(active: false)
                         }
                     }
+                }
+                .onReceive(audioPlayer.$playbackProgress) { progress in
+                    guard currentState == "vocalising" else { return }
+                    guard !useSystemSpeechHighlighting else { return }
+                    guard responseWordTimings.isEmpty else { return }
+                    guard !responseWords.isEmpty else { return }
+                    let clamped = max(0.0, min(1.0, progress))
+                    let index = min(responseWords.count - 1, Int(clamped * Double(responseWords.count)))
+                    responseWordIndex = max(0, index)
+                }
+                .onReceive(audioPlayer.$playbackTime) { time in
+                    guard currentState == "vocalising" else { return }
+                    responsePlaybackTime = time
+                }
+                .onReceive(speechSynthesizerManager.$currentWordIndex) { index in
+                    guard currentState == "vocalising" else { return }
+                    guard useSystemSpeechHighlighting else { return }
+                    guard speechSynthesizerManager.currentSpeechText == responseText else { return }
+                    responseWordIndex = index
                 }
                 .sheet(isPresented: $showingImagePicker) {
                     ImagePicker(image: self.$currentImage, onImagePicked: { selectedImage in
@@ -273,6 +333,79 @@ struct HomeView: View {
         // Base 0.9 ... 1.0 range feels subtle instead of nightclub.
         let base: CGFloat = 0.9
         return base + (pulseAmount - 1.0) * 0.1
+    }
+
+    private var statusLabel: String {
+        switch currentState {
+        case "thinking":
+            return "thinking..."
+        case "listening":
+            return "listening..."
+        case "vocalising":
+            return "speaking..."
+        case "sleeping":
+            return "sleeping"
+        case "try again later":
+            return "try again later"
+        case "chatting":
+            return "chatting"
+        default:
+            return currentState
+        }
+    }
+
+    private var activeTranscriptTitle: String {
+        switch currentState {
+        case "vocalising", "chatting":
+            return "Response"
+        default:
+            return "Live transcription"
+        }
+    }
+
+    private var activeTranscriptText: String {
+        switch currentState {
+        case "vocalising", "chatting", "sleeping", "conversation saved", "conversation deleted":
+            return responseText.isEmpty ? "" : responseText
+        default:
+            return liveTranscript.isEmpty ? "" : liveTranscript
+        }
+    }
+
+    private var isShowingResponse: Bool {
+        switch currentState {
+        case "vocalising", "chatting", "sleeping", "conversation saved", "conversation deleted":
+            return true
+        default:
+            return false
+        }
+    }
+
+    private var activeTranscriptHighlightIndex: Int {
+        switch currentState {
+        case "vocalising", "chatting":
+            return responseWordIndex
+        default:
+            return liveWordIndex
+        }
+    }
+
+    private var activeTranscriptTimings: [WordTiming] {
+        switch currentState {
+        case "vocalising", "chatting":
+            return responseWordTimings
+        default:
+            return []
+        }
+    }
+
+    private var activeTranscriptTime: Double {
+        switch currentState {
+        case "vocalising", "chatting":
+            return responsePlaybackTime
+        default:
+            return 0
+        }
     }
 
     private func updatePulseAnimation() {
@@ -356,8 +489,10 @@ struct HomeView: View {
                 sayText(text: welcomeText)
                 speechRecognizer.setUpdateStateHandler { newState in
                     DispatchQueue.main.async {
-                        if currentState != "thinking" {
-                            currentState = newState
+                        liveTranscript = newState
+                        liveWordIndex = max(0, newState.split(whereSeparator: { $0.isWhitespace }).count - 1)
+                        if currentState != "thinking" && currentState != "vocalising" {
+                            currentState = "listening"
                         }
                     }
                 }
@@ -371,11 +506,20 @@ struct HomeView: View {
 
     func sayText(text: String) {
         if elevenLabs {
+            useSystemSpeechHighlighting = false
             elevenLabsTextToSpeech(name: name, text: text) { result in
                 switch result {
-                case .success(let data):
-                    currentState = "chatting"
-                    audioPlayer.playAudioFromData(data: data)
+                case .success(let response):
+                    DispatchQueue.main.async {
+                        responseWordTimings = response.timings
+                        responsePlaybackTime = 0
+                        if text == responseText {
+                            lastResponseAudioData = response.audio
+                            lastResponseTimings = response.timings
+                            lastResponseText = text
+                        }
+                    }
+                    audioPlayer.playAudioFromData(data: response.audio)
                 case .failure(let error):
                     currentState = "try again later"
                     print("Eleven Labs API error: \(error.localizedDescription)")
@@ -385,11 +529,33 @@ struct HomeView: View {
                 }
             }
         } else if openAIVoice {
+            useSystemSpeechHighlighting = false
             openAItextToSpeechAPI(name: "nova", text: text) { result in
                 switch result {
                 case .success(let data):
-                    currentState = "chatting"
+                    DispatchQueue.main.async {
+                        responseWordTimings = []
+                        responsePlaybackTime = 0
+                        if text == responseText {
+                            lastResponseAudioData = data
+                            lastResponseTimings = []
+                            lastResponseText = text
+                        }
+                    }
                     audioPlayer.playAudioFromData(data: data)
+                    openAITranscribeAudioForWordTimings(data: data) { timingResult in
+                        switch timingResult {
+                        case .success(let timings):
+                            DispatchQueue.main.async {
+                                responseWordTimings = timings
+                                if text == responseText {
+                                    lastResponseTimings = timings
+                                }
+                            }
+                        case .failure(let error):
+                            print("OpenAI transcription timing error: \(error.localizedDescription)")
+                        }
+                    }
                 case .failure(let error):
                     currentState = "try again later"
                     print("OpenAI voice API error: \(error.localizedDescription)")
@@ -399,14 +565,47 @@ struct HomeView: View {
                 }
             }
         } else {
+            useSystemSpeechHighlighting = true
+            responseWordTimings = []
+            responsePlaybackTime = 0
+            if text == responseText {
+                lastResponseAudioData = nil
+                lastResponseTimings = []
+                lastResponseText = text
+            }
+            speechSynthesizerManager.currentSpeechText = text
             let speechUtterance = AVSpeechUtterance(string: text)
             speechUtterance.voice = AVSpeechSynthesisVoice(language: nil)
             speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate
 
-            currentState = "chatting"
             speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
         }
         setAudioSession(active: true)
+    }
+
+    private func replayLastResponse() {
+        guard !lastResponseText.isEmpty else { return }
+        responseText = lastResponseText
+        responseWords = lastResponseText.split(whereSeparator: { $0.isWhitespace })
+        responseWordIndex = 0
+        responsePlaybackTime = 0
+        currentState = "vocalising"
+
+        if let audioData = lastResponseAudioData {
+            useSystemSpeechHighlighting = false
+            responseWordTimings = lastResponseTimings
+            audioPlayer.playAudioFromData(data: audioData)
+            setAudioSession(active: true)
+        } else {
+            useSystemSpeechHighlighting = true
+            responseWordTimings = []
+            speechSynthesizerManager.currentSpeechText = lastResponseText
+            let speechUtterance = AVSpeechUtterance(string: lastResponseText)
+            speechUtterance.voice = AVSpeechSynthesisVoice(language: nil)
+            speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate
+            speechSynthesizerManager.speechSynthesizer.speak(speechUtterance)
+            setAudioSession(active: true)
+        }
     }
 
     func sendToOpenAI() {
@@ -416,6 +615,8 @@ struct HomeView: View {
         speed = 20
         let transcriptSnapshot = speechRecognizer.transcript
         pendingTranscript = transcriptSnapshot
+        liveTranscript = transcriptSnapshot
+        liveWordIndex = max(0, transcriptSnapshot.split(whereSeparator: { $0.isWhitespace }).count - 1)
         print("Message: \(transcriptSnapshot)")
 
         if UserDefaults.standard.bool(forKey: "vision") {
@@ -447,6 +648,12 @@ struct HomeView: View {
         let completionHandler: (Result<String, Error>) -> Void = { result in
             switch result {
             case .success(let content):
+                responseText = content
+                lastResponseText = content
+                responseWords = content.split(whereSeparator: { $0.isWhitespace })
+                responseWordIndex = 0
+                responseWordTimings = []
+                responsePlaybackTime = 0
                 var messageInChatHistory = false
                 for message in chatHistory.messages {
                     if message.message == content {
@@ -571,6 +778,175 @@ struct HomeView: View {
     }
 }
 
+struct TranscriptCardView: View {
+    let title: String
+    let text: String
+    let highlightedWordIndex: Int
+    var timings: [WordTiming] = []
+    var currentTime: Double = 0
+
+    var body: some View {
+        VStack(spacing: 16) {
+            TranscriptBlockView(
+                text: text,
+                highlightedWordIndex: highlightedWordIndex,
+                timings: timings,
+                currentTime: currentTime
+            )
+        }
+        .padding(.vertical, 18)
+        .padding(.horizontal, 20)
+    }
+}
+
+struct TranscriptBlockView: View {
+    let text: String
+    let highlightedWordIndex: Int
+    var timings: [WordTiming] = []
+    var currentTime: Double = 0
+
+    var body: some View {
+        let payload = attributedTextPayload
+        ScrollingAttributedTextView(
+            attributedText: payload.text,
+            scrollRange: scrollRange(in: payload.wordRanges)
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 6)
+    }
+
+    private var attributedTextPayload: (text: NSAttributedString, wordRanges: [NSRange]) {
+        let words = text.split(whereSeparator: { $0.isWhitespace })
+        guard !words.isEmpty else { return (NSAttributedString(string: text), []) }
+
+        let attributed = NSMutableAttributedString()
+        var ranges: [NSRange] = []
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .center
+        paragraphStyle.lineSpacing = 6
+
+        for (index, word) in words.enumerated() {
+            let start = attributed.length
+            let wordString = String(word)
+            let wordAttributes = attributesForWord(at: index)
+            let part = NSAttributedString(string: wordString, attributes: wordAttributes)
+            attributed.append(part)
+            ranges.append(NSRange(location: start, length: part.length))
+            if index < words.count - 1 {
+                attributed.append(NSAttributedString(string: " "))
+            }
+        }
+
+        attributed.addAttribute(
+            .paragraphStyle,
+            value: paragraphStyle,
+            range: NSRange(location: 0, length: attributed.length)
+        )
+
+        return (attributed, ranges)
+    }
+
+    private func attributesForWord(at index: Int) -> [NSAttributedString.Key: Any] {
+        let font = UIFont.systemFont(ofSize: 30, weight: .semibold)
+
+        if !timings.isEmpty, index < timings.count {
+            return attributesForTimedWord(at: index, font: font)
+        }
+
+        let color: UIColor = (index == highlightedWordIndex)
+            ? UIColor.white
+            : UIColor.white.withAlphaComponent(0.35)
+        return [.font: font, .foregroundColor: color]
+    }
+
+    private func attributesForTimedWord(at index: Int, font: UIFont) -> [NSAttributedString.Key: Any] {
+        let timing = timings[index]
+        let start = timing.start
+        let end = max(timing.end, start + 0.01)
+
+        if currentTime < start {
+            return [.font: font, .foregroundColor: UIColor.white.withAlphaComponent(0.25)]
+        }
+
+        if currentTime > end {
+            return [.font: font, .foregroundColor: UIColor.white.withAlphaComponent(0.6)]
+        }
+
+        let progress = (currentTime - start) / (end - start)
+        let eased = smoothstep(progress)
+        let opacity = 0.6 + 0.4 * eased
+        return [.font: font, .foregroundColor: UIColor.white.withAlphaComponent(opacity)]
+    }
+
+    private func scrollRange(in ranges: [NSRange]) -> NSRange? {
+        guard !ranges.isEmpty else { return nil }
+        if !timings.isEmpty {
+            let index = activeTimedWordIndex()
+            guard index >= 0, index < ranges.count else { return nil }
+            return ranges[index]
+        }
+        guard highlightedWordIndex >= 0, highlightedWordIndex < ranges.count else { return nil }
+        return ranges[highlightedWordIndex]
+    }
+
+    private func activeTimedWordIndex() -> Int {
+        guard !timings.isEmpty else { return highlightedWordIndex }
+        if let index = timings.lastIndex(where: { currentTime >= $0.start }) {
+            return index
+        }
+        return 0
+    }
+
+    private func smoothstep(_ value: Double) -> Double {
+        let clamped = min(max(value, 0), 1)
+        return clamped * clamped * (3 - 2 * clamped)
+    }
+}
+
+struct ScrollingAttributedTextView: UIViewRepresentable {
+    let attributedText: NSAttributedString
+    let scrollRange: NSRange?
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.backgroundColor = .clear
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.isScrollEnabled = true
+        textView.textContainerInset = .zero
+        textView.textContainer.lineFragmentPadding = 0
+        textView.showsVerticalScrollIndicator = false
+        textView.textContainer.widthTracksTextView = true
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        uiView.attributedText = attributedText
+        guard let range = scrollRange else { return }
+        guard range.location != NSNotFound else { return }
+        guard range.location + range.length <= uiView.attributedText.length else { return }
+        context.coordinator.scrollIfNeeded(to: range, in: uiView)
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    final class Coordinator {
+        private var lastRange: NSRange?
+        private var lastTextLength: Int = 0
+
+        func scrollIfNeeded(to range: NSRange, in textView: UITextView) {
+            guard lastRange != range || lastTextLength != textView.attributedText.length else { return }
+            lastRange = range
+            lastTextLength = textView.attributedText.length
+            DispatchQueue.main.async {
+                textView.scrollRangeToVisible(range)
+            }
+        }
+    }
+}
+
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         HomeView()
@@ -579,12 +955,19 @@ struct HomeView_Previews: PreviewProvider {
 }
 
 class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, ObservableObject {
+    @Published var currentSpeechText: String = ""
+    @Published var currentWordIndex: Int = 0
     var speechSynthesizer: AVSpeechSynthesizer
 
     override init() {
         self.speechSynthesizer = AVSpeechSynthesizer()
         super.init()
         self.speechSynthesizer.delegate = self
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
+        currentSpeechText = utterance.speechString
+        currentWordIndex = wordIndex(for: characterRange, in: utterance.speechString)
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
@@ -595,11 +978,21 @@ class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, Observabl
         speechRecognizer.reset()
         speechRecognizer.transcribe()
     }
+
+    private func wordIndex(for range: NSRange, in text: String) -> Int {
+        guard let swiftRange = Range(range, in: text) else { return 0 }
+        let prefix = text[..<swiftRange.lowerBound]
+        let words = prefix.split(whereSeparator: { $0.isWhitespace })
+        return max(0, words.count)
+    }
 }
 
 class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var audioPlayer: AVAudioPlayer?
     @Published var playbackFinished = false
+    @Published var playbackProgress: Double = 0
+    @Published var playbackTime: Double = 0
+    private var progressTimer: Timer?
 
     func playAudioFromData(data: Data) {
         DispatchQueue.main.async {
@@ -608,7 +1001,10 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
                 self.audioPlayer?.delegate = self
                 self.audioPlayer?.prepareToPlay()
                 self.playbackFinished = false
+                self.playbackProgress = 0
+                self.playbackTime = 0
                 self.audioPlayer?.play()
+                self.startProgressTimer()
             } catch {
                 print("Error loading audio data: \(error.localizedDescription)")
             }
@@ -622,7 +1018,10 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
                 self.audioPlayer?.delegate = self
                 self.audioPlayer?.prepareToPlay()
                 self.playbackFinished = false
+                self.playbackProgress = 0
+                self.playbackTime = 0
                 self.audioPlayer?.play()
+                self.startProgressTimer()
             } catch {
                 print("Error loading audio from file: \(error.localizedDescription)")
             }
@@ -634,11 +1033,26 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
             print("Audio playback finished, but there was an issue")
         }
         self.playbackFinished = true
+        self.playbackProgress = 1.0
+        self.playbackTime = player.duration
+        progressTimer?.invalidate()
+        progressTimer = nil
 
         // Start recording
         speechRecognizer.reset()
         speechRecognizer.transcribe()
    }
+
+    private func startProgressTimer() {
+        progressTimer?.invalidate()
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            guard let self = self,
+                  let player = self.audioPlayer,
+                  player.duration > 0 else { return }
+            self.playbackProgress = player.currentTime / player.duration
+            self.playbackTime = player.currentTime
+        }
+    }
 }
 
 func setAudioSession(active: Bool) {

@@ -38,7 +38,8 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.5, green: 0.5, blue: 0.5).edgesIgnoringSafeArea(.all).opacity(0.1)
+                Color(.secondarySystemBackground)
+                    .ignoresSafeArea()
                 ScrollView {
                     VStack {
                         HStack {
@@ -186,11 +187,12 @@ struct SettingsView: View {
                                         UserDefaults.standard.set("Custom", forKey: "name")
                                     }
                                 }
+                                .padding(.bottom, 10)
                         }
                         Group {
-                            Text("Clawdbot gateway")
+                            Text("Openclaw gateway")
                                 .bold()
-                            Toggle("Use Clawdbot Gateway", isOn: $gatewayEnabled)
+                            Toggle("Use Openclaw Gateway", isOn: $gatewayEnabled)
                                 .onChange(of: gatewayEnabled) {
                                     UserDefaults.standard.set($0, forKey: "gatewayEnabled")
                                 }
@@ -214,12 +216,14 @@ struct SettingsView: View {
                                     }
                                 } else {
                                     Text("Test Gateway Connection")
+                                        .padding(.bottom, 10)
                                 }
                             }
                             .disabled(gatewayTestInProgress || gatewayURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
                     }
                     .textFieldStyle(.roundedBorder)
+                    .foregroundStyle(.primary)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
                     .padding([.leading, .trailing], 40)
