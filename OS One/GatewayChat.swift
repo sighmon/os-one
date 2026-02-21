@@ -111,7 +111,7 @@ final class GatewayChatClient {
             "params": [
                 "sessionKey": sessionKey,
                 "message": message,
-                "deliver": false,
+                "deliver": true,
                 "idempotencyKey": id
             ]
         ]
