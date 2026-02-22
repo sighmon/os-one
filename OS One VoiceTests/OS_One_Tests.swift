@@ -34,12 +34,24 @@ final class OS_One_Tests: XCTestCase {
         XCTAssertFalse(shouldUseResponsesAPI(grokEnabled: false, allowSearch: false, model: "gpt-5.2-2025-12-11"))
     }
 
+    func testResponsesAPIEnabledForGrokWhenSearchAllowed() throws {
+        XCTAssertTrue(shouldUseResponsesAPI(grokEnabled: true, allowSearch: true, model: "grok-4-1-fast-reasoning"))
+    }
+
     func testWebSearchOptionsDisabledForGpt5WhenSearchAllowed() throws {
         XCTAssertFalse(shouldSendWebSearchOptions(grokEnabled: false, allowSearch: true, model: "gpt-5-nano-2025-08-07"))
     }
 
     func testWebSearchOptionsEnabledForNonGpt5Models() throws {
         XCTAssertTrue(shouldSendWebSearchOptions(grokEnabled: false, allowSearch: true, model: "gpt-4o-mini"))
+    }
+
+    func testGrokSearchToolNotIncludedWhenSearchAllowed() throws {
+        XCTAssertFalse(shouldIncludeGrokSearchTool(grokEnabled: true, allowSearch: true))
+    }
+
+    func testGrokSearchToolNotIncludedWhenSearchDisabled() throws {
+        XCTAssertFalse(shouldIncludeGrokSearchTool(grokEnabled: true, allowSearch: false))
     }
 
     func testBuildResponsesInputUsesInputTextForUser() throws {

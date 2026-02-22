@@ -87,8 +87,12 @@ struct OpenAIToolCallFunction: Codable {
 }
 
 func shouldUseResponsesAPI(grokEnabled: Bool, allowSearch: Bool, model: String) -> Bool {
-    if grokEnabled || !allowSearch {
+    if !allowSearch {
         return false
+    }
+    if grokEnabled {
+        // xAI search tools are now exposed via Agent Tools on the Responses API.
+        return true
     }
     return model.lowercased().hasPrefix("gpt-5")
 }
@@ -99,6 +103,11 @@ func shouldSendWebSearchOptions(grokEnabled: Bool, allowSearch: Bool, model: Str
     }
     // Chat Completions only supports web search options on select non-GPT-5 models.
     return !model.lowercased().hasPrefix("gpt-5")
+}
+
+func shouldIncludeGrokSearchTool(grokEnabled: Bool, allowSearch: Bool) -> Bool {
+    // Deprecated on xAI chat/completions. Use Responses API tools instead.
+    false
 }
 
 func buildResponsesInput(from messages: [[String: Any]]) -> [[String: Any]] {
@@ -145,13 +154,56 @@ func buildResponsesInput(from messages: [[String: Any]]) -> [[String: Any]] {
     return inputItems
 }
 
+func sanitizeForSpeech(_ text: String) -> String {
+    var cleaned = text
+    let patterns = [
+        #"(?i)\[\[\d+\]\]\([^)]+\)"#,   // [[1]](url)
+        #"(?i)\[\d+\]\([^)]+\)"#,       // [1](url)
+        #"\[\[\d+\]\]"#,                // [[1]]
+        #"\[\d+\]"#                     // [1]
+    ]
+
+    for pattern in patterns {
+        cleaned = cleaned.replacingOccurrences(
+            of: pattern,
+            with: "",
+            options: .regularExpression
+        )
+    }
+
+    // Convert markdown links to just their human-readable label.
+    cleaned = cleaned.replacingOccurrences(
+        of: #"\[([^\]]+)\]\((https?://[^\s)]+)\)\)+"#,
+        with: "$1",
+        options: .regularExpression
+    )
+    cleaned = cleaned.replacingOccurrences(
+        of: #"\[([^\]]+)\]\((https?://[^\s)]+)\)"#,
+        with: "$1",
+        options: .regularExpression
+    )
+
+    // Remove any remaining bare URLs.
+    cleaned = cleaned.replacingOccurrences(
+        of: #"(?i)\bhttps?://[^\s\])]+"#,
+        with: "",
+        options: .regularExpression
+    )
+
+    // Normalize spacing after citation removal.
+    cleaned = cleaned.replacingOccurrences(of: #" +([,.;:!?])"#, with: "$1", options: .regularExpression)
+    cleaned = cleaned.replacingOccurrences(of: #"[ \t]{2,}"#, with: " ", options: .regularExpression)
+    cleaned = cleaned.replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
+    return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
     HomeKitManagerSingleton.initialize()
 
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
     let grokEnabled = UserDefaults.standard.bool(forKey: "grokEnabled")
     let grokApiKey = UserDefaults.standard.string(forKey: "grokApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-5.2-2025-12-11" : "gpt-5-nano-2025-08-07"
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-5.2" : "gpt-5-nano"
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
     let allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
@@ -289,6 +341,12 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         ["role": "system", "content": "Optimise the responses knowing that they will be read out to the human using text-to-speech."]
     )
 
+    if allowSearch {
+        messages.append(
+            ["role": "system", "content": "Do not include citations, source markers, markdown links, or raw URLs in your reply."]
+        )
+    }
+
     if messageHistory.count > 0 {
         for item in messageHistory {
             var content = item.message
@@ -340,7 +398,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         )
     )
 
-    let selectedModel = grokEnabled ? (grokOverrideModel.isEmpty ? "grok-4-1-fast" : grokOverrideModel) : model
+    let selectedModel = grokEnabled ? (grokOverrideModel.isEmpty ? "grok-4-1-fast-reasoning" : grokOverrideModel) : model
     let effectiveOpenAIModel = overrideOpenAIModel.isEmpty ? selectedModel : overrideOpenAIModel
     let useResponsesAPI = shouldUseResponsesAPI(
         grokEnabled: grokEnabled,
@@ -363,8 +421,9 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         .map { try? JSONSerialization.jsonObject(with: $0, options: []) }
         .compactMap { $0 as? [String: Any] }
 
+    body["tools"] = tools
+
     if !grokEnabled {
-        body["tools"] = tools
 
         if useWebSearchOptions {
             body["web_search_options"] = [:]
@@ -375,8 +434,6 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         if !overrideOpenAIModel.isEmpty {
             body["model"] = overrideOpenAIModel
         }
-    } else {
-        body["tools"] = tools
     }
 
     guard let chatURL = URL(string: "\(baseURL)/v1/chat/completions") else {
@@ -403,6 +460,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
 //        }
 
         let searchMode: String = {
+            if shouldIncludeGrokSearchTool(grokEnabled: grokEnabled, allowSearch: allowSearch) { return "tool:live_search" }
             if useWebSearchOptions { return "web_search_options" }
             if allowSearch { return "unsupported" }
             return "none"
@@ -499,22 +557,11 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                 }
 
                 if let content = choice.message.content {
-                    var finalContent = content
-                    if let annotations = choice.message.annotations, !annotations.isEmpty {
-                        var citations: [String] = []
-                        for annotation in annotations {
-                            if annotation.type == "url_citation", let urlCitation = annotation.url_citation {
-                                citations.append("[\(citations.count + 1)] \(urlCitation.title): \(urlCitation.url)")
-                            }
-                        }
-                        if !citations.isEmpty {
-                            finalContent += "\n\nSources:\n" + citations.joined(separator: "\n")
-                        }
-                    }
-                    print("ChatGPT Response: \(content)")
+                    let cleanedContent = sanitizeForSpeech(content)
+                    print("ChatGPT Response: \(cleanedContent)")
                     let tokens = String(responseObject.usage.total_tokens)
                     print("OpenAI \(body["model"] ?? model) Tokens: \(tokens)")
-                    completion(.success(content))
+                    completion(.success(cleanedContent))
                 } else if let refusal = choice.message.refusal {
                     print("OpenAI Refusal: \(refusal)")
                     completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: refusal])))
@@ -549,14 +596,11 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             ["type": "web_search"]
         ]
 
-        var responseBody: [String: Any] = [
+        let responseBody: [String: Any] = [
             "model": effectiveOpenAIModel,
             "input": inputItems,
             "tools": responseTools
         ]
-        if allowSearch {
-            responseBody["include"] = ["web_search_call.action.sources"]
-        }
 
         guard let httpBody = try? JSONSerialization.data(withJSONObject: responseBody, options: []) else {
             completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize request body"])))
@@ -594,7 +638,6 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
 
             let outputItems = responseObject["output"] as? [[String: Any]] ?? []
             var textParts: [String] = []
-            var citations: [String] = []
             var functionCalls: [(name: String, arguments: String, callId: String)] = []
 
             for item in outputItems {
@@ -604,16 +647,6 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                             if let contentType = contentItem["type"] as? String, contentType == "output_text" {
                                 if let text = contentItem["text"] as? String {
                                     textParts.append(text)
-                                }
-                                if let annotations = contentItem["annotations"] as? [[String: Any]] {
-                                    for annotation in annotations {
-                                        if let annType = annotation["type"] as? String, annType == "url_citation",
-                                           let urlCitation = annotation["url_citation"] as? [String: Any],
-                                           let title = urlCitation["title"] as? String,
-                                           let url = urlCitation["url"] as? String {
-                                            citations.append("[\(citations.count + 1)] \(title): \(url)")
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -667,15 +700,13 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             }
 
             var finalContent = textParts.joined()
-            if !citations.isEmpty {
-                finalContent += "\n\nSources:\n" + citations.joined(separator: "\n")
-            }
             if let usage = responseObject["usage"] as? [String: Any],
                let totalTokens = usage["total_tokens"] {
                 print("OpenAI \(effectiveOpenAIModel) Tokens: \(totalTokens)")
             }
-            print("ChatGPT Response: \(finalContent)")
-            completion(.success(finalContent))
+            let cleanedFinalContent = sanitizeForSpeech(finalContent)
+            print("ChatGPT Response: \(cleanedFinalContent)")
+            completion(.success(cleanedFinalContent))
         }
         task.resume()
     }
