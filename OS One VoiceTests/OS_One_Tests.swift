@@ -54,6 +54,14 @@ final class OS_One_Tests: XCTestCase {
         XCTAssertFalse(shouldIncludeGrokSearchTool(grokEnabled: true, allowSearch: false))
     }
 
+    func testXSearchToolIncludedForGrokWhenSearchAllowed() throws {
+        XCTAssertTrue(shouldIncludeXSearchTool(grokEnabled: true, allowSearch: true))
+    }
+
+    func testXSearchToolNotIncludedForOpenAIWhenSearchAllowed() throws {
+        XCTAssertFalse(shouldIncludeXSearchTool(grokEnabled: false, allowSearch: true))
+    }
+
     func testBuildResponsesInputUsesInputTextForUser() throws {
         let messages: [[String: Any]] = [
             ["role": "user", "content": "Hello"]

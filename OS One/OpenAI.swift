@@ -110,6 +110,10 @@ func shouldIncludeGrokSearchTool(grokEnabled: Bool, allowSearch: Bool) -> Bool {
     false
 }
 
+func shouldIncludeXSearchTool(grokEnabled: Bool, allowSearch: Bool) -> Bool {
+    grokEnabled && allowSearch
+}
+
 func buildResponsesInput(from messages: [[String: Any]]) -> [[String: Any]] {
     var inputItems: [[String: Any]] = []
 
@@ -582,7 +586,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         request.httpMethod = "POST"
         request.allHTTPHeaderFields = headers
 
-        let responseTools: [[String: Any]] = [
+        var responseTools: [[String: Any]] = [
             [
                 "type": "function",
                 "name": homeKitTool.function.name,
@@ -596,6 +600,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             ["type": "web_search"]
         ]
 
+        if shouldIncludeXSearchTool(grokEnabled: grokEnabled, allowSearch: allowSearch) {
+            responseTools.append(["type": "x_search"])
+        }
+
         let responseBody: [String: Any] = [
             "model": effectiveOpenAIModel,
             "input": inputItems,
@@ -608,7 +616,10 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         }
         request.httpBody = httpBody
 
-        print("OpenAI responses request model=\(effectiveOpenAIModel) search=web_search")
+        let responsesSearchMode = shouldIncludeXSearchTool(grokEnabled: grokEnabled, allowSearch: allowSearch)
+            ? "web_search+x_search"
+            : "web_search"
+        print("OpenAI responses request model=\(effectiveOpenAIModel) search=\(responsesSearchMode)")
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -699,7 +710,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                 return
             }
 
-            var finalContent = textParts.joined()
+            let finalContent = textParts.joined()
             if let usage = responseObject["usage"] as? [String: Any],
                let totalTokens = usage["total_tokens"] {
                 print("OpenAI \(effectiveOpenAIModel) Tokens: \(totalTokens)")
