@@ -16,6 +16,7 @@ class SpeechRecognizer: ObservableObject {
         case notAuthorizedToRecognize
         case notPermittedToRecord
         case recognizerIsUnavailable
+        case invalidAudioInputFormat(sampleRate: Double, channelCount: AVAudioChannelCount)
         
         var message: String {
             switch self {
@@ -23,6 +24,8 @@ class SpeechRecognizer: ObservableObject {
             case .notAuthorizedToRecognize: return "Not authorized to recognize speech"
             case .notPermittedToRecord: return "Not permitted to record audio"
             case .recognizerIsUnavailable: return "Recognizer is unavailable"
+            case .invalidAudioInputFormat(let sampleRate, let channelCount):
+                return "Audio input is unavailable (sample rate: \(sampleRate), channels: \(channelCount))"
             }
         }
     }
@@ -36,9 +39,13 @@ class SpeechRecognizer: ObservableObject {
     private var updateState: ((String) -> Void)?
     private var onTimeout: (() -> Void)?
     private var timeoutTimer: DispatchSourceTimer?
+    private let recognitionQueue = DispatchQueue(label: "Speech Recognizer Queue", qos: .default)
+    private static let recognitionQueueKey = DispatchSpecificKey<Void>()
+    private var isTapInstalled = false
     
     init() {
         recognizer = SFSpeechRecognizer()
+        recognitionQueue.setSpecific(key: Self.recognitionQueueKey, value: ())
         
         Task(priority: .medium) {
             do {
@@ -81,19 +88,21 @@ class SpeechRecognizer: ObservableObject {
     }
 
     func transcribe() {
-        DispatchQueue(label: "Speech Recognizer Queue", qos: .default).async { [weak self] in
+        recognitionQueue.async { [weak self] in
             guard let self = self, let recognizer = self.recognizer, recognizer.isAvailable else {
                 self?.speakError(RecognizerError.recognizerIsUnavailable)
                 return
             }
             
             do {
+                self.resetOnRecognitionQueue(deactivateAudioSession: true)
                 let (audioEngine, request) = try Self.prepareEngine()
                 self.audioEngine = audioEngine
                 self.request = request
+                self.isTapInstalled = true
                 self.task = recognizer.recognitionTask(with: request, resultHandler: self.recognitionHandler(result:error:))
             } catch {
-                self.reset()
+                self.resetOnRecognitionQueue(deactivateAudioSession: true)
                 self.speakError(error)
             }
         }
@@ -104,18 +113,34 @@ class SpeechRecognizer: ObservableObject {
     }
     
     func reset() {
+        if DispatchQueue.getSpecific(key: Self.recognitionQueueKey) != nil {
+            resetOnRecognitionQueue(deactivateAudioSession: true)
+        } else {
+            recognitionQueue.sync {
+                resetOnRecognitionQueue(deactivateAudioSession: true)
+            }
+        }
+    }
+
+    private func resetOnRecognitionQueue(deactivateAudioSession: Bool) {
         task?.cancel()
+        if isTapInstalled {
+            audioEngine?.inputNode.removeTap(onBus: 0)
+            isTapInstalled = false
+        }
         audioEngine?.stop()
         audioEngine = nil
         request = nil
         task = nil
         timeoutTimer?.cancel()
         timeoutTimer = nil
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-            print("Failed to end audio session")
+        if deactivateAudioSession {
+            let audioSession = AVAudioSession.sharedInstance()
+            do {
+                try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+            } catch {
+                print("Failed to end audio session")
+            }
         }
     }
     
@@ -126,7 +151,7 @@ class SpeechRecognizer: ObservableObject {
         request.shouldReportPartialResults = true
         
         let audioSession = AVAudioSession.sharedInstance()
-        try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.allowBluetoothA2DP, .allowBluetooth])
+        try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.allowBluetoothA2DP, .allowBluetoothHFP])
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         let inputNode = audioEngine.inputNode
 
@@ -144,11 +169,30 @@ class SpeechRecognizer: ObservableObject {
         }
 
         let recordingFormat = inputNode.outputFormat(forBus: 0)
+        guard recordingFormat.sampleRate > 0, recordingFormat.channelCount > 0 else {
+            throw RecognizerError.invalidAudioInputFormat(
+                sampleRate: recordingFormat.sampleRate,
+                channelCount: recordingFormat.channelCount
+            )
+        }
+
+        var tapInstalled = false
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
             request.append(buffer)
         }
-        audioEngine.prepare()
-        try audioEngine.start()
+        tapInstalled = true
+
+        do {
+            audioEngine.prepare()
+            try audioEngine.start()
+        } catch {
+            if tapInstalled {
+                inputNode.removeTap(onBus: 0)
+            }
+            audioEngine.stop()
+            try? audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+            throw error
+        }
 
         return (audioEngine, request)
     }
@@ -158,8 +202,9 @@ class SpeechRecognizer: ObservableObject {
         let receivedError = error != nil
         
         if receivedFinalResult || receivedError {
-            audioEngine?.stop()
-            audioEngine?.inputNode.removeTap(onBus: 0)
+            recognitionQueue.async { [weak self] in
+                self?.resetOnRecognitionQueue(deactivateAudioSession: false)
+            }
         }
         
         if let result = result {
