@@ -114,6 +114,17 @@ func shouldIncludeXSearchTool(grokEnabled: Bool, allowSearch: Bool) -> Bool {
     grokEnabled && allowSearch
 }
 
+func resolvedModel(grokEnabled: Bool, defaultOpenAIModel: String, overrideOpenAIModel: String, grokOverrideModel: String) -> String {
+    if grokEnabled {
+        return grokOverrideModel.isEmpty ? "grok-4.3" : grokOverrideModel
+    }
+    return overrideOpenAIModel.isEmpty ? defaultOpenAIModel : overrideOpenAIModel
+}
+
+func defaultGrokReasoningEffort(grokEnabled: Bool, grokOverrideModel: String) -> String? {
+    grokEnabled && grokOverrideModel.isEmpty ? "low" : nil
+}
+
 func buildResponsesInput(from messages: [[String: Any]]) -> [[String: Any]] {
     var inputItems: [[String: Any]] = []
 
@@ -207,7 +218,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
     let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
     let grokEnabled = UserDefaults.standard.bool(forKey: "grokEnabled")
     let grokApiKey = UserDefaults.standard.string(forKey: "grokApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-5.2" : "gpt-5-nano"
+    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-5.5" : "gpt-5.4-mini"
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
     let allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
@@ -402,23 +413,30 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         )
     )
 
-    let selectedModel = grokEnabled ? (grokOverrideModel.isEmpty ? "grok-4-1-fast-reasoning" : grokOverrideModel) : model
-    let effectiveOpenAIModel = overrideOpenAIModel.isEmpty ? selectedModel : overrideOpenAIModel
+    let selectedModel = resolvedModel(
+        grokEnabled: grokEnabled,
+        defaultOpenAIModel: model,
+        overrideOpenAIModel: overrideOpenAIModel,
+        grokOverrideModel: grokOverrideModel
+    )
     let useResponsesAPI = shouldUseResponsesAPI(
         grokEnabled: grokEnabled,
         allowSearch: allowSearch,
-        model: effectiveOpenAIModel
+        model: selectedModel
     )
     let useWebSearchOptions = shouldSendWebSearchOptions(
         grokEnabled: grokEnabled,
         allowSearch: allowSearch,
-        model: effectiveOpenAIModel
+        model: selectedModel
     )
 
     var body: [String: Any] = [
         "model": selectedModel,
         "messages": messages
     ]
+    if let reasoningEffort = defaultGrokReasoningEffort(grokEnabled: grokEnabled, grokOverrideModel: grokOverrideModel) {
+        body["reasoning_effort"] = reasoningEffort
+    }
 
     let tools = [try? JSONEncoder().encode(homeKitTool)]
         .compactMap { $0 }
@@ -432,11 +450,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         if useWebSearchOptions {
             body["web_search_options"] = [:]
         } else if allowSearch {
-            print("OpenAI search requested but unsupported for model=\(effectiveOpenAIModel) on /v1/chat/completions; skipping search.")
-        }
-
-        if !overrideOpenAIModel.isEmpty {
-            body["model"] = overrideOpenAIModel
+            print("OpenAI search requested but unsupported for model=\(selectedModel) on /v1/chat/completions; skipping search.")
         }
     }
 
@@ -547,9 +561,12 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                         // print("Messages sent to API: \(newMessages.map { "\($0["role"] ?? "unknown"): \($0["content"] ?? "no content"), tool_calls: \($0["tool_calls"] ?? "none"), tool_call_id: \($0["tool_call_id"] ?? "none")" })")
 
                         var newBody: [String: Any] = [
-                            "model": model,
+                            "model": body["model"] ?? selectedModel,
                             "messages": newMessages
                         ]
+                        if let reasoningEffort = body["reasoning_effort"] {
+                            newBody["reasoning_effort"] = reasoningEffort
+                        }
                         if allowSearch {
                             newBody["web_search_options"] = body["web_search_options"] ?? [:]
                         } else {
@@ -604,11 +621,14 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             responseTools.append(["type": "x_search"])
         }
 
-        let responseBody: [String: Any] = [
-            "model": effectiveOpenAIModel,
+        var responseBody: [String: Any] = [
+            "model": selectedModel,
             "input": inputItems,
             "tools": responseTools
         ]
+        if let reasoningEffort = defaultGrokReasoningEffort(grokEnabled: grokEnabled, grokOverrideModel: grokOverrideModel) {
+            responseBody["reasoning_effort"] = reasoningEffort
+        }
 
         guard let httpBody = try? JSONSerialization.data(withJSONObject: responseBody, options: []) else {
             completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize request body"])))
@@ -619,7 +639,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
         let responsesSearchMode = shouldIncludeXSearchTool(grokEnabled: grokEnabled, allowSearch: allowSearch)
             ? "web_search+x_search"
             : "web_search"
-        print("OpenAI responses request model=\(effectiveOpenAIModel) search=\(responsesSearchMode)")
+        print("OpenAI responses request model=\(selectedModel) search=\(responsesSearchMode)")
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -713,7 +733,7 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             let finalContent = textParts.joined()
             if let usage = responseObject["usage"] as? [String: Any],
                let totalTokens = usage["total_tokens"] {
-                print("OpenAI \(effectiveOpenAIModel) Tokens: \(totalTokens)")
+                print("OpenAI \(selectedModel) Tokens: \(totalTokens)")
             }
             let cleanedFinalContent = sanitizeForSpeech(finalContent)
             print("ChatGPT Response: \(cleanedFinalContent)")

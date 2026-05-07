@@ -27,19 +27,19 @@ final class OS_One_Tests: XCTestCase {
     }
 
     func testResponsesAPIEnabledForGpt5WhenSearchAllowed() throws {
-        XCTAssertTrue(shouldUseResponsesAPI(grokEnabled: false, allowSearch: true, model: "gpt-5-nano-2025-08-07"))
+        XCTAssertTrue(shouldUseResponsesAPI(grokEnabled: false, allowSearch: true, model: "gpt-5.4-mini"))
     }
 
     func testResponsesAPIDisabledWhenSearchNotAllowed() throws {
-        XCTAssertFalse(shouldUseResponsesAPI(grokEnabled: false, allowSearch: false, model: "gpt-5.2-2025-12-11"))
+        XCTAssertFalse(shouldUseResponsesAPI(grokEnabled: false, allowSearch: false, model: "gpt-5.5"))
     }
 
     func testResponsesAPIEnabledForGrokWhenSearchAllowed() throws {
-        XCTAssertTrue(shouldUseResponsesAPI(grokEnabled: true, allowSearch: true, model: "grok-4-1-fast-reasoning"))
+        XCTAssertTrue(shouldUseResponsesAPI(grokEnabled: true, allowSearch: true, model: "grok-4.3"))
     }
 
     func testWebSearchOptionsDisabledForGpt5WhenSearchAllowed() throws {
-        XCTAssertFalse(shouldSendWebSearchOptions(grokEnabled: false, allowSearch: true, model: "gpt-5-nano-2025-08-07"))
+        XCTAssertFalse(shouldSendWebSearchOptions(grokEnabled: false, allowSearch: true, model: "gpt-5.4-mini"))
     }
 
     func testWebSearchOptionsEnabledForNonGpt5Models() throws {
@@ -60,6 +60,42 @@ final class OS_One_Tests: XCTestCase {
 
     func testXSearchToolNotIncludedForOpenAIWhenSearchAllowed() throws {
         XCTAssertFalse(shouldIncludeXSearchTool(grokEnabled: false, allowSearch: true))
+    }
+
+    func testResolvedModelUsesGrokOverrideWhenGrokEnabled() throws {
+        XCTAssertEqual(
+            resolvedModel(
+                grokEnabled: true,
+                defaultOpenAIModel: "gpt-5-nano",
+                overrideOpenAIModel: "gpt-4o-mini",
+                grokOverrideModel: "grok-custom"
+            ),
+            "grok-custom"
+        )
+    }
+
+    func testResolvedModelUsesOpenAIOverrideWhenGrokDisabled() throws {
+        XCTAssertEqual(
+            resolvedModel(
+                grokEnabled: false,
+                defaultOpenAIModel: "gpt-5-nano",
+                overrideOpenAIModel: "gpt-4o-mini",
+                grokOverrideModel: "grok-custom"
+            ),
+            "gpt-4o-mini"
+        )
+    }
+
+    func testDefaultGrokReasoningEffortIsLowForDefaultModel() throws {
+        XCTAssertEqual(defaultGrokReasoningEffort(grokEnabled: true, grokOverrideModel: ""), "low")
+    }
+
+    func testDefaultGrokReasoningEffortIsNilForOverrideModel() throws {
+        XCTAssertNil(defaultGrokReasoningEffort(grokEnabled: true, grokOverrideModel: "grok-custom"))
+    }
+
+    func testDefaultGrokReasoningEffortIsNilForOpenAI() throws {
+        XCTAssertNil(defaultGrokReasoningEffort(grokEnabled: false, grokOverrideModel: ""))
     }
 
     func testBuildResponsesInputUsesInputTextForUser() throws {

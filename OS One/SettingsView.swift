@@ -116,7 +116,7 @@ struct SettingsView: View {
                             .onChange(of: allowSearch) {
                                 UserDefaults.standard.set($0, forKey: "allowSearch")
                             }
-                        Toggle("GPT 5.2", isOn: $gpt4)
+                        Toggle("GPT 5.5", isOn: $gpt4)
                             .onChange(of: gpt4) {
                                 UserDefaults.standard.set($0, forKey: "gpt4")
                             }
