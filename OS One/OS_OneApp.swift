@@ -13,8 +13,17 @@ struct OS_OneApp: App {
 
     var body: some Scene {
         WindowGroup {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--settings-preview") {
+                SettingsView()
+            } else {
+                HomeView()
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            }
+            #else
             HomeView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            #endif
         }
     }
 }

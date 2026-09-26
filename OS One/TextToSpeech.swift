@@ -460,3 +460,88 @@ func elevenLabsGetHistoricAudio(audioId: String, completion: @escaping (Result<D
     }
     task.resume()
 }
+
+struct SpeechVoice: Identifiable, Codable, Equatable {
+    let id: String
+    let name: String
+
+    static let openAI: [SpeechVoice] = [
+        "alloy", "ash", "ballad", "coral", "echo", "fable", "nova",
+        "onyx", "sage", "shimmer", "verse", "marin", "cedar"
+    ].map { SpeechVoice(id: $0, name: $0.capitalized) }
+}
+
+enum VoiceAPIError: LocalizedError {
+    case missingKey
+    case http(Int)
+    case invalidResponse
+    case noVoices
+
+    var errorDescription: String? {
+        switch self {
+        case .missingKey: return "Add an API key to use this voice provider."
+        case .http(401), .http(403): return "The voice provider rejected the API key or its permissions. Check the key in Models."
+        case .http(429): return "The voice provider's rate or usage limit was reached. Try again later."
+        case .http(let code): return "The voice provider returned HTTP \(code). Try again later."
+        case .invalidResponse: return "The voice provider returned an invalid response."
+        case .noVoices: return "No voices were returned by the provider."
+        }
+    }
+}
+
+enum GrokSpeechAPI {
+    static func request(path: String, apiKey: String) throws -> URLRequest {
+        let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else { throw VoiceAPIError.missingKey }
+        var request = URLRequest(url: URL(string: "https://api.x.ai/v1/tts" + path)!)
+        request.timeoutInterval = 60
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        return request
+    }
+
+    static func voices(apiKey: String, session: URLSession = .shared) async throws -> [SpeechVoice] {
+        let request = try request(path: "/voices", apiKey: apiKey)
+        let (data, response) = try await session.data(for: request)
+        try validateVoiceResponse(data: data, response: response)
+        struct VoiceList: Decodable {
+            struct Voice: Decodable {
+                let voice_id: String
+                let name: String
+            }
+            let voices: [Voice]
+        }
+        let result = try JSONDecoder().decode(VoiceList.self, from: data)
+        var seen = Set<String>()
+        let voices = result.voices.filter { !$0.voice_id.isEmpty && seen.insert($0.voice_id).inserted }
+            .map { SpeechVoice(id: $0.voice_id, name: $0.name.isEmpty ? $0.voice_id : $0.name) }
+        guard !voices.isEmpty else { throw VoiceAPIError.noVoices }
+        return voices
+    }
+
+    static func speechRequest(text: String, voiceID: String, apiKey: String) throws -> URLRequest {
+        var request = try request(path: "", apiKey: apiKey)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "text": text, "voice_id": voiceID, "language": "auto",
+            "output_format": ["codec": "mp3"]
+        ])
+        return request
+    }
+
+    static func speech(text: String, voiceID: String, apiKey: String, session: URLSession = .shared) async throws -> Data {
+        let request = try speechRequest(text: text, voiceID: voiceID, apiKey: apiKey)
+        let (data, response) = try await session.data(for: request)
+        try validateVoiceResponse(data: data, response: response)
+        guard (response as? HTTPURLResponse)?.mimeType?.hasPrefix("audio/") == true else {
+            throw VoiceAPIError.invalidResponse
+        }
+        return data
+    }
+}
+
+func validateVoiceResponse(data: Data, response: URLResponse?) throws {
+    guard let response = response as? HTTPURLResponse else { throw VoiceAPIError.invalidResponse }
+    guard (200..<300).contains(response.statusCode) else { throw VoiceAPIError.http(response.statusCode) }
+    guard !data.isEmpty else { throw VoiceAPIError.invalidResponse }
+}

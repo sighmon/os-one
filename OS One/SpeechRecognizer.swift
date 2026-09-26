@@ -37,16 +37,18 @@ class SpeechRecognizer: ObservableObject {
     private var task: SFSpeechRecognitionTask?
     private let recognizer: SFSpeechRecognizer?
     private var updateState: ((String) -> Void)?
-    private var onTimeout: (() -> Void)?
+    private var onTimeout: ((String) -> Void)?
     private var timeoutTimer: DispatchSourceTimer?
     private let recognitionQueue = DispatchQueue(label: "Speech Recognizer Queue", qos: .default)
     private static let recognitionQueueKey = DispatchSpecificKey<Void>()
     private var isTapInstalled = false
+    private var recognitionID = UUID()
     
-    init() {
+    init(requestPermissions: Bool = true) {
         recognizer = SFSpeechRecognizer()
         recognitionQueue.setSpecific(key: Self.recognitionQueueKey, value: ())
         
+        guard requestPermissions else { return }
         Task(priority: .medium) {
             do {
                 guard recognizer != nil else {
@@ -72,7 +74,7 @@ class SpeechRecognizer: ObservableObject {
         updateState = handler
     }
 
-    func setOnTimeoutHandler(_ handler: @escaping () -> Void) {
+    func setOnTimeoutHandler(_ handler: @escaping (String) -> Void) {
         onTimeout = handler
     }
 
@@ -81,8 +83,7 @@ class SpeechRecognizer: ObservableObject {
         timeoutTimer = DispatchSource.makeTimerSource(queue: .main)
         timeoutTimer?.schedule(deadline: .now() + 3.0)
         timeoutTimer?.setEventHandler { [weak self] in
-            self?.onTimeout?()
-            self?.stopTranscribing()
+            self?.finishTranscribing()
         }
         timeoutTimer?.resume()
     }
@@ -100,7 +101,13 @@ class SpeechRecognizer: ObservableObject {
                 self.audioEngine = audioEngine
                 self.request = request
                 self.isTapInstalled = true
-                self.task = recognizer.recognitionTask(with: request, resultHandler: self.recognitionHandler(result:error:))
+                let recognitionID = self.recognitionID
+                self.task = recognizer.recognitionTask(with: request) { [weak self] result, error in
+                    self?.recognitionQueue.async { [weak self] in
+                        guard let self = self, self.recognitionID == recognitionID else { return }
+                        self.recognitionHandler(result: result, error: error, recognitionID: recognitionID)
+                    }
+                }
             } catch {
                 self.resetOnRecognitionQueue(deactivateAudioSession: true)
                 self.speakError(error)
@@ -123,6 +130,7 @@ class SpeechRecognizer: ObservableObject {
     }
 
     private func resetOnRecognitionQueue(deactivateAudioSession: Bool) {
+        recognitionID = UUID()
         task?.cancel()
         if isTapInstalled {
             audioEngine?.inputNode.removeTap(onBus: 0)
@@ -197,33 +205,47 @@ class SpeechRecognizer: ObservableObject {
         return (audioEngine, request)
     }
     
-    private func recognitionHandler(result: SFSpeechRecognitionResult?, error: Error?) {
+    private func recognitionHandler(result: SFSpeechRecognitionResult?, error: Error?, recognitionID: UUID) {
         let receivedFinalResult = result?.isFinal ?? false
         let receivedError = error != nil
         
-        if receivedFinalResult || receivedError {
+        if receivedError && !receivedFinalResult {
             recognitionQueue.async { [weak self] in
                 self?.resetOnRecognitionQueue(deactivateAudioSession: false)
             }
         }
         
         if let result = result {
-            speak(result.bestTranscription.formattedString)
+            speak(result.bestTranscription.formattedString, finished: receivedFinalResult, recognitionID: recognitionID)
         }
     }
     
-    private func speak(_ message: String) {
+    private func speak(_ message: String, finished: Bool, recognitionID: UUID) {
         Task { @MainActor in
+            guard recognitionQueue.sync(execute: { self.recognitionID == recognitionID }) else { return }
             transcript = message
             if transcript != "" {
                 updateState?(transcript)
-                resetTimeoutTimer()
+                if finished {
+                    finishTranscribing()
+                } else {
+                    resetTimeoutTimer()
+                }
             } else {
                 stopTranscribing()
             }
         }
     }
     
+    @MainActor func finishTranscribing() {
+        // Snapshot before resetting the recognizer; each completed turn is delivered once.
+        let completedTranscript = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        transcript = ""
+        stopTranscribing()
+        guard !completedTranscript.isEmpty else { return }
+        onTimeout?(completedTranscript)
+    }
+
     private func speakError(_ error: Error) {
         var errorMessage = ""
         if let error = error as? RecognizerError {

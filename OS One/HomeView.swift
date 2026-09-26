@@ -11,12 +11,15 @@ import SwiftUI
 import UIKit
 
 var speechRecognizer = SpeechRecognizer()
-var name = UserDefaults.standard.string(forKey: "name") ?? ""
+var name = UserDefaults.standard.string(forKey: "name") ?? "Samantha"
 var elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
 var openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
 
 struct HomeView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var camera = LiveCamera()
+    @State private var assistantError: String?
 
     @State private var mute = false
     @State private var speed: Double = 300
@@ -28,7 +31,6 @@ struct HomeView: View {
     @State private var sendButtonEnabled: Bool = true
     @State private var saveButtonTapped: Bool = false
     @State private var deleteButtonTapped: Bool = false
-    @State private var showingImagePicker = false
     @State private var currentImage: UIImage?
     @State private var pendingTranscript: String = ""
     @State private var liveTranscript: String = ""
@@ -76,6 +78,11 @@ struct HomeView: View {
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 0.6), value: currentState)
                 .animation(.easeInOut(duration: 1.2), value: pulseAmount)
+
+                if visionEnabled && AssistantProvider.current.supportsCamera {
+                    CameraPreview(session: camera.session).ignoresSafeArea()
+                    Color.white.opacity(0.35).ignoresSafeArea().allowsHitTesting(false)
+                }
 
                 VStack {
                     Spacer()
@@ -154,6 +161,9 @@ struct HomeView: View {
                             }
 
                         Image(systemName: "gear")
+                            .accessibilityIdentifier("settingsButton")
+                            .accessibilityLabel("Settings")
+                            .accessibilityAddTraits(.isButton)
                             .font(.system(size: 25))
                             .frame(width: 30)
                             .padding(6)
@@ -235,6 +245,10 @@ struct HomeView: View {
                             .padding(6)
                             .opacity(visionEnabled ? 1.0 : 0.4)
                             .onTapGesture {
+                                guard AssistantProvider.current.supportsCamera else {
+                                    assistantError = "Camera analysis requires OpenAI or xAI. Choose a provider in Models."
+                                    return
+                                }
                                 visionEnabled.toggle()
                             }
 
@@ -250,12 +264,14 @@ struct HomeView: View {
                 }
                 .onAppear {
                     startup()
+                    updateCamera()
                     UIApplication.shared.isIdleTimerDisabled = true
                     saveButtonTapped = false
                     deleteButtonTapped = false
                     updatePulseAnimation()
                 }
                 .onDisappear {
+                    camera.stop()
                     speechRecognizer.stopTranscribing()
                     speechSynthesizerManager.speechSynthesizer.stopSpeaking(at: .immediate)
                     setAudioSession(active: false)
@@ -273,13 +289,17 @@ struct HomeView: View {
                 }
                 .onReceive(audioPlayer.$playbackFinished) { finished in
                     if finished {
-                        currentState = "listening"
-                        if UserDefaults.standard.string(forKey: "openAIApiKey") ?? "" == "" {
-                            showingSettingsSheet.toggle()
+                        if !AssistantProvider.current.isConfigured {
+                            showingSettingsSheet = true
                             speechRecognizer.stopTranscribing()
                             setAudioSession(active: false)
+                        } else {
+                            resumeListening()
                         }
                     }
+                }
+                .onReceive(speechSynthesizerManager.$playbackFinished) { finished in
+                    if finished { resumeListening() }
                 }
                 .onReceive(audioPlayer.$playbackProgress) { progress in
                     guard currentState == "vocalising" else { return }
@@ -300,12 +320,18 @@ struct HomeView: View {
                     guard speechSynthesizerManager.currentSpeechText == responseText else { return }
                     responseWordIndex = index
                 }
-                .sheet(isPresented: $showingImagePicker) {
-                    ImagePicker(image: self.$currentImage, onImagePicked: { selectedImage in
-                        self.currentImage = selectedImage
-                        self.continueSendingToOpenAI(transcript: self.pendingTranscript)
-                    })
+                .onChange(of: visionEnabled) { _ in updateCamera() }
+                .onChange(of: scenePhase) { _ in updateCamera() }
+                .onChange(of: showingSettingsSheet) { _ in updateCamera() }
+                .onChange(of: showingHomeKitSheet) { _ in updateCamera() }
+                .onChange(of: navigate) { _ in updateCamera() }
+                .onReceive(camera.$errorMessage) { message in
+                    if let message = message { assistantError = message; visionEnabled = false }
                 }
+                .alert("Assistant", isPresented: Binding(
+                    get: { assistantError != nil }, set: { if !$0 { assistantError = nil } }
+                )) { Button("OK", role: .cancel) {} } message: { Text(assistantError ?? "") }
+
             }
             // Force light mode only for the home view
             .environment(\.colorScheme, .light)
@@ -425,13 +451,36 @@ struct HomeView: View {
         }
     }
 
+    private func updateCamera() {
+        if visionEnabled && AssistantProvider.current.supportsCamera && scenePhase == .active
+            && !showingSettingsSheet && !showingHomeKitSheet && !navigate {
+            camera.start()
+        } else { camera.stop() }
+    }
+
     func startup() {
-        if UserDefaults.standard.string(forKey: "openAIApiKey") ?? "" == "" {
+        visionEnabled = UserDefaults.standard.bool(forKey: "vision")
+        searchEnabled = UserDefaults.standard.bool(forKey: "allowSearch")
+        updateCamera()
+        speechRecognizer.setUpdateStateHandler { newState in
+            DispatchQueue.main.async {
+                liveTranscript = newState
+                liveWordIndex = max(0, newState.split(whereSeparator: { $0.isWhitespace }).count - 1)
+                if currentState != "thinking" && currentState != "vocalising" {
+                    currentState = "listening"
+                }
+            }
+        }
+        speechRecognizer.setOnTimeoutHandler { transcript in
+            print("Silence detected...")
+            sendToOpenAI(transcript: transcript)
+        }
+        if !AssistantProvider.current.isConfigured {
             if let fileURL = Bundle.main.url(forResource: "hello", withExtension: "mp3") {
                 audioPlayer.playAudioFromFile(url: fileURL)
             }
         } else {
-            name = UserDefaults.standard.string(forKey: "name") ?? ""
+            name = UserDefaults.standard.string(forKey: "name") ?? "Samantha"
             if name == "Samantha" {
                 welcomeText = "Hello, how can I help?"
             } else if name == "Mr.Robot" {
@@ -487,19 +536,6 @@ struct HomeView: View {
             openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
             if !mute {
                 sayText(text: welcomeText)
-                speechRecognizer.setUpdateStateHandler { newState in
-                    DispatchQueue.main.async {
-                        liveTranscript = newState
-                        liveWordIndex = max(0, newState.split(whereSeparator: { $0.isWhitespace }).count - 1)
-                        if currentState != "thinking" && currentState != "vocalising" {
-                            currentState = "listening"
-                        }
-                    }
-                }
-                speechRecognizer.setOnTimeoutHandler {
-                    print("Silence detected...")
-                    sendToOpenAI()
-                }
             }
         }
     }
@@ -528,9 +564,30 @@ struct HomeView: View {
                     }
                 }
             }
+        } else if UserDefaults.standard.bool(forKey: "grokVoice") {
+            useSystemSpeechHighlighting = false
+            responseWordTimings = []
+            responsePlaybackTime = 0
+            let voiceID = UserDefaults.standard.string(forKey: "grokVoiceID") ?? "eve"
+            let apiKey = UserDefaults.standard.string(forKey: "grokApiKey") ?? ""
+            Task { @MainActor in
+                do {
+                    let data = try await GrokSpeechAPI.speech(text: text, voiceID: voiceID, apiKey: apiKey)
+                    if text == responseText {
+                        lastResponseAudioData = data
+                        lastResponseTimings = []
+                        lastResponseText = text
+                    }
+                    audioPlayer.playAudioFromData(data: data)
+                } catch {
+                    currentState = "try again later"
+                    assistantError = error.localizedDescription
+                    setAudioSession(active: false)
+                }
+            }
         } else if openAIVoice {
             useSystemSpeechHighlighting = false
-            openAItextToSpeechAPI(name: "nova", text: text) { result in
+            openAItextToSpeechAPI(name: UserDefaults.standard.string(forKey: "openAIVoiceID") ?? "nova", text: text) { result in
                 switch result {
                 case .success(let data):
                     DispatchQueue.main.async {
@@ -608,20 +665,55 @@ struct HomeView: View {
         }
     }
 
-    func sendToOpenAI() {
+    private var speechSubmissionBlockReason: String? {
+        if !sendButtonEnabled { return "a response is already in progress" }
+        if mute { return "microphone is muted" }
+        if showingSettingsSheet { return "settings is open" }
+        if showingHomeKitSheet { return "HomeKit is open" }
+        if navigate { return "conversation archive is open" }
+        // Stored speech callbacks outlive the View value that installed them. Read
+        // application activity now, rather than that View's captured scenePhase.
+        if UIApplication.shared.applicationState != .active { return "app is not active" }
+        if !AssistantProvider.current.isConfigured { return "assistant provider is not configured" }
+        return nil
+    }
+
+    private func resumeListening() {
+        guard speechSubmissionBlockReason == nil else { return }
+        currentState = "listening"
+        speechRecognizer.transcribe()
+    }
+
+    func sendToOpenAI(transcript: String) {
+        if let reason = speechSubmissionBlockReason {
+            print("Speech turn skipped: \(reason)")
+            return
+        }
+        let transcriptSnapshot = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !transcriptSnapshot.isEmpty else {
+            print("Speech turn skipped: transcript is empty")
+            resumeListening()
+            return
+        }
         speechRecognizer.stopTranscribing()
         sendButtonEnabled = false
         currentState = "thinking"
         speed = 20
-        let transcriptSnapshot = speechRecognizer.transcript
         pendingTranscript = transcriptSnapshot
         liveTranscript = transcriptSnapshot
         liveWordIndex = max(0, transcriptSnapshot.split(whereSeparator: { $0.isWhitespace }).count - 1)
         print("Message: \(transcriptSnapshot)")
 
-        if UserDefaults.standard.bool(forKey: "vision") {
-            self.showingImagePicker = true
-            return
+        currentImage = nil
+        if visionEnabled && AssistantProvider.current.supportsCamera {
+            guard let frame = camera.snapshot() else {
+                assistantError = "The camera is not ready. Please wait for the live view, then speak again."
+                currentState = "listening"
+                sendButtonEnabled = true
+                speechRecognizer.transcribe()
+                return
+            }
+            currentImage = frame
         }
 
         continueSendingToOpenAI(transcript: transcriptSnapshot)
@@ -629,64 +721,53 @@ struct HomeView: View {
 
     func continueSendingToOpenAI(transcript: String? = nil) {
         let messageText = transcript ?? speechRecognizer.transcript
-        var messageInChatHistory = false
-        for message in chatHistory.messages {
-            if message.message == messageText {
-                messageInChatHistory = true
-                break
-            }
-        }
         let base64String = currentImage.map { encodeToBase64(image: $0) } ?? ""
-        if !messageInChatHistory {
-            chatHistory.addMessage(
-                messageText,
-                from: ChatMessage.Sender.user,
-                with: base64String
-            )
-        }
-        let useGateway = UserDefaults.standard.bool(forKey: "gatewayEnabled")
+        chatHistory.addMessage(messageText, from: .user, with: base64String)
+        let useGateway = AssistantProvider.current == .gateway
         let completionHandler: (Result<String, Error>) -> Void = { result in
-            switch result {
-            case .success(let content):
-                responseText = content
-                lastResponseText = content
-                responseWords = content.split(whereSeparator: { $0.isWhitespace })
-                responseWordIndex = 0
-                responseWordTimings = []
-                responsePlaybackTime = 0
-                var messageInChatHistory = false
-                for message in chatHistory.messages {
-                    if message.message == content {
-                        messageInChatHistory = true
-                        break
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let content):
+                    responseText = content
+                    lastResponseText = content
+                    responseWords = content.split(whereSeparator: { $0.isWhitespace })
+                    responseWordIndex = 0
+                    responseWordTimings = []
+                    responsePlaybackTime = 0
+                    var messageInChatHistory = false
+                    for message in chatHistory.messages {
+                        if message.message == content {
+                            messageInChatHistory = true
+                            break
+                        }
                     }
+                    if !messageInChatHistory {
+                        chatHistory.addMessage(
+                            content,
+                            from: ChatMessage.Sender.openAI,
+                            with: ""
+                        )
+                    }
+                    currentImage = nil
+                    pendingTranscript = ""
+                    currentState = "vocalising"
+                    sayText(text: content)
+                    speed = 300
+                    sendButtonEnabled = true
+                    deleteButtonTapped = false
+                case .failure(let error):
+                    currentState = "try again later"
+                    currentImage = nil
+                    pendingTranscript = ""
+                    assistantError = error.localizedDescription
+                    print("Assistant API error: \(error.localizedDescription)")
+                    if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
+                        audioPlayer.playAudioFromFile(url: fileURL)
+                    }
+                    sendButtonEnabled = true
                 }
-                if !messageInChatHistory {
-                    chatHistory.addMessage(
-                        content,
-                        from: ChatMessage.Sender.openAI,
-                        with: ""
-                    )
-                }
-                currentImage = nil
-                pendingTranscript = ""
-                currentState = "vocalising"
-                sayText(text: content)
-                speed = 300
-                sendButtonEnabled = true
-                deleteButtonTapped = false
-            case .failure(let error):
-                currentState = "try again later"
-                currentImage = nil
-                pendingTranscript = ""
-                print("Assistant API error: \(error.localizedDescription)")
-                if let fileURL = Bundle.main.url(forResource: "sorry", withExtension: "mp3") {
-                    audioPlayer.playAudioFromFile(url: fileURL)
-                }
-                sendButtonEnabled = true
             }
         }
-
         if useGateway {
             chatCompletionGateway(messageHistory: chatHistory.messages, completion: completionHandler)
         } else {
@@ -761,7 +842,7 @@ struct HomeView: View {
 
     func scaledImage(_ image: UIImage, width: CGFloat) -> UIImage? {
         let oldWidth = image.size.width
-        let scaleFactor = width / oldWidth
+        let scaleFactor = min(1, width / oldWidth)
 
         let newHeight = image.size.height * scaleFactor
         let newSize = CGSize(width: width, height: newHeight)
@@ -955,6 +1036,7 @@ struct HomeView_Previews: PreviewProvider {
 }
 
 class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, ObservableObject {
+    @Published var playbackFinished = false
     @Published var currentSpeechText: String = ""
     @Published var currentWordIndex: Int = 0
     var speechSynthesizer: AVSpeechSynthesizer
@@ -970,13 +1052,15 @@ class SpeechSynthesizerManager: NSObject, AVSpeechSynthesizerDelegate, Observabl
         currentWordIndex = wordIndex(for: characterRange, in: utterance.speechString)
     }
 
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        playbackFinished = false
+    }
+
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         print("Finished speaking")
         setAudioSession(active: false)
 
-        // Start recording
-        speechRecognizer.reset()
-        speechRecognizer.transcribe()
+        playbackFinished = true
     }
 
     private func wordIndex(for range: NSRange, in text: String) -> Int {
@@ -1038,9 +1122,7 @@ class AudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
         progressTimer?.invalidate()
         progressTimer = nil
 
-        // Start recording
-        speechRecognizer.reset()
-        speechRecognizer.transcribe()
+
    }
 
     private func startProgressTimer() {
@@ -1087,41 +1169,136 @@ func areHeadphonesConnected() -> Bool {
     return false
 }
 
-class ImagePickerCoordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-    var parent: ImagePicker
+// Capture work stays off the main thread; the lock protects only the latest frame.
+final class LiveCamera: NSObject, ObservableObject, AVCaptureVideoDataOutputSampleBufferDelegate {
+    let session = AVCaptureSession()
+    @Published var errorMessage: String?
+    private let queue = DispatchQueue(label: "OSOne.camera")
+    private let lock = NSLock()
+    private var latestFrame: CVPixelBuffer?
+    private var frameTime = Date.distantPast
+    private var wantsRunning = false
+    private let context = CIContext()
+    private var observers: [NSObjectProtocol] = []
 
-    init(_ parent: ImagePicker) {
-        self.parent = parent
-    }
-
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let uiImage = info[.originalImage] as? UIImage {
-            parent.onImagePicked(uiImage)
+    override init() {
+        super.init()
+        for event in [AVCaptureSession.runtimeErrorNotification, AVCaptureSession.wasInterruptedNotification] {
+            observers.append(NotificationCenter.default.addObserver(forName: event, object: session, queue: nil) { [weak self] _ in
+                self?.stop()
+                self?.fail("The camera was interrupted. Turn it on again when the camera is available.")
+            })
         }
-        parent.presentationMode.wrappedValue.dismiss()
     }
 
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        parent.presentationMode.wrappedValue.dismiss()
+    deinit { observers.forEach { NotificationCenter.default.removeObserver($0) } }
+
+    func start() {
+        queue.async {
+            self.wantsRunning = true
+            switch AVCaptureDevice.authorizationStatus(for: .video) {
+            case .authorized: self.configureAndStart()
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: .video) { allowed in
+                    self.queue.async {
+                        guard self.wantsRunning else { return }
+                        if allowed { self.configureAndStart() }
+                        else { self.fail("Camera access was denied. Enable it in the device Settings.") }
+                    }
+                }
+            default: self.fail("Camera access is unavailable. Enable it in the device Settings.")
+            }
+        }
+    }
+
+    private func configureAndStart() {
+        guard wantsRunning, !session.isRunning else { return }
+        if session.inputs.isEmpty {
+            guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+                  let input = try? AVCaptureDeviceInput(device: device) else {
+                fail("No camera is available on this device."); return
+            }
+            session.beginConfiguration()
+            session.sessionPreset = .hd1280x720
+            session.automaticallyConfiguresApplicationAudioSession = false
+            let output = AVCaptureVideoDataOutput()
+            output.alwaysDiscardsLateVideoFrames = true
+            output.setSampleBufferDelegate(self, queue: queue)
+            guard session.canAddInput(input), session.canAddOutput(output) else {
+                session.commitConfiguration(); fail("Unable to start the camera."); return
+            }
+            session.addInput(input)
+            session.addOutput(output)
+            session.commitConfiguration()
+        }
+        DispatchQueue.main.async { self.errorMessage = nil }
+        session.startRunning()
+    }
+
+    func stop() {
+        queue.async {
+            self.wantsRunning = false
+            if self.session.isRunning { self.session.stopRunning() }
+            self.lock.lock()
+            self.latestFrame = nil
+            self.frameTime = .distantPast
+            self.lock.unlock()
+        }
+    }
+
+    private func fail(_ message: String) {
+        DispatchQueue.main.async { self.errorMessage = message }
+    }
+
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        lock.lock()
+        latestFrame = buffer
+        frameTime = Date()
+        lock.unlock()
+    }
+
+    func snapshot() -> UIImage? {
+        lock.lock()
+        let buffer = latestFrame
+        let fresh = Date().timeIntervalSince(frameTime) < 1
+        lock.unlock()
+        guard fresh, let buffer = buffer,
+              let image = context.createCGImage(CIImage(cvPixelBuffer: buffer), from: CIImage(cvPixelBuffer: buffer).extent) else { return nil }
+        let orientation = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?.interfaceOrientation
+        let imageOrientation: UIImage.Orientation
+        switch orientation {
+        case .landscapeLeft: imageOrientation = .down
+        case .landscapeRight: imageOrientation = .up
+        case .portraitUpsideDown: imageOrientation = .left
+        default: imageOrientation = .right
+        }
+        return UIImage(cgImage: image, scale: 1, orientation: imageOrientation)
     }
 }
 
-struct ImagePicker: UIViewControllerRepresentable {
-    @Environment(\.presentationMode) var presentationMode
-    @Binding var image: UIImage?
-    var onImagePicked: (UIImage) -> Void
-
-    func makeUIViewController(context: UIViewControllerRepresentableContext<ImagePicker>) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        return picker
+struct CameraPreview: UIViewRepresentable {
+    let session: AVCaptureSession
+    func makeUIView(context: Context) -> CameraPreviewView {
+        let view = CameraPreviewView()
+        view.previewLayer.session = session
+        view.previewLayer.videoGravity = .resizeAspectFill
+        return view
     }
+    func updateUIView(_ uiView: CameraPreviewView, context: Context) { uiView.setNeedsLayout() }
+}
 
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: UIViewControllerRepresentableContext<ImagePicker>) {
-        // Not needed for basic functionality
-    }
-
-    func makeCoordinator() -> ImagePickerCoordinator {
-        ImagePickerCoordinator(self)
+final class CameraPreviewView: UIView {
+    override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
+    var previewLayer: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard let connection = previewLayer.connection, connection.isVideoOrientationSupported else { return }
+        switch window?.windowScene?.interfaceOrientation {
+        case .landscapeLeft: connection.videoOrientation = .landscapeLeft
+        case .landscapeRight: connection.videoOrientation = .landscapeRight
+        case .portraitUpsideDown: connection.videoOrientation = .portraitUpsideDown
+        default: connection.videoOrientation = .portrait
+        }
     }
 }

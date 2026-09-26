@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FoundationModels
 import CoreLocation
 import HomeKit
 
@@ -87,6 +88,7 @@ struct OpenAIToolCallFunction: Codable {
 }
 
 func shouldUseResponsesAPI(grokEnabled: Bool, allowSearch: Bool, model: String) -> Bool {
+    if !grokEnabled && model.hasPrefix("gpt-6") { return true }
     if !allowSearch {
         return false
     }
@@ -102,7 +104,7 @@ func shouldSendWebSearchOptions(grokEnabled: Bool, allowSearch: Bool, model: Str
         return false
     }
     // Chat Completions only supports web search options on select non-GPT-5 models.
-    return !model.lowercased().hasPrefix("gpt-5")
+    return model.lowercased().contains("search")
 }
 
 func shouldIncludeGrokSearchTool(grokEnabled: Bool, allowSearch: Bool) -> Bool {
@@ -115,10 +117,8 @@ func shouldIncludeXSearchTool(grokEnabled: Bool, allowSearch: Bool) -> Bool {
 }
 
 func resolvedModel(grokEnabled: Bool, defaultOpenAIModel: String, overrideOpenAIModel: String, grokOverrideModel: String) -> String {
-    if grokEnabled {
-        return grokOverrideModel.isEmpty ? "grok-4.3" : grokOverrideModel
-    }
-    return overrideOpenAIModel.isEmpty ? defaultOpenAIModel : overrideOpenAIModel
+    let override = (grokEnabled ? grokOverrideModel : overrideOpenAIModel).trimmingCharacters(in: .whitespacesAndNewlines)
+    return override.isEmpty ? (grokEnabled ? ModelCatalog.grok[0] : defaultOpenAIModel) : override
 }
 
 func defaultGrokReasoningEffort(grokEnabled: Bool, grokOverrideModel: String) -> String? {
@@ -213,12 +213,11 @@ func sanitizeForSpeech(_ text: String) -> String {
 }
 
 func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation: CLLocation?, completion: @escaping (Result<String, Error>) -> Void) {
-    HomeKitManagerSingleton.initialize()
 
-    let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-    let grokEnabled = UserDefaults.standard.bool(forKey: "grokEnabled")
+    let openAIApiKey = OpenAICredentials.savedKey()
+    let grokEnabled = AssistantProvider.current == .grok
     let grokApiKey = UserDefaults.standard.string(forKey: "grokApiKey") ?? ""
-    let model = UserDefaults.standard.bool(forKey: "gpt4") ? "gpt-5.5" : "gpt-5.4-mini"
+    let model = ModelCatalog.openAI[0]
     let vision = UserDefaults.standard.bool(forKey: "vision")
     let allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
     let allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
@@ -399,6 +398,12 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
             }
         }
     }
+
+    if AssistantProvider.current == .apple {
+        appleChatCompletion(messages: messages, completion: completion)
+        return
+    }
+    HomeKitManagerSingleton.initialize()
 
     let homeKitTool = OpenAITool(
         type: "function",
@@ -613,9 +618,9 @@ func chatCompletionAPI(name: String, messageHistory: [ChatMessage], lastLocation
                     "properties": [:],
                     "required": homeKitTool.function.parameters.required
                 ]
-            ],
-            ["type": "web_search"]
+            ]
         ]
+        if allowSearch { responseTools.append(["type": "web_search"]) }
 
         if shouldIncludeXSearchTool(grokEnabled: grokEnabled, allowSearch: allowSearch) {
             responseTools.append(["type": "x_search"])
@@ -871,10 +876,10 @@ struct OpenAIUsageResponse: Codable {
 }
 
 func openAItextToSpeechAPI(name: String, text: String, completion: @escaping (Result<Data, Error>) -> Void) {
-    let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
+    let openAIApiKey = OpenAICredentials.savedKey()
 
     let body: [String: Any] = [
-        "model": "tts-1",
+        "model": "gpt-4o-mini-tts",
         "input": text,
         "voice": name
     ]
@@ -907,13 +912,16 @@ func openAItextToSpeechAPI(name: String, text: String, completion: @escaping (Re
             return
         }
 
-        completion(.success(data))
+        do {
+            try validateVoiceResponse(data: data, response: response)
+            completion(.success(data))
+        } catch { completion(.failure(error)) }
     }
     task.resume()
 }
 
 func openAITranscribeAudioForWordTimings(data: Data, completion: @escaping (Result<[WordTiming], Error>) -> Void) {
-    let openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
+    let openAIApiKey = OpenAICredentials.savedKey()
     let urlString = "https://api.openai.com/v1/audio/transcriptions"
 
     guard let url = URL(string: urlString) else {
@@ -1004,4 +1012,204 @@ func firstDayOfNextMonth() -> String {
     let components = calendar.dateComponents([.year, .month], from: nextMonth)
     guard let firstDay = calendar.date(from: components) else { return "" }
     return dateFormatter.string(from: firstDay)
+}
+
+
+// Latest defaults are maintained with the supported conversation model catalog.
+// Explicit selections (including older custom IDs) remain pinned across updates.
+enum ModelCatalog {
+    static let openAI = ["gpt-6-astra", "gpt-6-sol", "gpt-6-luna", "gpt-5.5", "gpt-5.4-mini"]
+    static let grok = ["grok-4.7", "grok-4.3"]
+}
+
+enum AssistantProvider: String, CaseIterable, Identifiable {
+    case openAI = "OpenAI"
+    case grok = "xAI / Grok"
+    case apple = "Apple Foundation Models"
+    case gateway = "OpenClaw gateway"
+    var id: String { rawValue }
+    var supportsCamera: Bool { self == .openAI || self == .grok }
+
+    static func selected(in defaults: UserDefaults) -> AssistantProvider {
+        if let value = defaults.string(forKey: "assistantProvider"), let provider = Self(rawValue: value) {
+            return provider
+        }
+        if defaults.bool(forKey: "gatewayEnabled") { return .gateway }
+        return defaults.bool(forKey: "grokEnabled") ? .grok : .openAI
+    }
+    static var current: AssistantProvider { selected(in: .standard) }
+    func save() {
+        UserDefaults.standard.set(rawValue, forKey: "assistantProvider")
+        UserDefaults.standard.set(self == .gateway, forKey: "gatewayEnabled")
+        UserDefaults.standard.set(self == .grok, forKey: "grokEnabled")
+    }
+    var isConfigured: Bool {
+        let key: String
+        switch self {
+        case .apple: return true
+        case .openAI: key = "openAIApiKey"
+        case .grok: key = "grokApiKey"
+        case .gateway: key = "gatewayURL"
+        }
+        return !(UserDefaults.standard.string(forKey: key) ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
+var appleModelAvailabilityMessage: String {
+    if #available(iOS 26.0, *) {
+        switch SystemLanguageModel.default.availability {
+        case .available: return "Ready on this device."
+        case .unavailable(.deviceNotEligible): return "This device does not support Apple Intelligence."
+        case .unavailable(.appleIntelligenceNotEnabled): return "Enable Apple Intelligence in the device Settings."
+        case .unavailable(.modelNotReady): return "The on-device model is still downloading or preparing. Try again later."
+        default: return "Apple Foundation Models is currently unavailable."
+        }
+    }
+    return "Requires iOS 26 or later and an Apple Intelligence-capable device."
+}
+
+func appleChatCompletion(messages: [[String: Any]], completion: @escaping (Result<String, Error>) -> Void) {
+    guard #available(iOS 26.0, *), SystemLanguageModel.default.availability == .available else {
+        completion(.failure(NSError(domain: "AppleModels", code: 1, userInfo: [NSLocalizedDescriptionKey: appleModelAvailabilityMessage])))
+        return
+    }
+    Task { @MainActor in
+        do {
+            let instructions = messages.filter { $0["role"] as? String == "system" }
+                .compactMap { $0["content"] as? String }.joined(separator: "\n")
+            var entries: [Transcript.Entry] = [.instructions(.init(
+                segments: [.text(.init(content: instructions))], toolDefinitions: []))]
+            for message in messages where message["role"] as? String != "system" {
+                let role = message["role"] as? String ?? "user"
+                let text: String
+                if let content = message["content"] as? String { text = content }
+                else {
+                    text = (message["content"] as? [[String: Any]] ?? []).compactMap { $0["text"] as? String }.joined(separator: "\n")
+                }
+                let segments: [Transcript.Segment] = [.text(.init(content: text))]
+                switch role {
+                case "system": entries.append(.instructions(.init(segments: segments, toolDefinitions: [])))
+                case "assistant": entries.append(.response(.init(assetIDs: [], segments: segments)))
+                default: entries.append(.prompt(.init(segments: segments)))
+                }
+            }
+            guard case .prompt(let prompt) = entries.last else {
+                throw NSError(domain: "AppleModels", code: 2, userInfo: [NSLocalizedDescriptionKey: "No message to send."])
+            }
+            entries.removeLast()
+            let session = LanguageModelSession(transcript: Transcript(entries: entries))
+            let text = prompt.segments.compactMap { segment -> String? in
+                if case .text(let text) = segment { return text.content }
+                return nil
+            }.joined(separator: "\n")
+            let response = try await session.respond(to: text)
+            completion(.success(sanitizeForSpeech(response.content)))
+        } catch {
+            completion(.failure(error))
+        }
+    }
+}
+
+
+// Keep the stored value intact; normalize pasted whitespace at the request boundary.
+enum OpenAICredentials {
+    static func normalized(_ key: String) -> String {
+        key.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func savedKey(defaults: UserDefaults = .standard) -> String {
+        normalized(defaults.string(forKey: "openAIApiKey") ?? "")
+    }
+
+    static func test(apiKey: String, session: URLSession = .shared) async throws -> String {
+        let key = normalized(apiKey)
+        guard !key.isEmpty else {
+            return "No OpenAI API key is saved. Paste your key into the OpenAI API key field."
+        }
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/models")!)
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 20
+        let (_, response) = try await session.data(for: request)
+        guard let response = response as? HTTPURLResponse else { throw VoiceAPIError.invalidResponse }
+        switch response.statusCode {
+        case 200...299: return "OpenAI accepted this key. Individual models and speech features may require additional permissions."
+        case 401: return "OpenAI rejected this key. Re-enter the full API key from your OpenAI project, or create a replacement if it has been revoked. A ChatGPT subscription or session key cannot be used here."
+        case 403: return "OpenAI denied access to the model list. Check this key's project permissions; a restricted key may still work for other features."
+        default: return "OpenAI returned HTTP \(response.statusCode). This does not confirm an invalid key. Try again later."
+        }
+    }
+}
+
+enum ModelAPIProvider {
+    case openAI, grok
+
+    var url: URL {
+        URL(string: self == .openAI ? "https://api.openai.com/v1/models" : "https://api.x.ai/v1/models")!
+    }
+}
+
+enum ModelListError: LocalizedError {
+    case missingKey, invalidResponse, emptyList
+    case http(Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingKey: return "Add an API key to load models from this provider."
+        case .invalidResponse: return "The provider returned an invalid model list."
+        case .emptyList: return "No models were returned for this key."
+        case .http(401): return "The provider rejected this API key. Check the saved key."
+        case .http(403): return "This key does not have permission to list models. You can still enter a model name."
+        case .http(let status): return "Unable to load models (HTTP \(status)). Try refreshing later."
+        }
+    }
+}
+
+enum ProviderModelsAPI {
+    static func fetch(provider: ModelAPIProvider, apiKey: String, session: URLSession = .shared) async throws -> [String] {
+        let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else { throw ModelListError.missingKey }
+        var request = URLRequest(url: provider.url)
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 20
+        let (data, response) = try await session.data(for: request)
+        guard let response = response as? HTTPURLResponse else { throw ModelListError.invalidResponse }
+        guard (200..<300).contains(response.statusCode) else { throw ModelListError.http(response.statusCode) }
+        struct ModelList: Decodable {
+            struct Model: Decodable { let id: String }
+            let data: [Model]
+        }
+        let list = try JSONDecoder().decode(ModelList.self, from: data)
+        let models = Set(list.data.map(\.id).filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+        guard !models.isEmpty else { throw ModelListError.emptyList }
+        return models
+    }
+}
+
+@MainActor final class ProviderModelList: ObservableObject {
+    @Published private(set) var models: [String]?
+    @Published private(set) var isLoading = false
+    @Published private(set) var errorMessage: String?
+    private var requestID = UUID()
+
+    func load(provider: ModelAPIProvider, apiKey: String, session: URLSession = .shared) async {
+        let id = UUID()
+        requestID = id
+        models = nil
+        errorMessage = nil
+        isLoading = false
+        guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        isLoading = true
+        defer { if requestID == id { isLoading = false } }
+        do {
+            try await Task.sleep(nanoseconds: 400_000_000)
+            let models = try await ProviderModelsAPI.fetch(provider: provider, apiKey: apiKey, session: session)
+            try Task.checkCancellation()
+            guard requestID == id else { return }
+            self.models = models
+        } catch {
+            guard !Task.isCancelled, requestID == id else { return }
+            errorMessage = error.localizedDescription
+        }
+    }
 }
