@@ -8,5 +8,7 @@
 	<string>Optional location can be sent so that suggestions are more accurate to where you currently are.</string>
 	<key>NSHomeKitUsageDescription</key>
 	<string>Provides the ability to answer questions about your Apple Home</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Provides an image to give better answers about your surroundings</string>
 </dict>
 </plist>

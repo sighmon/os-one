@@ -1,68 +1,69 @@
-//
-//  SettingsView.swift
-//  OS One
-//
-//  Created by Simon Loffler on 3/4/2023.
-//
-
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var elevenLabsApiKey: String = ""
-    @State private var elevenLabs: Bool = true
-    @State private var openAIVoice: Bool = false
-    @State private var elevenLabsUsage: Float = 0
-    @State private var openAIApiKey: String = ""
-    @State private var openAISessionKey: String = ""
-    @State private var openAIUsage: Float = 0
-    @State private var gpt4: Bool = true
-    @State private var vision: Bool = false
-    @State private var grokEnabled: Bool = false
-    @State private var grokApiKey: String = ""
-    @State private var grokOverrideModel: String = ""
-    @State private var allowLocation: Bool = false
-    @State private var allowSearch: Bool = false
-    @State private var name: String = ""
-    @State private var overrideOpenAIModel: String = ""
-    @State private var overrideVoiceID: String = ""
-    @State private var overrideSystemPrompt: String = ""
-    @State private var gatewayEnabled: Bool = false
-    @State private var gatewayURL: String = ""
-    @State private var gatewayToken: String = ""
-    @State private var gatewaySessionKey: String = "main"
-    @State private var gatewayTestInProgress: Bool = false
-    @State private var gatewayTestMessage: String = ""
-    @State private var showGatewayTestAlert: Bool = false
-    @Environment(\.dismiss) var dismiss
+    @AppStorage("name") private var name = "Samantha"
+    @AppStorage("overrideSystemPrompt") private var overrideSystemPrompt = ""
+    @AppStorage("overrideVoiceID") private var overrideVoiceID = ""
+    @AppStorage("overrideOpenAIModel") private var overrideOpenAIModel = ""
+    @AppStorage("grokOverrideModel") private var grokOverrideModel = ""
+    @AppStorage("openAIApiKey") private var openAIApiKey = ""
+    @AppStorage("openAISessionKey") private var openAISessionKey = ""
+    @AppStorage("grokApiKey") private var grokApiKey = ""
+    @AppStorage("elevenLabsApiKey") private var elevenLabsApiKey = ""
+    @AppStorage("elevenLabs") private var elevenLabs = false
+    @AppStorage("openAIVoice") private var openAIVoice = false
+    @AppStorage("grokVoice") private var grokVoice = false
+    @AppStorage("grokVoiceID") private var grokVoiceID = "eve"
+    @AppStorage("openAIVoiceID") private var openAIVoiceID = "nova"
+    @StateObject private var openAIModels = ProviderModelList()
+    @StateObject private var grokModels = ProviderModelList()
+    @State private var openAIModelRefresh = 0
+    @State private var grokModelRefresh = 0
+    @State private var grokVoices: [SpeechVoice] = []
+    @State private var voicesLoading = false
+    @State private var voicesError: String?
+    @State private var voiceRequestID = UUID()
+    @State private var voiceRefresh = 0
+    @AppStorage("allowLocation") private var allowLocation = false
+    @AppStorage("allowSearch") private var allowSearch = false
+    @AppStorage("vision") private var vision = false
+    @AppStorage("gatewayURL") private var gatewayURL = ""
+    @AppStorage("gatewayToken") private var gatewayToken = ""
+    @AppStorage("gatewaySessionKey") private var gatewaySessionKey = "main"
+    @State private var keyTestMessage = ""
+    @State private var keyTestRunning = false
+    @State private var usageMessage = ""
+    @State private var provider = AssistantProvider.current
+    @State private var gatewayTestInProgress = false
+    @State private var gatewayTestMessage = ""
+    @State private var showGatewayTestAlert = false
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(.secondarySystemBackground)
-                    .ignoresSafeArea()
-                ScrollView {
-                    VStack {
-                        HStack {
-                            Text("OS")
-                                .font(.system(
-                                    size: 50,
-                                    weight: .light
-                                ))
-                            Text("1")
-                                .font(.system(
-                                    size: 30,
-                                    weight: .regular
-                                ))
-                                .baselineOffset(20.0)
-                        }
-                        Text("settings")
-                            .font(.system(size: 25, weight: .light))
-                            .padding(.bottom, 5)
-                        Text(appVersionAndBuild())
-                            .font(.system(size: 15, weight: .light))
+        NavigationStack {
+            TabView {
+                personalityTab.tabItem { Label("Personality", systemImage: "person.crop.circle") }
+                modelsTab.tabItem { Label("Models", systemImage: "cpu") }
+                settingsTab.tabItem { Label("Settings", systemImage: "gearshape") }
+            }
+            .navigationTitle("OS One")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { Button("Done") { dismiss() } }
+            .onChange(of: provider) { $0.save() }
+            .onChange(of: openAIApiKey) { _ in keyTestMessage = "" }
+            .alert("Gateway Test", isPresented: $showGatewayTestAlert) {
+                Button("OK", role: .cancel) {}
+            } message: { Text(gatewayTestMessage) }
+        }
+    }
+
+    private var personalityTab: some View {
+        Form {
+            Section("Personality") {
                         Picker("Name of your voice assistant", selection: $name) {
                             Group {
                                 Text("Samantha").tag("Samantha")
+                                Text("Custom").tag("Custom")
                                 Text("KITT").tag("KITT")
                                 Text("Mr.Robot").tag("Mr.Robot")
                                 Text("Elliot").tag("Elliot")
@@ -102,191 +103,234 @@ struct SettingsView: View {
                                 Text("Seb Chan").tag("Seb Chan")
                             }
                         }
-                            .pickerStyle(.wheel)
-                            .onChange(of: name) {
-                                UserDefaults.standard.set($0, forKey: "name")
-                            }
-                        Text("Settings", comment: "Choose which features to use.")
-                            .bold()
-                        Toggle("Allow location", isOn: $allowLocation)
-                            .onChange(of: allowLocation) {
-                                UserDefaults.standard.set($0, forKey: "allowLocation")
-                            }
-                        Toggle("Allow search", isOn: $allowSearch)
-                            .onChange(of: allowSearch) {
-                                UserDefaults.standard.set($0, forKey: "allowSearch")
-                            }
-                        Toggle("GPT 5.5", isOn: $gpt4)
-                            .onChange(of: gpt4) {
-                                UserDefaults.standard.set($0, forKey: "gpt4")
-                            }
-                        Toggle("OpenAI voice", isOn: $openAIVoice)
-                            .onChange(of: openAIVoice) {
-                                UserDefaults.standard.set($0, forKey: "openAIVoice")
-                            }
-                        Toggle("Grok", isOn: $grokEnabled)
-                            .onChange(of: grokEnabled) {
-                                UserDefaults.standard.set($0, forKey: "grokEnabled")
-                            }
-                        if openAISessionKey != "" {
-                            ProgressView(value: openAIUsage / 1000) {
-                                Text("$\((openAIUsage / 100), specifier: "%.2f")")
-                            }
-                            .padding(.bottom, 10)
-                        }
-                        Toggle("Eleven Labs voice", isOn: $elevenLabs)
-                            .onChange(of: elevenLabs) {
-                                UserDefaults.standard.set($0, forKey: "elevenLabs")
-                            }
-                        ProgressView(value: elevenLabsUsage) {
-                            Text("\(floatToPercent(float:elevenLabsUsage))")
-                                .opacity(elevenLabs ? 1.0 : 0.5)
-                        }
-                        .padding(.bottom, 10)
-                        Group {
-                            SecureField("OpenAI API Key", text: $openAIApiKey)
-                                .onChange(of: openAIApiKey) {
-                                    UserDefaults.standard.set($0, forKey: "openAIApiKey")
-                                }
-                            SecureField("OpenAI Session Key (optional)", text: $openAISessionKey)
-                                .onChange(of: openAISessionKey) {
-                                    UserDefaults.standard.set($0, forKey: "openAISessionKey")
-                                }
-                            SecureField("Grok API Key", text: $grokApiKey)
-                                .onChange(of: grokApiKey) {
-                                    UserDefaults.standard.set($0, forKey: "grokApiKey")
-                                }
-                            SecureField("Eleven Labs API Key", text: $elevenLabsApiKey)
-                                .onChange(of: elevenLabsApiKey) {
-                                    UserDefaults.standard.set($0, forKey: "elevenLabsApiKey")
-                                }
-                                .padding(.bottom, 10)
-                        }
-                        Group {
-                            Text("Custom settings", comment: "Set your own custom model, voice, and prompt.")
-                                .bold()
-                            TextField("Override OpenAI model", text: $overrideOpenAIModel)
-                                .onChange(of: overrideOpenAIModel) {
-                                    UserDefaults.standard.set($0, forKey: "overrideOpenAIModel")
-                                }
-                            TextField("Override Grok model", text: $grokOverrideModel)
-                                .onChange(of: grokOverrideModel) {
-                                    UserDefaults.standard.set($0, forKey: "grokOverrideModel")
-                                }
-                            TextField("Override ElevenLabs voice ID", text: $overrideVoiceID)
-                                .onChange(of: overrideVoiceID) {
-                                    UserDefaults.standard.set($0, forKey: "overrideVoiceID")
-                                    if !overrideVoiceID.isEmpty || !overrideSystemPrompt.isEmpty {
-                                        UserDefaults.standard.set("Custom", forKey: "name")
-                                    }
-                                }
-                            TextField("Override system prompt", text: $overrideSystemPrompt)
-                                .onChange(of: overrideSystemPrompt) {
-                                    UserDefaults.standard.set($0, forKey: "overrideSystemPrompt")
-                                    if !overrideVoiceID.isEmpty || !overrideSystemPrompt.isEmpty {
-                                        UserDefaults.standard.set("Custom", forKey: "name")
-                                    }
-                                }
-                                .padding(.bottom, 10)
-                        }
-                        Group {
-                            Text("Openclaw gateway")
-                                .bold()
-                            Toggle("Use Openclaw Gateway", isOn: $gatewayEnabled)
-                                .onChange(of: gatewayEnabled) {
-                                    UserDefaults.standard.set($0, forKey: "gatewayEnabled")
-                                }
-                            TextField("Gateway URL (ws://host:18789)", text: $gatewayURL)
-                                .onChange(of: gatewayURL) {
-                                    UserDefaults.standard.set($0, forKey: "gatewayURL")
-                                }
-                            SecureField("Gateway token (optional)", text: $gatewayToken)
-                                .onChange(of: gatewayToken) {
-                                    UserDefaults.standard.set($0, forKey: "gatewayToken")
-                                }
-                            TextField("Gateway session key", text: $gatewaySessionKey)
-                                .onChange(of: gatewaySessionKey) {
-                                    UserDefaults.standard.set($0, forKey: "gatewaySessionKey")
-                                }
-                            Button(action: testGatewayConnection) {
-                                if gatewayTestInProgress {
-                                    HStack {
-                                        ProgressView()
-                                        Text("Testing...")
-                                    }
-                                } else {
-                                    Text("Test Gateway Connection")
-                                        .padding(.bottom, 10)
-                                }
-                            }
-                            .disabled(gatewayTestInProgress || gatewayURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        }
-                    }
-                    .textFieldStyle(.roundedBorder)
-                    .foregroundStyle(.primary)
-                    .textInputAutocapitalization(.never)
-                    .disableAutocorrection(true)
-                    .padding([.leading, .trailing], 40)
-                    .onAppear {
-                        // Load OS One settings from user defaults
-                        openAIApiKey = UserDefaults.standard.string(forKey: "openAIApiKey") ?? ""
-                        openAISessionKey = UserDefaults.standard.string(forKey: "openAISessionKey") ?? ""
-                        gpt4 = UserDefaults.standard.bool(forKey: "gpt4")
-                        vision = UserDefaults.standard.bool(forKey: "vision")
-                        openAIVoice = UserDefaults.standard.bool(forKey: "openAIVoice")
-                        allowLocation = UserDefaults.standard.bool(forKey: "allowLocation")
-                        allowSearch = UserDefaults.standard.bool(forKey: "allowSearch")
-                        grokEnabled = UserDefaults.standard.bool(forKey: "grokEnabled")
-                        grokApiKey = UserDefaults.standard.string(forKey: "grokApiKey") ?? ""
-                        grokOverrideModel = UserDefaults.standard.string(forKey: "grokOverrideModel") ?? ""
-                        elevenLabsApiKey = UserDefaults.standard.string(forKey: "elevenLabsApiKey") ?? ""
-                        elevenLabs = UserDefaults.standard.bool(forKey: "elevenLabs")
-                        name = UserDefaults.standard.string(forKey: "name") ?? ""
-                        overrideOpenAIModel = UserDefaults.standard.string(forKey: "overrideOpenAIModel") ?? ""
-                        overrideVoiceID = UserDefaults.standard.string(forKey: "overrideVoiceID") ?? ""
-                        overrideSystemPrompt = UserDefaults.standard.string(forKey: "overrideSystemPrompt") ?? ""
-                        gatewayEnabled = UserDefaults.standard.bool(forKey: "gatewayEnabled")
-                        gatewayURL = UserDefaults.standard.string(forKey: "gatewayURL") ?? ""
-                        gatewayToken = UserDefaults.standard.string(forKey: "gatewayToken") ?? ""
-                        gatewaySessionKey = UserDefaults.standard.string(forKey: "gatewaySessionKey") ?? "main"
-                        if !overrideVoiceID.isEmpty || !overrideSystemPrompt.isEmpty {
-                            name = "Custom"
-                        }
 
-                        if (elevenLabsApiKey != "" && elevenLabs) {
-                            elevenLabsGetUsage { result in
-                                switch result {
-                                case .success(let usage):
-                                    elevenLabsUsage = usage
-                                case .failure(let error):
-                                    print("Eleven Labs API error: \(error.localizedDescription)")
-                                }
-                            }
-                        }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 250)
+                    .labelsHidden()
+                Text("Choose the personality your assistant uses in conversation.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("Custom personality") {
+                TextField("System prompt", text: $overrideSystemPrompt, axis: .vertical)
+                    .lineLimit(4...10)
+                TextField("ElevenLabs voice ID", text: $overrideVoiceID)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                Text("A custom prompt or voice overrides the selected personality. Clear these fields to use the preset again.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
 
-                        if (openAISessionKey != "") {
-                            getOpenAIUsage { result in
-                                switch result {
-                                case .success(let usage):
-                                    openAIUsage = usage
-                                case .failure(let error):
-                                    print("OpenAI API error: \(error.localizedDescription)")
-                                }
-                            }
+    private var modelsTab: some View {
+        Form {
+            Section("Assistant") {
+                Picker("Provider", selection: $provider) {
+                    ForEach(AssistantProvider.allCases) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.menu)
+            }
+            Section("Voice") {
+                Picker("Voice provider", selection: Binding(
+                    get: { elevenLabs ? "elevenLabs" : (grokVoice ? "grok" : (openAIVoice ? "openAI" : "system")) },
+                    set: { elevenLabs = $0 == "elevenLabs"; openAIVoice = $0 == "openAI"; grokVoice = $0 == "grok" }
+                )) {
+                    Text("System voice").tag("system")
+                    Text("OpenAI").tag("openAI")
+                    Text("Grok Voice").tag("grok")
+                    Text("ElevenLabs").tag("elevenLabs")
+                }
+                .accessibilityIdentifier("voiceProviderPicker")
+                if grokVoice {
+                    SecureField("Grok API key", text: $grokApiKey)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    if grokApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text("Add your Grok API key to load available voices.").font(.footnote)
+                    } else {
+                        if voicesLoading { ProgressView("Loading voices…") }
+                        if !grokVoices.isEmpty {
+                            voiceWheel(voices: grokVoices, selection: $grokVoiceID)
                         }
+                        if let error = voicesError { Text(error).font(.footnote).foregroundStyle(.secondary) }
+                        Button("Refresh voices") { voiceRefresh += 1 }.disabled(voicesLoading)
                     }
+                } else if openAIVoice {
+                    SecureField("OpenAI API key", text: $openAIApiKey)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    voiceWheel(voices: SpeechVoice.openAI, selection: $openAIVoiceID)
+                    Text("Choose from OpenAI's 13 built-in voices.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    if openAIApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text("Add your OpenAI API key to use this voice.").font(.footnote)
+                    }
+                } else if elevenLabs {
+                    SecureField("ElevenLabs API key", text: $elevenLabsApiKey)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
                 }
             }
-            .toolbar {
-                Button("Done") {
-                    dismiss()
+            Section("OpenAI") {
+                modelPicker(selection: $overrideOpenAIModel, fallback: ModelCatalog.openAI,
+                            list: openAIModels, apiKey: openAIApiKey, identifier: "openAICustomModel") {
+                    openAIModelRefresh += 1
+                }
+                SecureField("OpenAI API key", text: $openAIApiKey)
+                Button(keyTestRunning ? "Testing key…" : "Test API key") {
+                    let key = openAIApiKey
+                    keyTestRunning = true
+                    keyTestMessage = ""
+                    Task { @MainActor in
+                        defer { keyTestRunning = false }
+                        do {
+                            let message = try await OpenAICredentials.test(apiKey: key)
+                            if key == openAIApiKey { keyTestMessage = message }
+                        } catch {
+                            if key == openAIApiKey { keyTestMessage = error.localizedDescription }
+                        }
+                    }
+                }.disabled(keyTestRunning)
+                if !keyTestMessage.isEmpty { Text(keyTestMessage).font(.footnote) }
+            }
+            Section("xAI / Grok") {
+                modelPicker(selection: $grokOverrideModel, fallback: ModelCatalog.grok,
+                            list: grokModels, apiKey: grokApiKey, identifier: "grokCustomModel") {
+                    grokModelRefresh += 1
+                }
+                SecureField("API key", text: $grokApiKey)
+            }
+            Section("Apple Foundation Models") {
+                LabeledContent("Model", value: "On-device · System default")
+                Text(appleModelAvailabilityMessage).font(.footnote).foregroundStyle(.secondary)
+                Text("Text conversations run on this device without an API key. Camera analysis, web search and HomeKit tools are unavailable with this provider. Select System voice to avoid a cloud voice service.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("OpenClaw gateway") {
+                TextField("Gateway URL (ws://host:18789)", text: $gatewayURL)
+                SecureField("Gateway token (optional)", text: $gatewayToken)
+                TextField("Session key", text: $gatewaySessionKey)
+                Text("The model is configured by your gateway. Camera images are not supported by this connection.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Button(action: testGatewayConnection) {
+                    if gatewayTestInProgress { ProgressView() } else { Text("Test connection") }
+                }
+                .disabled(gatewayTestInProgress || gatewayURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .textInputAutocapitalization(.never).autocorrectionDisabled()
+        .task(id: "\(openAIApiKey)-\(openAIModelRefresh)") {
+            await openAIModels.load(provider: .openAI, apiKey: openAIApiKey)
+        }
+        .task(id: "\(grokApiKey)-\(grokModelRefresh)") {
+            await grokModels.load(provider: .grok, apiKey: grokApiKey)
+        }
+        .task(id: "\(grokVoice)-\(grokApiKey)-\(voiceRefresh)") {
+            await loadGrokVoices()
+        }
+    }
+
+    private func modelPicker(selection: Binding<String>, fallback: [String], list: ProviderModelList,
+                             apiKey: String, identifier: String, refresh: @escaping () -> Void) -> some View {
+        let models = list.models ?? fallback
+        return Group {
+            Picker("Model", selection: selection) {
+                Text("Latest (\(fallback[0]))").tag("")
+                ForEach(models, id: \.self) { Text($0).tag($0) }
+                if !selection.wrappedValue.isEmpty && !models.contains(selection.wrappedValue) {
+                    Text("\(selection.wrappedValue) (custom)").tag(selection.wrappedValue)
                 }
             }
-            .alert("Gateway Test", isPresented: $showGatewayTestAlert) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(gatewayTestMessage)
+            .pickerStyle(.menu)
+            TextField("Model name or custom ID", text: selection)
+                .accessibilityIdentifier(identifier)
+            Text("Choose a chat model from the list or enter its name. Clear the name to use Latest.")
+                .font(.footnote).foregroundStyle(.secondary)
+            if list.isLoading { ProgressView("Loading models…") }
+            if let error = list.errorMessage {
+                Text("\(error) Showing built-in choices.").font(.footnote).foregroundStyle(.secondary)
+            } else if list.models != nil {
+                Text("Models loaded from your provider. Speech-only and image-generation models cannot be used for chat.")
+                    .font(.footnote).foregroundStyle(.secondary)
             }
+            if !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Button("Refresh models", action: refresh).disabled(list.isLoading)
+            } else {
+                Text("Add an API key to load available models. Built-in choices and custom names work without loading the list.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var settingsTab: some View {
+        Form {
+            Section("Features") {
+                Toggle("Allow location", isOn: $allowLocation)
+                Toggle("Allow web search", isOn: $allowSearch).disabled(!provider.supportsCamera)
+                Toggle("Live camera", isOn: $vision).disabled(!provider.supportsCamera)
+                Text("With the camera on, the latest frame is sent with your words when you finish speaking.")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            Section("Account usage") {
+                SecureField("OpenAI session key (optional)", text: $openAISessionKey)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                Button("Check ElevenLabs usage") {
+                    elevenLabsGetUsage { result in
+                        DispatchQueue.main.async {
+                            switch result {
+                            case .success(let usage): usageMessage = "ElevenLabs: \(floatToPercent(float: usage)) used"
+                            case .failure(let error): usageMessage = error.localizedDescription
+                            }
+                        }
+                    }
+                }.disabled(elevenLabsApiKey.isEmpty)
+                Button("Check OpenAI usage") {
+                    getOpenAIUsage { result in
+                        DispatchQueue.main.async {
+                            switch result {
+                            case .success(let usage): usageMessage = String(format: "OpenAI: $%.2f", usage / 100)
+                            case .failure(let error): usageMessage = error.localizedDescription
+                            }
+                        }
+                    }
+                }.disabled(openAISessionKey.isEmpty)
+                if !usageMessage.isEmpty { Text(usageMessage).font(.footnote) }
+            }
+            Section("About") { LabeledContent("Version", value: appVersionAndBuild()) }
+        }
+    }
+
+    private func voiceWheel(voices: [SpeechVoice], selection: Binding<String>) -> some View {
+        Picker("Voice", selection: selection) {
+            ForEach(voices) { Text($0.name).tag($0.id) }
+            if !voices.contains(where: { $0.id == selection.wrappedValue }) {
+                Text("\(selection.wrappedValue) (saved)").tag(selection.wrappedValue)
+            }
+        }
+        .pickerStyle(.wheel)
+        .frame(maxWidth: .infinity)
+        .frame(height: 200)
+        .labelsHidden()
+        .accessibilityIdentifier("voiceWheel")
+    }
+
+    @MainActor private func loadGrokVoices() async {
+        let requestID = UUID()
+        voiceRequestID = requestID
+        voicesLoading = false
+        voicesError = nil
+        grokVoices = []
+        let key = grokApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard grokVoice, !key.isEmpty else { return }
+        voicesLoading = true
+        defer { if voiceRequestID == requestID { voicesLoading = false } }
+        do {
+            // Debounce key entry and cancel in-flight work when the provider or key changes.
+            try await Task.sleep(nanoseconds: 400_000_000)
+            let voices = try await GrokSpeechAPI.voices(apiKey: key)
+            try Task.checkCancellation()
+            guard voiceRequestID == requestID else { return }
+            grokVoices = voices
+        } catch {
+            guard !Task.isCancelled, voiceRequestID == requestID else { return }
+            voicesError = error.localizedDescription
         }
     }
 
@@ -324,11 +368,5 @@ struct SettingsView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .percent
         return formatter.string(from: float as NSNumber) ?? "0%"
-    }
-}
-
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
     }
 }
